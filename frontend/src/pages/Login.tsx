@@ -38,20 +38,12 @@ export default function Login() {
       });
 
       localStorage.setItem("insuranceToken", res.data.token);
-      localStorage.setItem(
-        "insuranceUser",
-        JSON.stringify(res.data.user)
-      );
+      localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
 
       alert("Login Successful");
-
       navigate("/customer-dashboard");
     } catch (err: unknown) {
-      if (
-        typeof err === "object" &&
-        err !== null &&
-        "response" in err
-      ) {
+      if (typeof err === "object" && err !== null && "response" in err) {
         const error = err as {
           response?: {
             data?: {
@@ -73,36 +65,58 @@ export default function Login() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f5f7fb",
+        background:
+          "linear-gradient(135deg, #fff7ed 0%, #fee2e2 45%, #ffffff 100%)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        padding: 18,
       }}
     >
       <div
         style={{
-          width: 420,
+          width: "100%",
+          maxWidth: 430,
           background: "#fff",
-          borderRadius: 15,
+          borderRadius: 24,
           padding: 35,
-          boxShadow: "0 10px 30px rgba(0,0,0,.1)",
+          boxShadow: "0 20px 50px rgba(220, 38, 38, 0.18)",
+          borderTop: "6px solid #dc2626",
         }}
       >
+        <img
+          src="ic_launcher.png"
+          alt="ICICI Life Logo"
+          style={{
+            width: 95,
+            height: 95,
+            display: "block",
+            margin: "0 auto 18px",
+            objectFit: "contain",
+            borderRadius: 18,
+          }}
+        />
+
         <h1
           style={{
             textAlign: "center",
-            marginBottom: 10,
-            color: "#2563eb",
+            marginBottom: 6,
+            fontSize: 34,
+            fontWeight: 900,
+            background: "linear-gradient(90deg, #dc2626, #f97316)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
           }}
         >
           ICICI LIFE
         </h1>
 
         <h3
-        
           style={{
             textAlign: "center",
-            marginBottom: 25,
+            marginBottom: 28,
+            color: "#555",
+            fontWeight: 600,
           }}
         >
           Customer Login
@@ -113,9 +127,10 @@ export default function Login() {
             style={{
               background: "#fee2e2",
               color: "#b91c1c",
-              padding: 10,
-              borderRadius: 8,
-              marginBottom: 15,
+              padding: 12,
+              borderRadius: 12,
+              marginBottom: 16,
+              fontWeight: 600,
             }}
           >
             {error}
@@ -129,10 +144,12 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
           style={{
             width: "100%",
-            padding: 12,
-            marginBottom: 15,
-            borderRadius: 8,
-            border: "1px solid #ddd",
+            padding: 14,
+            marginBottom: 16,
+            borderRadius: 12,
+            border: "1px solid #fecaca",
+            outline: "none",
+            fontSize: 15,
           }}
         />
 
@@ -143,10 +160,12 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           style={{
             width: "100%",
-            padding: 12,
-            marginBottom: 20,
-            borderRadius: 8,
-            border: "1px solid #ddd",
+            padding: 14,
+            marginBottom: 22,
+            borderRadius: 12,
+            border: "1px solid #fecaca",
+            outline: "none",
+            fontSize: 15,
           }}
         />
 
@@ -155,43 +174,45 @@ export default function Login() {
           disabled={loading}
           style={{
             width: "100%",
-            padding: 14,
-            background: "#2563eb",
+            padding: 15,
+            background: "linear-gradient(90deg, #dc2626, #f97316)",
             color: "#fff",
             border: "none",
-            borderRadius: 8,
-            fontSize: 16,
-            cursor: "pointer",
+            borderRadius: 12,
+            fontSize: 17,
+            fontWeight: 800,
+            cursor: loading ? "not-allowed" : "pointer",
+            boxShadow: "0 10px 24px rgba(220, 38, 38, 0.32)",
+            opacity: loading ? 0.75 : 1,
           }}
         >
           {loading ? "Logging in..." : "Customer Login"}
         </button>
 
-        <div
-          style={{
-            marginTop: 20,
-            textAlign: "center",
-          }}
-        >
+        <div style={{ marginTop: 22, textAlign: "center", color: "#555" }}>
           Don't have an account?
-
           <Link
             to="/register"
             style={{
-              marginLeft: 5,
+              marginLeft: 6,
+              color: "#dc2626",
+              fontWeight: 700,
+              textDecoration: "none",
             }}
           >
             Register
           </Link>
         </div>
 
-        <div
-          style={{
-            marginTop: 10,
-            textAlign: "center",
-          }}
-        >
-          <Link to="/admin-login">
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <Link
+            to="/admin-login"
+            style={{
+              color: "#f97316",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
             Admin Login
           </Link>
         </div>
