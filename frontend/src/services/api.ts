@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE_URL = "https://insurance-app-7vkn.onrender.com/api";
+
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
 
@@ -20,21 +22,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
-    ) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const res = await axios.post(
-          "http://localhost:5000/api/auth/refresh",
+          `${API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
         localStorage.setItem("insuranceToken", res.data.token);
-
         originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
 
         return api(originalRequest);
