@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Policy = require("../models/Policy");
 const auth = require("../middleware/auth");
 
+/* CREATE POLICY */
 router.post("/", auth(), async (req, res) => {
   try {
     const policy = await Policy.create({
@@ -16,11 +17,10 @@ router.post("/", auth(), async (req, res) => {
   }
 });
 
+/* GET ALL POLICIES - customer ki kanipinchadaniki */
 router.get("/", auth(), async (req, res) => {
   try {
-    const policies = await Policy.find()
-      .sort({ createdAt: -1 });
-
+    const policies = await Policy.find().sort({ createdAt: -1 });
     res.json(policies);
   } catch (error) {
     console.error("Policies fetch error:", error);
@@ -28,13 +28,35 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(), async (req, res) => {
+/* BUY POLICY */
+router.post("/:id/buy", auth(), async (req, res) => {
   try {
     const policy = await Policy.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {
+        status: "active",
+        customerId: req.user.id,
+      },
       { new: true }
     );
+
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
+
+    res.json(policy);
+  } catch (error) {
+    console.error("Policy buy error:", error);
+    res.status(500).json({ message: "Policy buy failed" });
+  }
+});
+
+/* UPDATE POLICY */
+router.put("/:id", auth(), async (req, res) => {
+  try {
+    const policy = await Policy.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     res.json(policy);
   } catch (error) {
@@ -43,6 +65,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
+/* DELETE POLICY */
 router.delete("/:id", auth(), async (req, res) => {
   try {
     await Policy.findByIdAndDelete(req.params.id);

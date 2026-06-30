@@ -119,23 +119,20 @@ export default function CustomerDashboard() {
   }, [loadDashboard]);
 
   const buyPolicy = async (policyId: string) => {
-    try {
-      setBuyingId(policyId);
+  try {
+    setBuyingId(policyId);
 
-      await api.put<Policy>(`/policies/${policyId}`, {
-        status: "active",
-      });
+    await api.post(`/policies/${policyId}/buy`);
 
-      alert("Policy purchased successfully!");
-      await loadDashboard();
-    } catch (error) {
-      console.error("Buy policy error:", error);
-      alert("Policy buy failed");
-    } finally {
-      setBuyingId("");
-    }
-  };
-
+    alert("Policy purchased successfully!");
+    await loadDashboard();
+  } catch (error) {
+    console.error("Buy policy error:", error);
+    alert("Policy buy failed");
+  } finally {
+    setBuyingId("");
+  }
+};
   return (
     <MainLayout
       title="Customer Dashboard"
