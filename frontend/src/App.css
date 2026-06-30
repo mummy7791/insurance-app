@@ -182,3 +182,51 @@
     border-right-color: var(--border);
   }
 }
+/* ================= LOGO ================= */
+
+.sidebar-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:25px;
+}
+
+.sidebar-logo{
+    width:52px;
+    height:52px;
+    border-radius:12px;
+    background:#fff;
+    object-fit:contain;
+    padding:5px;
+}
+
+.sidebar-title h2{
+    margin:0;
+    color:#fff;
+    font-size:30px;
+    font-weight:800;
+    line-height:1;
+}
+
+.sidebar-title small{
+    color:#cbd5e1;
+    font-size:13px;
+    letter-spacing:2px;
+}
+
+@media(max-width:768px){
+
+.sidebar-logo{
+    width:42px;
+    height:42px;
+}
+
+.sidebar-title h2{
+    font-size:24px;
+}
+
+.sidebar-title small{
+    font-size:11px;
+}
+
+}

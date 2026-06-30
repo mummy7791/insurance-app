@@ -733,3 +733,43 @@ body.dark .warning-badge {
     min-width: 700px;
   }
 }
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.sidebar-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #fff;
+  object-fit: contain;
+  padding: 5px;
+}
+
+.sidebar-title h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.sidebar-title small {
+  color: #cbd5e1;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 768px) {
+  .sidebar-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .sidebar-title h2 {
+    font-size: 20px;
+  }
+}

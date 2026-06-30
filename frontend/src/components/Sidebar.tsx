@@ -178,7 +178,14 @@ export default function Sidebar() {
       />
 
       <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
-        <h2>🛡️ LifeSecure CRM</h2>
+        <div className="sidebar-brand">
+          <img src="ic_launcher.png" alt="ICICI Life" className="sidebar-logo" />
+
+          <div className="sidebar-title">
+            <h2>LifeSecure CRM</h2>
+            <small>ICICI LIFE</small>
+          </div>
+        </div>
 
         <div style={{ marginBottom: 20 }}>
           <strong>{user.name || user.email || "User"}</strong>
