@@ -144,7 +144,7 @@ useRoute("/api/customer-profile", customerProfileRoutes);
 useRoute("/api/tickets", ticketRoutes);
 useRoute("/api/insurance-plans", insurancePlanRoutes);
 useRoute("/api/plan-purchases", planPurchaseRoutes);
-app.use("/policy-purchases", policyPurchaseRoutes);
+useRoute("/api/policy-purchases", policyPurchaseRoutes);
 
 
 /* ================= TEST ROUTE ================= */
