@@ -1,8 +1,10 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000", {
+const SOCKET_URL = "https://insurance-app-7vkn.onrender.com";
+
+export const socket = io(SOCKET_URL, {
   withCredentials: true,
-  autoConnect: true,
+  transports: ["websocket", "polling"],
 });
 
 export default socket;
