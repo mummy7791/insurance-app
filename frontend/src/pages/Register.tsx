@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Auth.css";
 
 type AuthResponse = {
-  token: string;
-  user: {
+  token?: string;
+  user?: {
     id: string;
     name: string;
     email: string;
     role: string;
   };
+  email?: string;
+  message?: string;
 };
 
 const getErrorMessage = (error: unknown) => {
@@ -35,7 +37,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const register = async () => {
-    if (!form.name || !form.email || !form.password) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
       alert("Name, email and password required");
       return;
     }
@@ -44,23 +46,29 @@ export default function Register() {
       setLoading(true);
 
       const res = await api.post<AuthResponse>("/auth/register", {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
         password: form.password,
         role: "customer",
       });
 
-      const user = {
-        ...res.data.user,
-        role: "customer",
-      };
+      if (res.data.token && res.data.user) {
+        const user = {
+          ...res.data.user,
+          role: "customer",
+        };
 
-      localStorage.setItem("insuranceToken", res.data.token);
-      localStorage.setItem("insuranceUser", JSON.stringify(user));
+        localStorage.setItem("insuranceToken", res.data.token);
+        localStorage.setItem("insuranceUser", JSON.stringify(user));
 
-      alert("Customer registered successfully");
-      navigate("/customer-dashboard");
+        alert("Customer registered successfully");
+        navigate("/customer-dashboard");
+        return;
+      }
+
+      alert(res.data.message || "Customer registered successfully");
+      navigate("/login");
     } catch (error: unknown) {
       alert(getErrorMessage(error));
     } finally {
@@ -88,6 +96,7 @@ export default function Register() {
 
           <input
             className="auth-input"
+            type="email"
             placeholder="Email Address"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -109,6 +118,7 @@ export default function Register() {
           />
 
           <button
+            type="button"
             className="auth-btn"
             onClick={() => void register()}
             disabled={loading}
@@ -117,14 +127,13 @@ export default function Register() {
           </button>
         </div>
 
-        <p className="auth-links">
-          Already have an account?
-          <Link to="/login">Login</Link>
+        <p className="auth-link">
+          Already have an account? <Link to="/login">Login</Link>
         </p>
 
-        <Link className="auth-secondary-link" to="/admin-login">
-          Admin Login
-        </Link>
+        <p className="auth-link small">
+          <Link to="/admin-login">Admin Login</Link>
+        </p>
       </div>
     </div>
   );
