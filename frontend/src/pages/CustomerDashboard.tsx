@@ -13,11 +13,14 @@ type Customer = {
 
 type Policy = {
   _id: string;
-  policyName?: string;
-  policyNumber?: string;
-  status?: string;
-  premiumAmount?: number;
-  expiryDate?: string;
+  customerName?: string;
+  customerPhone?: string;
+  policyName: string;
+  policyNumber: string;
+  premiumAmount: number;
+  sumAssured: number;
+  paymentMode: "monthly" | "quarterly" | "half_yearly" | "yearly";
+  status: "pending" | "active" | "rejected" | "closed" | "expired";
 };
 
 type Premium = {
@@ -41,31 +44,6 @@ type Activity = {
   activity?: string;
   type?: string;
   createdAt?: string;
-};
-
-type Plan = {
-  _id: string;
-  planName: string;
-  category?: string;
-  coverageAmount?: number;
-  yearlyPremium?: number;
-  paymentYears?: number;
-  description?: string;
-  status?: string;
-};
-
-type ActivePlan = {
-  _id: string;
-  planName: string;
-  category?: string;
-  coverageAmount?: number;
-  yearlyPremium?: number;
-  paymentYears?: number;
-  paymentStatus?: string;
-  policyStatus?: string;
-  transactionId?: string;
-  startDate?: string;
-  endDate?: string;
 };
 
 type DashboardData = {
@@ -94,23 +72,21 @@ const normalizeDashboard = (result?: Partial<DashboardData>): DashboardData => (
 
 export default function CustomerDashboard() {
   const [data, setData] = useState<DashboardData>(initialData);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [activePlans, setActivePlans] = useState<ActivePlan[]>([]);
+  const [availablePolicies, setAvailablePolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(false);
   const [buyingId, setBuyingId] = useState("");
 
   const fetchDashboard = useCallback(async (): Promise<DashboardData> => {
-    const res = await api.get<DashboardData>("/customer-dashboard");
-    return normalizeDashboard(res.data);
+    try {
+      const res = await api.get<DashboardData>("/customer-dashboard");
+      return normalizeDashboard(res.data);
+    } catch {
+      return initialData;
+    }
   }, []);
 
-  const fetchPlans = useCallback(async (): Promise<Plan[]> => {
-    const res = await api.get<Plan[]>("/plans");
-    return Array.isArray(res.data) ? res.data : [];
-  }, []);
-
-  const fetchActivePlans = useCallback(async (): Promise<ActivePlan[]> => {
-    const res = await api.get<ActivePlan[]>("/plan-purchases/my-plans");
+  const fetchAvailablePolicies = useCallback(async (): Promise<Policy[]> => {
+    const res = await api.get<Policy[]>("/policies");
     return Array.isArray(res.data) ? res.data : [];
   }, []);
 
@@ -118,25 +94,21 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
 
-      const [dashboardResult, plansResult, activePlanResult] =
-        await Promise.all([
-          fetchDashboard(),
-          fetchPlans(),
-          fetchActivePlans(),
-        ]);
+      const [dashboardResult, policiesResult] = await Promise.all([
+        fetchDashboard(),
+        fetchAvailablePolicies(),
+      ]);
 
       setData(dashboardResult);
-      setPlans(plansResult);
-      setActivePlans(activePlanResult);
+      setAvailablePolicies(policiesResult);
     } catch (error) {
       console.error("Customer dashboard load error:", error);
       setData(initialData);
-      setPlans([]);
-      setActivePlans([]);
+      setAvailablePolicies([]);
     } finally {
       setLoading(false);
     }
-  }, [fetchDashboard, fetchPlans, fetchActivePlans]);
+  }, [fetchDashboard, fetchAvailablePolicies]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -146,23 +118,19 @@ export default function CustomerDashboard() {
     return () => window.clearTimeout(timer);
   }, [loadDashboard]);
 
-  const isAlreadyBought = (planName: string) => {
-    return activePlans.some((item) => item.planName === planName);
-  };
-
-  const buyPlan = async (planId: string) => {
+  const buyPolicy = async (policyId: string) => {
     try {
-      setBuyingId(planId);
+      setBuyingId(policyId);
 
-      await api.post("/plan-purchases/buy", {
-        planId,
+      await api.put<Policy>(`/policies/${policyId}`, {
+        status: "active",
       });
 
-      alert("Plan purchased successfully!");
+      alert("Policy purchased successfully!");
       await loadDashboard();
     } catch (error) {
-      console.error("Buy plan error:", error);
-      alert("Plan buy failed. Please try again.");
+      console.error("Buy policy error:", error);
+      alert("Policy buy failed");
     } finally {
       setBuyingId("");
     }
@@ -171,7 +139,7 @@ export default function CustomerDashboard() {
   return (
     <MainLayout
       title="Customer Dashboard"
-      subtitle="Customer profile, available plans, active plans, policies, premiums, claims and activities"
+      subtitle="Customer profile, available policies, active policies, premiums, claims and activities"
     >
       {loading && <p>Loading customer dashboard...</p>}
 
@@ -183,23 +151,28 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="card">
-          <h3>Available Plans</h3>
-          <h1>{plans.length}</h1>
+          <h3>Available Policies</h3>
+          <h1>{availablePolicies.length}</h1>
         </div>
 
         <div className="card">
-          <h3>Active Plans</h3>
-          <h1>{activePlans.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>Policies</h3>
-          <h1>{data.policies.length}</h1>
+          <h3>Active Policies</h3>
+          <h1>
+            {
+              availablePolicies.filter((policy) => policy.status === "active")
+                .length
+            }
+          </h1>
         </div>
 
         <div className="card">
           <h3>Premiums</h3>
           <h1>{data.premiums.length}</h1>
+        </div>
+
+        <div className="card">
+          <h3>Claims</h3>
+          <h1>{data.claims.length}</h1>
         </div>
 
         <div className="card">
@@ -209,142 +182,37 @@ export default function CustomerDashboard() {
       </div>
 
       <div className="section">
-        <h2>Available Plans</h2>
+        <h2>Available Policies</h2>
 
-        {plans.length === 0 ? (
-          <p>No plans available.</p>
+        {availablePolicies.length === 0 ? (
+          <p>No policies available.</p>
         ) : (
           <div className="lead-grid">
-            {plans.map((plan) => {
-              const bought = isAlreadyBought(plan.planName);
+            {availablePolicies.map((policy) => (
+              <div className="lead-card" key={policy._id}>
+                <h3>{policy.policyName}</h3>
 
-              return (
-                <div className="lead-card" key={plan._id}>
-                  <h3>{plan.planName}</h3>
+                <p>📄 Policy No: {policy.policyNumber}</p>
+                <p>💰 Premium: ₹{policy.premiumAmount}</p>
+                <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
+                <p>📆 Payment Mode: {policy.paymentMode}</p>
 
-                  <p>
-                    <b>Category:</b> {plan.category || "N/A"}
-                  </p>
+                <span className="badge">{policy.status}</span>
 
-                  <p>
-                    <b>Coverage:</b> ₹
-                    {Number(plan.coverageAmount || 0).toLocaleString("en-IN")}
-                  </p>
+                <br />
+                <br />
 
-                  <p>
-                    <b>Yearly Premium:</b> ₹
-                    {Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}
-                  </p>
-
-                  <p>
-                    <b>Payment Years:</b> {plan.paymentYears || 1}
-                  </p>
-
-                  <p>
-                    <b>Description:</b> {plan.description || "N/A"}
-                  </p>
-
-                  <button
-                    className="btn small-btn"
-                    disabled={bought || buyingId === plan._id}
-                    onClick={() => void buyPlan(plan._id)}
-                  >
-                    {bought
-                      ? "Already Bought"
-                      : buyingId === plan._id
-                      ? "Buying..."
-                      : "Buy Plan"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <h2>My Active Plans</h2>
-
-        {activePlans.length === 0 ? (
-          <p>No active plans found.</p>
-        ) : (
-          <div className="lead-grid">
-            {activePlans.map((plan) => (
-              <div className="lead-card" key={plan._id}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 10,
-                    alignItems: "center",
-                  }}
+                <button
+                  className="btn small-btn"
+                  disabled={policy.status === "active" || buyingId === policy._id}
+                  onClick={() => void buyPolicy(policy._id)}
                 >
-                  <h3>{plan.planName}</h3>
-
-                  <span
-                    style={{
-                      background:
-                        plan.policyStatus === "Active" ? "#16a34a" : "#dc2626",
-                      color: "#fff",
-                      padding: "6px 12px",
-                      borderRadius: 20,
-                      fontWeight: 700,
-                    }}
-                  >
-                    ● {plan.policyStatus || "Pending"}
-                  </span>
-                </div>
-
-                <p>
-                  <b>Category:</b> {plan.category || "N/A"}
-                </p>
-
-                <p>
-                  <b>Coverage:</b> ₹
-                  {Number(plan.coverageAmount || 0).toLocaleString("en-IN")}
-                </p>
-
-                <p>
-                  <b>Yearly Premium:</b> ₹
-                  {Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}
-                </p>
-
-                <p>
-                  <b>Payment Years:</b> {plan.paymentYears || 1}
-                </p>
-
-                <p>
-                  <b>Payment Status:</b>{" "}
-                  <span
-                    style={{
-                      color:
-                        plan.paymentStatus === "Paid" ? "#16a34a" : "#dc2626",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {plan.paymentStatus || "Pending"}
-                  </span>
-                </p>
-
-                <p>
-                  <b>Transaction ID:</b>
-                  <br />
-                  {plan.transactionId || "N/A"}
-                </p>
-
-                <p>
-                  <b>Start:</b>{" "}
-                  {plan.startDate
-                    ? new Date(plan.startDate).toLocaleDateString()
-                    : "N/A"}
-                </p>
-
-                <p>
-                  <b>Expiry:</b>{" "}
-                  {plan.endDate
-                    ? new Date(plan.endDate).toLocaleDateString()
-                    : "N/A"}
-                </p>
+                  {policy.status === "active"
+                    ? "Already Bought"
+                    : buyingId === policy._id
+                    ? "Buying..."
+                    : "Buy Policy"}
+                </button>
               </div>
             ))}
           </div>
@@ -385,43 +253,6 @@ export default function CustomerDashboard() {
       </div>
 
       <div className="section">
-        <h2>My Policies</h2>
-
-        {data.policies.length === 0 ? (
-          <p>No policies found.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Policy</th>
-                <th>Number</th>
-                <th>Status</th>
-                <th>Premium</th>
-                <th>Expiry</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.policies.map((policy) => (
-                <tr key={policy._id}>
-                  <td>{policy.policyName || "N/A"}</td>
-                  <td>{policy.policyNumber || "N/A"}</td>
-                  <td>
-                    <span className="badge">{policy.status || "N/A"}</span>
-                  </td>
-                  <td>₹{policy.premiumAmount || 0}</td>
-                  <td>
-                    {policy.expiryDate
-                      ? new Date(policy.expiryDate).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div className="section">
         <h2>Premium History</h2>
 
         {data.premiums.length === 0 ? (
@@ -436,6 +267,7 @@ export default function CustomerDashboard() {
                 <th>Created</th>
               </tr>
             </thead>
+
             <tbody>
               {data.premiums.map((premium) => (
                 <tr key={premium._id}>
@@ -475,6 +307,7 @@ export default function CustomerDashboard() {
                 <th>Date</th>
               </tr>
             </thead>
+
             <tbody>
               {data.claims.map((claim) => (
                 <tr key={claim._id}>
@@ -486,39 +319,6 @@ export default function CustomerDashboard() {
                   <td>
                     {claim.createdAt
                       ? new Date(claim.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div className="section">
-        <h2>Recent Activities</h2>
-
-        {data.activities.length === 0 ? (
-          <p>No activities found.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Activity</th>
-                <th>Type</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.activities.map((item) => (
-                <tr key={item._id}>
-                  <td>{item.activity || "N/A"}</td>
-                  <td>
-                    <span className="badge">{item.type || "Other"}</span>
-                  </td>
-                  <td>
-                    {item.createdAt
-                      ? new Date(item.createdAt).toLocaleString()
                       : "N/A"}
                   </td>
                 </tr>
