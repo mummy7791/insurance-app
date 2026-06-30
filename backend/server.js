@@ -47,6 +47,7 @@ const customerProfileRoutes = require("./routes/customerProfileRoutes");
 const ticketRoutes = require("./routes/ticketRoutes");
 const insurancePlanRoutes = require("./routes/insurancePlanRoutes");
 const planPurchaseRoutes = require("./routes/planPurchaseRoutes");
+const policyPurchaseRoutes = require("./routes/policyPurchaseRoutes");
 
 const seedAdmin = require("./seedAdmin");
 
@@ -143,6 +144,8 @@ useRoute("/api/customer-profile", customerProfileRoutes);
 useRoute("/api/tickets", ticketRoutes);
 useRoute("/api/insurance-plans", insurancePlanRoutes);
 useRoute("/api/plan-purchases", planPurchaseRoutes);
+app.use("/policy-purchases", policyPurchaseRoutes);
+
 
 /* ================= TEST ROUTE ================= */
 app.get("/", (req, res) => {

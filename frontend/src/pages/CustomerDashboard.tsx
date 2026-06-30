@@ -23,6 +23,21 @@ type Policy = {
   status: "pending" | "active" | "rejected" | "closed" | "expired";
 };
 
+type PolicyPurchase = {
+  _id: string;
+  policyId: string;
+  policyName: string;
+  policyNumber: string;
+  premiumAmount: number;
+  sumAssured: number;
+  paymentMode: string;
+  paidAmount: number;
+  paymentStatus: "Pending" | "Paid" | "Failed";
+  status: "Pending" | "Approved" | "Rejected" | "Active";
+  transactionId?: string;
+  createdAt?: string;
+};
+
 type Premium = {
   _id: string;
   amount?: number;
@@ -73,6 +88,7 @@ const normalizeDashboard = (result?: Partial<DashboardData>): DashboardData => (
 export default function CustomerDashboard() {
   const [data, setData] = useState<DashboardData>(initialData);
   const [availablePolicies, setAvailablePolicies] = useState<Policy[]>([]);
+  const [myPolicies, setMyPolicies] = useState<PolicyPurchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [buyingId, setBuyingId] = useState("");
 
@@ -86,29 +102,48 @@ export default function CustomerDashboard() {
   }, []);
 
   const fetchAvailablePolicies = useCallback(async (): Promise<Policy[]> => {
-    const res = await api.get<Policy[]>("/policies");
-    return Array.isArray(res.data) ? res.data : [];
+    try {
+      const res = await api.get<Policy[]>("/policies");
+      return Array.isArray(res.data) ? res.data : [];
+    } catch (error) {
+      console.error("Available policies load error:", error);
+      return [];
+    }
+  }, []);
+
+  const fetchMyPolicies = useCallback(async (): Promise<PolicyPurchase[]> => {
+    try {
+      const res = await api.get<PolicyPurchase[]>("/policy-purchases/my-policies");
+      return Array.isArray(res.data) ? res.data : [];
+    } catch (error) {
+      console.error("My policies load error:", error);
+      return [];
+    }
   }, []);
 
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
 
-      const [dashboardResult, policiesResult] = await Promise.all([
-        fetchDashboard(),
-        fetchAvailablePolicies(),
-      ]);
+      const [dashboardResult, policiesResult, myPoliciesResult] =
+        await Promise.all([
+          fetchDashboard(),
+          fetchAvailablePolicies(),
+          fetchMyPolicies(),
+        ]);
 
       setData(dashboardResult);
       setAvailablePolicies(policiesResult);
+      setMyPolicies(myPoliciesResult);
     } catch (error) {
       console.error("Customer dashboard load error:", error);
       setData(initialData);
       setAvailablePolicies([]);
+      setMyPolicies([]);
     } finally {
       setLoading(false);
     }
-  }, [fetchDashboard, fetchAvailablePolicies]);
+  }, [fetchDashboard, fetchAvailablePolicies, fetchMyPolicies]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -118,25 +153,35 @@ export default function CustomerDashboard() {
     return () => window.clearTimeout(timer);
   }, [loadDashboard]);
 
+  const isPolicyBought = (policyId: string) => {
+    return myPolicies.some((item) => String(item.policyId) === String(policyId));
+  };
+
   const buyPolicy = async (policyId: string) => {
-  try {
-    setBuyingId(policyId);
+    try {
+      setBuyingId(policyId);
 
-    await api.post(`/policies/${policyId}/buy`);
+      await api.post(`/policy-purchases/buy/${policyId}`);
 
-    alert("Policy purchased successfully!");
-    await loadDashboard();
-  } catch (error) {
-    console.error("Buy policy error:", error);
-    alert("Policy buy failed");
-  } finally {
-    setBuyingId("");
-  }
-};
+      alert("Policy purchased successfully!");
+      await loadDashboard();
+    } catch (error) {
+      console.error("Buy policy error:", error);
+      alert("Policy buy failed");
+    } finally {
+      setBuyingId("");
+    }
+  };
+
+  const totalPaid = myPolicies.reduce(
+    (sum, item) => sum + Number(item.paidAmount || item.premiumAmount || 0),
+    0
+  );
+
   return (
     <MainLayout
       title="Customer Dashboard"
-      subtitle="Customer profile, available policies, active policies, premiums, claims and activities"
+      subtitle="Customer profile, available policies, active policies, payments and claims"
     >
       {loading && <p>Loading customer dashboard...</p>}
 
@@ -154,17 +199,12 @@ export default function CustomerDashboard() {
 
         <div className="card">
           <h3>Active Policies</h3>
-          <h1>
-            {
-              availablePolicies.filter((policy) => policy.status === "active")
-                .length
-            }
-          </h1>
+          <h1>{myPolicies.length}</h1>
         </div>
 
         <div className="card">
-          <h3>Premiums</h3>
-          <h1>{data.premiums.length}</h1>
+          <h3>Total Paid</h3>
+          <h1>₹{totalPaid.toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
@@ -185,31 +225,91 @@ export default function CustomerDashboard() {
           <p>No policies available.</p>
         ) : (
           <div className="lead-grid">
-            {availablePolicies.map((policy) => (
+            {availablePolicies.map((policy) => {
+              const bought = isPolicyBought(policy._id);
+
+              return (
+                <div className="lead-card" key={policy._id}>
+                  <h3>{policy.policyName}</h3>
+
+                  <p>📄 Policy No: {policy.policyNumber}</p>
+                  <p>💰 Premium: ₹{policy.premiumAmount}</p>
+                  <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
+                  <p>📆 Payment Mode: {policy.paymentMode}</p>
+
+                  {bought ? (
+                    <span
+                      style={{
+                        background: "#16a34a",
+                        color: "#fff",
+                        padding: "6px 12px",
+                        borderRadius: 20,
+                        fontWeight: 700,
+                      }}
+                    >
+                      ● Active
+                    </span>
+                  ) : (
+                    <span className="badge">{policy.status}</span>
+                  )}
+
+                  <br />
+                  <br />
+
+                  <button
+                    className="btn small-btn"
+                    disabled={bought || buyingId === policy._id}
+                    onClick={() => void buyPolicy(policy._id)}
+                  >
+                    {bought
+                      ? "Already Bought"
+                      : buyingId === policy._id
+                      ? "Buying..."
+                      : "Buy Policy"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <h2>My Active Policies</h2>
+
+        {myPolicies.length === 0 ? (
+          <p>No active policies found.</p>
+        ) : (
+          <div className="lead-grid">
+            {myPolicies.map((policy) => (
               <div className="lead-card" key={policy._id}>
                 <h3>{policy.policyName}</h3>
 
+                <span
+                  style={{
+                    background: "#16a34a",
+                    color: "#fff",
+                    padding: "6px 12px",
+                    borderRadius: 20,
+                    fontWeight: 700,
+                  }}
+                >
+                  ● {policy.status || "Active"}
+                </span>
+
                 <p>📄 Policy No: {policy.policyNumber}</p>
                 <p>💰 Premium: ₹{policy.premiumAmount}</p>
+                <p>✅ Paid Amount: ₹{policy.paidAmount || policy.premiumAmount}</p>
                 <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
                 <p>📆 Payment Mode: {policy.paymentMode}</p>
-
-                <span className="badge">{policy.status}</span>
-
-                <br />
-                <br />
-
-                <button
-                  className="btn small-btn"
-                  disabled={policy.status === "active" || buyingId === policy._id}
-                  onClick={() => void buyPolicy(policy._id)}
-                >
-                  {policy.status === "active"
-                    ? "Already Bought"
-                    : buyingId === policy._id
-                    ? "Buying..."
-                    : "Buy Policy"}
-                </button>
+                <p>💳 Payment Status: {policy.paymentStatus || "Paid"}</p>
+                <p>🧾 Transaction ID: {policy.transactionId || "N/A"}</p>
+                <p>
+                  📅 Bought Date:{" "}
+                  {policy.createdAt
+                    ? new Date(policy.createdAt).toLocaleDateString()
+                    : "N/A"}
+                </p>
               </div>
             ))}
           </div>
@@ -247,82 +347,6 @@ export default function CustomerDashboard() {
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div className="section">
-        <h2>Premium History</h2>
-
-        {data.premiums.length === 0 ? (
-          <p>No premiums found.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Due Date</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {data.premiums.map((premium) => (
-                <tr key={premium._id}>
-                  <td>₹{premium.amount || 0}</td>
-                  <td>
-                    <span className="badge">{premium.status || "N/A"}</span>
-                  </td>
-                  <td>
-                    {premium.dueDate
-                      ? new Date(premium.dueDate).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td>
-                    {premium.createdAt
-                      ? new Date(premium.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div className="section">
-        <h2>Claims</h2>
-
-        {data.claims.length === 0 ? (
-          <p>No claims found.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Amount</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {data.claims.map((claim) => (
-                <tr key={claim._id}>
-                  <td>₹{claim.claimAmount || 0}</td>
-                  <td>{claim.reason || "N/A"}</td>
-                  <td>
-                    <span className="badge">{claim.status || "N/A"}</span>
-                  </td>
-                  <td>
-                    {claim.createdAt
-                      ? new Date(claim.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </div>
 
       <button

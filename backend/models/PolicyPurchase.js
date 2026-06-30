@@ -35,6 +35,27 @@ const policyPurchaseSchema = new mongoose.Schema(
       default: 0,
     },
 
+    sumAssured: {
+      type: Number,
+      default: 0,
+    },
+
+    paymentMode: {
+      type: String,
+      enum: ["monthly", "quarterly", "half_yearly", "yearly"],
+      default: "monthly",
+    },
+
+    paidAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    transactionId: {
+      type: String,
+      default: "",
+    },
+
     customerName: {
       type: String,
       required: true,
@@ -58,13 +79,13 @@ const policyPurchaseSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["Pending", "Approved", "Rejected", "Active"],
-      default: "Pending",
+      default: "Active",
     },
 
     paymentStatus: {
       type: String,
       enum: ["Pending", "Paid", "Failed"],
-      default: "Pending",
+      default: "Paid",
     },
   },
   { timestamps: true }
