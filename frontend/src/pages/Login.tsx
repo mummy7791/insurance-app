@@ -95,10 +95,11 @@ export default function Login() {
             color: "#2563eb",
           }}
         >
-          LifeSecure CRM
+          ICICI LIFE
         </h1>
 
         <h3
+        
           style={{
             textAlign: "center",
             marginBottom: 25,
