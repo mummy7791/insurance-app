@@ -182,7 +182,7 @@ export default function Sidebar() {
           <img src="ic_launcher.png" alt="ICICI Life" className="sidebar-logo" />
 
           <div className="sidebar-title">
-            <h2>LifeSecure CRM</h2>
+            <h2>ICICI</h2>
             <small>ICICI LIFE</small>
           </div>
         </div>
