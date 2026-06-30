@@ -5,18 +5,132 @@ type User = {
   name?: string;
   email?: string;
   role?: string;
-  branch?: string;
+};
+
+const menus = {
+  "Motor Insurance": [
+    ["🚗", "Car Insurance", "Custom cover for your car"],
+    ["🛵", "Bike Insurance", "Custom cover for your two-wheeler"],
+    ["🚙", "Motor Insurance", "Reliable protection for your vehicle"],
+    ["📄", "Motor Floater", "Secure multiple vehicles under one policy"],
+  ],
+  "Health Insurance": [
+    ["💙", "Health Insurance", "Explore our top health policies"],
+    ["⭐", "Elevate", "Comprehensive health plan that covers it all"],
+    ["➕", "Activate Booster", "Boost your coverage with super top-up"],
+    ["🛡️", "Family Shield", "Health cover for your family"],
+  ],
+  "Travel Insurance": [
+    ["✈️", "Travel Insurance", "Secure your trips worldwide"],
+    ["🌍", "International Travel", "Coverage for foreign travel"],
+    ["🎒", "Student Travel", "Insurance for students abroad"],
+  ],
+  "SME Insurance": [
+    ["🏪", "Shop Insurance", "Protect your business"],
+    ["🏭", "Factory Insurance", "Cover for small industries"],
+    ["📦", "Marine Insurance", "Goods transit protection"],
+  ],
+  "Corporate Insurance": [
+    ["🏢", "Group Health", "Employee health protection"],
+    ["🚚", "Fleet Insurance", "Cover multiple vehicles"],
+    ["🧑‍💼", "Liability Insurance", "Business risk protection"],
+  ],
+  "Other Insurance": [
+    ["🏠", "Home Insurance", "Protect your home"],
+    ["🌾", "Crop Insurance", "Support for farmers"],
+    ["💻", "Cyber Insurance", "Protection from cyber risk"],
+  ],
+  Renewals: [
+    ["🔁", "Renew Policy", "Renew existing policy online"],
+    ["📋", "Retrieve Quote", "Continue your previous quote"],
+  ],
+  Claims: [
+    ["🧾", "File Claim", "Raise a claim request"],
+    ["🔍", "Track Claim", "Check claim status"],
+    ["☎️", "Claim Support", "Get claim assistance"],
+  ],
+};
+
+const footerData = {
+  Products: [
+    "Motor Insurance",
+    "Car Insurance",
+    "Two Wheeler Insurance",
+    "Health Insurance",
+    "Travel Insurance",
+    "NRI Insurance Services",
+    "Business Insurance",
+    "Crop Insurance",
+    "Cyber Insurance",
+    "ICICI Bharat Griha Raksha Policy",
+  ],
+  Services: [
+    "Customer Support",
+    "Citizen Charter",
+    "Retrieve Quote",
+    "Unclaimed Amount",
+    "Intimate PA claim",
+    "Renew Your Policy",
+    "Portability",
+    "EIA",
+    "Online Dispute Resolution Portal for Investors",
+    "SME Endorsements",
+  ],
+  Legal: [
+    "Privacy Policy",
+    "Insure App Privacy Policy",
+    "Product Withdrawal",
+    "Do Not Call Registry",
+    "General Terms & Conditions",
+    "Disclaimer",
+    "Insurance Ombudsman",
+    "Stewardship Policy",
+    "Disclosure under Stewardship Policy",
+    "Policy for Policyholder’s Interest Protection & Grievance Redressal",
+    "Advisory to Customer and Channel Partners",
+    "ICICI Lombard Product List",
+    "GRO Details of Active Branches",
+    "Motor Third Party claims - Statewise nodal officer details",
+    "Whistle Blower Policy",
+  ],
+  "About Us": [
+    "Overview",
+    "Promoters",
+    "CSR",
+    "Risk Management",
+    "Public Disclosures",
+    "Awards and Recognitions",
+    "Investor Relations",
+    "Media",
+  ],
+  Others: [
+    "Agents’ Portal",
+    "Corporate Login",
+    "Blacklisted Agents",
+    "BAGI Blacklisted Agents",
+    "Distribution Channels",
+    "Pradhan Mantri Suraksha Bima Yojna",
+    "Hospital Empanelment Criteria",
+    "Account Aggregator",
+    "International Business (IIO)",
+    "Sitemap",
+    "Become an Agent (SME)",
+    "Data on Health Claim Service Indicators",
+    "IRDAI List of Blacklisted Agents",
+  ],
 };
 
 export default function CustomerDashboard() {
- const [user] = useState<User>(() => {
-  try {
-    const savedUser = localStorage.getItem("insuranceUser");
-    return savedUser ? JSON.parse(savedUser) : {};
-  } catch {
-    return {};
-  }
-});
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  const [user] = useState<User>(() => {
+    try {
+      const savedUser = localStorage.getItem("insuranceUser");
+      return savedUser ? JSON.parse(savedUser) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const logout = () => {
     localStorage.removeItem("insuranceToken");
@@ -29,15 +143,15 @@ export default function CustomerDashboard() {
       <div className="top-strip">
         <span>☎ 1800 2666 <b>(Available 24 x 7)</b></span>
         <span>📞 Call Back</span>
-        <span>💬 Live Chat</span>
-        <span>Help</span>
-        <span>Info Centre</span>
+        <span>🟢 Live Chat</span>
+        <span>Help⌄</span>
+        <span>Info Centre⌄</span>
         <span>Investor Relations</span>
-        <button>Become an advisor</button>
-        <button onClick={logout}>Login</button>
+        <button>Become an advisor⌄</button>
+        <button onClick={logout}>Login ❯</button>
       </div>
 
-      <div className="main-nav">
+      <header className="main-nav">
         <div className="brand">
           <img src="/ic_launcher.png" alt="ICICI LIFE" />
           <div>
@@ -47,28 +161,57 @@ export default function CustomerDashboard() {
         </div>
 
         <nav>
-          <a>Motor Insurance</a>
-          <a>Health Insurance</a>
-          <a>Travel Insurance</a>
-          <a>SME Insurance</a>
-          <a>Corporate Insurance</a>
-          <a>Other Insurance</a>
-          <a>Renewals</a>
-          <a>Claims</a>
+          {Object.keys(menus).map((menu) => (
+            <div
+              className="nav-item"
+              key={menu}
+              onMouseEnter={() => setActiveMenu(menu)}
+            >
+              {menu}⌄
+            </div>
+          ))}
         </nav>
-      </div>
+      </header>
+
+      {activeMenu && (
+        <div
+          className="mega-menu"
+          onMouseEnter={() => setActiveMenu(activeMenu)}
+          onMouseLeave={() => setActiveMenu(null)}
+        >
+          <div className="mega-left">
+            {menus[activeMenu as keyof typeof menus].map(([icon, title, desc]) => (
+              <div className="mega-row" key={title}>
+                <span>{icon}</span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mega-right">
+            <h3>Other Products</h3>
+            <p>› NRI health insurance <b>25% off</b></p>
+            <p>› Personal Protect</p>
+            <p>› Max Protect</p>
+            <p>› Family Shield</p>
+            <p>› Golden Shield</p>
+            <p>› Saral Suraksha Bima</p>
+          </div>
+        </div>
+      )}
 
       <div className="ticker">
         Introducing Service Assure — 30-min roadside assistance promise. Now live with ICICI LIFE insurance.
       </div>
 
       <section className="hero">
-        <div className="hero-text">
+        <div>
           <p className="tag">Service Assure</p>
           <h1>Car troubles? Not on our watch</h1>
-          <p>
-            Our insurance now comes with fast support, easy policies and smooth claims.
-          </p>
+          <p>Our insurance now comes with fast support, easy policies and smooth claims.</p>
         </div>
 
         <div className="hero-card">
@@ -91,21 +234,9 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="quote-form">
-          <label>
-            Car registration no.*
-            <input placeholder="E.g. MH01DF5698" />
-          </label>
-
-          <label>
-            Mobile number*
-            <input placeholder="Enter mobile no." />
-          </label>
-
-          <label>
-            Email*
-            <input placeholder="Enter email address" />
-          </label>
-
+          <label>Car registration no.*<input placeholder="E.g. MH01DF5698" /></label>
+          <label>Mobile number*<input placeholder="Enter mobile no." /></label>
+          <label>Email*<input placeholder="Enter email address" /></label>
           <button>Get quote</button>
         </div>
 
@@ -119,50 +250,28 @@ export default function CustomerDashboard() {
         <div><h2>11000+</h2><p>Network hospitals</p></div>
       </section>
 
-      <section className="why">
-        <h2>Why choose ICICI LIFE?</h2>
-
-        <div className="why-grid">
-          <div>
-            <h3>Dependable</h3>
-            <p>You can rely on us at all times. We stand with customers in every emergency.</p>
-          </div>
-
-          <div>
-            <h3>Approachable</h3>
-            <p>Need help? Our support team guides you through policies, payments and claims.</p>
-          </div>
-
-          <div>
-            <h3>Transparent</h3>
-            <p>Simple policy details, clear premium information and easy claim tracking.</p>
-          </div>
-        </div>
-      </section>
-
       <section className="products">
         <h2>Our products</h2>
-
         <div className="product-grid">
-          {[
-            ["Car", "Cashless repair & claims process"],
-            ["Bike", "Cashless garage network"],
-            ["Health", "Personalised policies for all budgets"],
-            ["Travel", "Coverage for missed flights and baggage"],
-          ].map(([title, desc]) => (
-            <div className="product-card" key={title}>
-              <h3>{title}</h3>
-              <p>{desc}</p>
+          {["Car", "Bike", "Health", "Travel"].map((p) => (
+            <div className="product-card" key={p}>
+              <h3>{p}</h3>
+              <p>Cashless support, easy claim process and instant online policy.</p>
               <button>Explore</button>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="footer">
-        <h3>ICICI LIFE Insurance</h3>
-        <p>Customer Support | Policies | Claims | Renewals | Privacy Policy</p>
-        <p>Contact - 1800 2666 Available 24 x 7</p>
+      <footer className="big-footer">
+        {Object.entries(footerData).map(([title, items]) => (
+          <div key={title}>
+            <h3>{title}</h3>
+            {items.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        ))}
       </footer>
     </div>
   );
