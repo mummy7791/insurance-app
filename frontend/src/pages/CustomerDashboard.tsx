@@ -42,7 +42,7 @@ export default function CustomerDashboard() {
           <img src="/ic_launcher.png" alt="ICICI LIFE" />
           <div>
             <h2>ICICI LIFE</h2>
-            <p>Insurance CRM</p>
+            <p>Insurance</p>
           </div>
         </div>
 
@@ -160,7 +160,7 @@ export default function CustomerDashboard() {
       </section>
 
       <footer className="footer">
-        <h3>ICICI LIFE Insurance CRM</h3>
+        <h3>ICICI LIFE Insurance</h3>
         <p>Customer Support | Policies | Claims | Renewals | Privacy Policy</p>
         <p>Contact - 1800 2666 Available 24 x 7</p>
       </footer>
