@@ -18,6 +18,16 @@ const createToken = (user) =>
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+const safeSendOTP = async (email, otp) => {
+  try {
+    await sendOTP(email, otp);
+    return true;
+  } catch (error) {
+    console.log("Email sending failed, but user created:", error.message);
+    return false;
+  }
+};
+
 const getPermissionsByRole = (role) => {
   const permissions = {
     admin: ["all"],
@@ -137,10 +147,13 @@ router.post("/create-staff", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendOTP(user.email, otp);
+    const emailSent = await safeSendOTP(user.email, otp);
 
     res.json({
-      message: "Staff created. OTP sent to email.",
+      message: emailSent
+        ? "Staff created. OTP sent to email."
+        : "Staff created successfully. Email sending failed.",
+      otp: emailSent ? undefined : otp,
       user: {
         id: user._id,
         name: user.name,
@@ -183,11 +196,14 @@ router.post("/register", async (req, res) => {
       permissions: getPermissionsByRole("customer"),
     });
 
-    await sendOTP(user.email, otp);
+    const emailSent = await safeSendOTP(user.email, otp);
 
     res.status(201).json({
-      message: "Customer registered. OTP sent to email.",
+      message: emailSent
+        ? "Customer registered. OTP sent to email."
+        : "Customer registered successfully. Email sending failed.",
       email: user.email,
+      otp: emailSent ? undefined : otp,
     });
   } catch (error) {
     console.error("Customer register error:", error);
@@ -208,18 +224,20 @@ router.post("/send-login-otp", async (req, res) => {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await sendOTP(user.email, otp);
+    const emailSent = await safeSendOTP(user.email, otp);
 
     res.json({
-      message: "OTP sent to email.",
+      message: emailSent ? "OTP sent to email." : "OTP generated. Email sending failed.",
       email: user.email,
       role: user.role,
+      otp: emailSent ? undefined : otp,
     });
   } catch (error) {
     console.error("Send login OTP error:", error);
     res.status(500).json({ message: "Send login OTP failed" });
   }
 });
+
 router.get("/test-email", async (req, res) => {
   try {
     await sendEmail(
@@ -229,8 +247,8 @@ router.get("/test-email", async (req, res) => {
     );
 
     res.json({ message: "Email Sent Successfully" });
-  } catch (err) {
-    console.error("Test email error:", err);
+  } catch (error) {
+    console.error("Test email error:", error);
     res.status(500).json({ message: "Email Failed" });
   }
 });
