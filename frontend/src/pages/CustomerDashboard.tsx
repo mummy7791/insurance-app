@@ -1,361 +1,169 @@
-import { useCallback, useEffect, useState } from "react";
-import MainLayout from "../layouts/MainLayout";
-import api from "../services/api";
+import { useState } from "react";
+import "../styles/LombardHome.css";
 
-type Customer = {
-  _id: string;
+type User = {
   name?: string;
   email?: string;
-  phone?: string;
-  address?: string;
-  kycStatus?: string;
+  role?: string;
+  branch?: string;
 };
-
-type Policy = {
-  _id: string;
-  customerName?: string;
-  customerPhone?: string;
-  policyName: string;
-  policyNumber: string;
-  premiumAmount: number;
-  sumAssured: number;
-  paymentMode: "monthly" | "quarterly" | "half_yearly" | "yearly";
-  status: "pending" | "active" | "rejected" | "closed" | "expired";
-};
-
-type PolicyPurchase = {
-  _id: string;
-  policyId: string;
-  policyName: string;
-  policyNumber: string;
-  premiumAmount: number;
-  sumAssured: number;
-  paymentMode: string;
-  paidAmount: number;
-  paymentStatus: "Pending" | "Paid" | "Failed";
-  status: "Pending" | "Approved" | "Rejected" | "Active";
-  transactionId?: string;
-  createdAt?: string;
-};
-
-type Premium = {
-  _id: string;
-  amount?: number;
-  status?: string;
-  dueDate?: string;
-  createdAt?: string;
-};
-
-type Claim = {
-  _id: string;
-  claimAmount?: number;
-  reason?: string;
-  status?: string;
-  createdAt?: string;
-};
-
-type Activity = {
-  _id: string;
-  activity?: string;
-  type?: string;
-  createdAt?: string;
-};
-
-type DashboardData = {
-  customer: Customer;
-  policies: Policy[];
-  premiums: Premium[];
-  claims: Claim[];
-  activities: Activity[];
-};
-
-const initialData: DashboardData = {
-  customer: { _id: "" },
-  policies: [],
-  premiums: [],
-  claims: [],
-  activities: [],
-};
-
-const normalizeDashboard = (result?: Partial<DashboardData>): DashboardData => ({
-  customer: result?.customer || initialData.customer,
-  policies: Array.isArray(result?.policies) ? result.policies : [],
-  premiums: Array.isArray(result?.premiums) ? result.premiums : [],
-  claims: Array.isArray(result?.claims) ? result.claims : [],
-  activities: Array.isArray(result?.activities) ? result.activities : [],
-});
 
 export default function CustomerDashboard() {
-  const [data, setData] = useState<DashboardData>(initialData);
-  const [availablePolicies, setAvailablePolicies] = useState<Policy[]>([]);
-  const [myPolicies, setMyPolicies] = useState<PolicyPurchase[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [buyingId, setBuyingId] = useState("");
+ const [user] = useState<User>(() => {
+  try {
+    const savedUser = localStorage.getItem("insuranceUser");
+    return savedUser ? JSON.parse(savedUser) : {};
+  } catch {
+    return {};
+  }
+});
 
-  const fetchDashboard = useCallback(async (): Promise<DashboardData> => {
-    try {
-      const res = await api.get<DashboardData>("/customer-dashboard");
-      return normalizeDashboard(res.data);
-    } catch {
-      return initialData;
-    }
-  }, []);
-
-  const fetchAvailablePolicies = useCallback(async (): Promise<Policy[]> => {
-    try {
-      const res = await api.get<Policy[]>("/policies");
-      return Array.isArray(res.data) ? res.data : [];
-    } catch (error) {
-      console.error("Available policies load error:", error);
-      return [];
-    }
-  }, []);
-
-  const fetchMyPolicies = useCallback(async (): Promise<PolicyPurchase[]> => {
-    try {
-      const res = await api.get<PolicyPurchase[]>("/policy-purchases/my-policies");
-      return Array.isArray(res.data) ? res.data : [];
-    } catch (error) {
-      console.error("My policies load error:", error);
-      return [];
-    }
-  }, []);
-
-  const loadDashboard = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const [dashboardResult, policiesResult, myPoliciesResult] =
-        await Promise.all([
-          fetchDashboard(),
-          fetchAvailablePolicies(),
-          fetchMyPolicies(),
-        ]);
-
-      setData(dashboardResult);
-      setAvailablePolicies(policiesResult);
-      setMyPolicies(myPoliciesResult);
-    } catch (error) {
-      console.error("Customer dashboard load error:", error);
-      setData(initialData);
-      setAvailablePolicies([]);
-      setMyPolicies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchDashboard, fetchAvailablePolicies, fetchMyPolicies]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadDashboard();
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [loadDashboard]);
-
-  const isPolicyBought = (policyId: string) => {
-    return myPolicies.some((item) => String(item.policyId) === String(policyId));
+  const logout = () => {
+    localStorage.removeItem("insuranceToken");
+    localStorage.removeItem("insuranceUser");
+    window.location.href = "/login";
   };
-
-  const buyPolicy = async (policyId: string) => {
-    try {
-      setBuyingId(policyId);
-
-      await api.post(`/policy-purchases/buy/${policyId}`);
-
-      alert("Policy purchased successfully!");
-      await loadDashboard();
-    } catch (error) {
-      console.error("Buy policy error:", error);
-      alert("Policy buy failed");
-    } finally {
-      setBuyingId("");
-    }
-  };
-
-  const totalPaid = myPolicies.reduce(
-    (sum, item) => sum + Number(item.paidAmount || item.premiumAmount || 0),
-    0
-  );
 
   return (
-    <MainLayout
-      title="Customer Dashboard"
-      subtitle="Customer profile, available policies, active policies, payments and claims"
-    >
-      {loading && <p>Loading customer dashboard...</p>}
-
-      <div className="cards">
-        <div className="card">
-          <h3>Customer</h3>
-          <h1>{data.customer.name || "N/A"}</h1>
-          <p>{data.customer.email || "N/A"}</p>
-        </div>
-
-        <div className="card">
-          <h3>Available Policies</h3>
-          <h1>{availablePolicies.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>Active Policies</h3>
-          <h1>{myPolicies.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>Total Paid</h3>
-          <h1>₹{totalPaid.toLocaleString("en-IN")}</h1>
-        </div>
-
-        <div className="card">
-          <h3>Claims</h3>
-          <h1>{data.claims.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>KYC Status</h3>
-          <h1>{data.customer.kycStatus || "Pending"}</h1>
-        </div>
+    <div className="icici-page">
+      <div className="top-strip">
+        <span>☎ 1800 2666 <b>(Available 24 x 7)</b></span>
+        <span>📞 Call Back</span>
+        <span>💬 Live Chat</span>
+        <span>Help</span>
+        <span>Info Centre</span>
+        <span>Investor Relations</span>
+        <button>Become an advisor</button>
+        <button onClick={logout}>Login</button>
       </div>
 
-      <div className="section">
-        <h2>Available Policies</h2>
-
-        {availablePolicies.length === 0 ? (
-          <p>No policies available.</p>
-        ) : (
-          <div className="lead-grid">
-            {availablePolicies.map((policy) => {
-              const bought = isPolicyBought(policy._id);
-
-              return (
-                <div className="lead-card" key={policy._id}>
-                  <h3>{policy.policyName}</h3>
-
-                  <p>📄 Policy No: {policy.policyNumber}</p>
-                  <p>💰 Premium: ₹{policy.premiumAmount}</p>
-                  <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
-                  <p>📆 Payment Mode: {policy.paymentMode}</p>
-
-                  {bought ? (
-                    <span
-                      style={{
-                        background: "#16a34a",
-                        color: "#fff",
-                        padding: "6px 12px",
-                        borderRadius: 20,
-                        fontWeight: 700,
-                      }}
-                    >
-                      ● Active
-                    </span>
-                  ) : (
-                    <span className="badge">{policy.status}</span>
-                  )}
-
-                  <br />
-                  <br />
-
-                  <button
-                    className="btn small-btn"
-                    disabled={bought || buyingId === policy._id}
-                    onClick={() => void buyPolicy(policy._id)}
-                  >
-                    {bought
-                      ? "Already Bought"
-                      : buyingId === policy._id
-                      ? "Buying..."
-                      : "Buy Policy"}
-                  </button>
-                </div>
-              );
-            })}
+      <div className="main-nav">
+        <div className="brand">
+          <img src="/ic_launcher.png" alt="ICICI LIFE" />
+          <div>
+            <h2>ICICI LIFE</h2>
+            <p>Insurance CRM</p>
           </div>
-        )}
+        </div>
+
+        <nav>
+          <a>Motor Insurance</a>
+          <a>Health Insurance</a>
+          <a>Travel Insurance</a>
+          <a>SME Insurance</a>
+          <a>Corporate Insurance</a>
+          <a>Other Insurance</a>
+          <a>Renewals</a>
+          <a>Claims</a>
+        </nav>
       </div>
 
-      <div className="section">
-        <h2>My Active Policies</h2>
+      <div className="ticker">
+        Introducing Service Assure — 30-min roadside assistance promise. Now live with ICICI LIFE insurance.
+      </div>
 
-        {myPolicies.length === 0 ? (
-          <p>No active policies found.</p>
-        ) : (
-          <div className="lead-grid">
-            {myPolicies.map((policy) => (
-              <div className="lead-card" key={policy._id}>
-                <h3>{policy.policyName}</h3>
+      <section className="hero">
+        <div className="hero-text">
+          <p className="tag">Service Assure</p>
+          <h1>Car troubles? Not on our watch</h1>
+          <p>
+            Our insurance now comes with fast support, easy policies and smooth claims.
+          </p>
+        </div>
 
-                <span
-                  style={{
-                    background: "#16a34a",
-                    color: "#fff",
-                    padding: "6px 12px",
-                    borderRadius: 20,
-                    fontWeight: 700,
-                  }}
-                >
-                  ● {policy.status || "Active"}
-                </span>
+        <div className="hero-card">
+          <h3>{user.name || "Customer"}</h3>
+          <p>{user.role || "customer"}</p>
+          <small>{user.email}</small>
+        </div>
+      </section>
 
-                <p>📄 Policy No: {policy.policyNumber}</p>
-                <p>💰 Premium: ₹{policy.premiumAmount}</p>
-                <p>✅ Paid Amount: ₹{policy.paidAmount || policy.premiumAmount}</p>
-                <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
-                <p>📆 Payment Mode: {policy.paymentMode}</p>
-                <p>💳 Payment Status: {policy.paymentStatus || "Paid"}</p>
-                <p>🧾 Transaction ID: {policy.transactionId || "N/A"}</p>
-                <p>
-                  📅 Bought Date:{" "}
-                  {policy.createdAt
-                    ? new Date(policy.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </p>
+      <section className="quote-box">
+        <div className="product-tabs">
+          {["🚗 Car", "🛵 Bike", "❤️ Health", "✈️ Travel", "🏠 Home", "🏢 SME", "🏬 Corporate", "🔁 Renewal"].map(
+            (item) => (
+              <div className="product-tab" key={item}>
+                <span>{item.split(" ")[0]}</span>
+                <p>{item.replace(item.split(" ")[0], "")}</p>
               </div>
-            ))}
+            )
+          )}
+        </div>
+
+        <div className="quote-form">
+          <label>
+            Car registration no.*
+            <input placeholder="E.g. MH01DF5698" />
+          </label>
+
+          <label>
+            Mobile number*
+            <input placeholder="Enter mobile no." />
+          </label>
+
+          <label>
+            Email*
+            <input placeholder="Enter email address" />
+          </label>
+
+          <button>Get quote</button>
+        </div>
+
+        <a className="recent-link">Recent Quote</a>
+      </section>
+
+      <section className="stats">
+        <div><h2>37.57 Million</h2><p>Policies issued</p></div>
+        <div><h2>3.2 Million</h2><p>Claims processed</p></div>
+        <div><h2>15200+</h2><p>Network garages</p></div>
+        <div><h2>11000+</h2><p>Network hospitals</p></div>
+      </section>
+
+      <section className="why">
+        <h2>Why choose ICICI LIFE?</h2>
+
+        <div className="why-grid">
+          <div>
+            <h3>Dependable</h3>
+            <p>You can rely on us at all times. We stand with customers in every emergency.</p>
           </div>
-        )}
-      </div>
 
-      <div className="section">
-        <h2>Customer Profile</h2>
+          <div>
+            <h3>Approachable</h3>
+            <p>Need help? Our support team guides you through policies, payments and claims.</p>
+          </div>
 
-        <table className="table">
-          <tbody>
-            <tr>
-              <th>Name</th>
-              <td>{data.customer.name || "N/A"}</td>
-            </tr>
-            <tr>
-              <th>Email</th>
-              <td>{data.customer.email || "N/A"}</td>
-            </tr>
-            <tr>
-              <th>Phone</th>
-              <td>{data.customer.phone || "N/A"}</td>
-            </tr>
-            <tr>
-              <th>Address</th>
-              <td>{data.customer.address || "N/A"}</td>
-            </tr>
-            <tr>
-              <th>KYC</th>
-              <td>
-                <span className="badge">
-                  {data.customer.kycStatus || "Pending"}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <div>
+            <h3>Transparent</h3>
+            <p>Simple policy details, clear premium information and easy claim tracking.</p>
+          </div>
+        </div>
+      </section>
 
-      <button
-        className="btn small-btn"
-        onClick={() => void loadDashboard()}
-        disabled={loading}
-      >
-        Refresh
-      </button>
-    </MainLayout>
+      <section className="products">
+        <h2>Our products</h2>
+
+        <div className="product-grid">
+          {[
+            ["Car", "Cashless repair & claims process"],
+            ["Bike", "Cashless garage network"],
+            ["Health", "Personalised policies for all budgets"],
+            ["Travel", "Coverage for missed flights and baggage"],
+          ].map(([title, desc]) => (
+            <div className="product-card" key={title}>
+              <h3>{title}</h3>
+              <p>{desc}</p>
+              <button>Explore</button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="footer">
+        <h3>ICICI LIFE Insurance CRM</h3>
+        <p>Customer Support | Policies | Claims | Renewals | Privacy Policy</p>
+        <p>Contact - 1800 2666 Available 24 x 7</p>
+      </footer>
+    </div>
   );
 }
