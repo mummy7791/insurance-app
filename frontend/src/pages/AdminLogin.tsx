@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import "../styles/Auth.css";
 
 type LoginResponse = {
   token: string;
@@ -17,6 +18,7 @@ export default function AdminLogin() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const login = async () => {
     if (!email || !password) {
@@ -25,6 +27,8 @@ export default function AdminLogin() {
     }
 
     try {
+      setLoading(true);
+
       const res = await api.post<LoginResponse>("/auth/admin-login", {
         email,
         password,
@@ -37,30 +41,51 @@ export default function AdminLogin() {
     } catch (error) {
       console.error(error);
       alert("Admin login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>🛡️ Admin Login</h1>
-        <p>LifeSecure CRM Admin Panel</p>
+        <div className="auth-logo">
+          <img src="/ic_launcher.png" alt="ICICI Life" />
+        </div>
 
-        <input
-          type="email"
-          placeholder="Admin email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <h1 className="auth-title">ICICI LIFE</h1>
+        <h2 className="auth-subtitle">Admin Login</h2>
 
-        <input
-          type="password"
-          placeholder="Admin password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="auth-form">
+          <input
+            className="auth-input"
+            type="email"
+            placeholder="Admin Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <button onClick={() => void login()}>Login</button>
+          <input
+            className="auth-input"
+            type="password"
+            placeholder="Admin Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            className="auth-btn"
+            onClick={() => void login()}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Admin Login"}
+          </button>
+        </div>
+
+        <p className="auth-links">
+          Customer account?
+          <Link to="/login">Customer Login</Link>
+        </p>
       </div>
     </div>
   );
