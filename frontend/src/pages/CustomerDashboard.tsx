@@ -46,10 +46,10 @@ type Activity = {
 type Plan = {
   _id: string;
   planName: string;
-  category: string;
-  coverageAmount: number;
-  yearlyPremium: number;
-  paymentYears: number;
+  category?: string;
+  coverageAmount?: number;
+  yearlyPremium?: number;
+  paymentYears?: number;
   description?: string;
   status?: string;
 };
@@ -57,13 +57,13 @@ type Plan = {
 type ActivePlan = {
   _id: string;
   planName: string;
-  category: string;
-  coverageAmount: number;
-  yearlyPremium: number;
-  paymentYears: number;
-  paymentStatus: string;
-  policyStatus: string;
-  transactionId: string;
+  category?: string;
+  coverageAmount?: number;
+  yearlyPremium?: number;
+  paymentYears?: number;
+  paymentStatus?: string;
+  policyStatus?: string;
+  transactionId?: string;
   startDate?: string;
   endDate?: string;
 };
@@ -118,11 +118,12 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
 
-      const [dashboardResult, plansResult, activePlanResult] = await Promise.all([
-        fetchDashboard(),
-        fetchPlans(),
-        fetchActivePlans(),
-      ]);
+      const [dashboardResult, plansResult, activePlanResult] =
+        await Promise.all([
+          fetchDashboard(),
+          fetchPlans(),
+          fetchActivePlans(),
+        ]);
 
       setData(dashboardResult);
       setPlans(plansResult);
@@ -138,17 +139,15 @@ export default function CustomerDashboard() {
   }, [fetchDashboard, fetchPlans, fetchActivePlans]);
 
   useEffect(() => {
-  const timer = window.setTimeout(() => {
-    void loadDashboard();
-  }, 0);
+    const timer = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
 
-  return () => window.clearTimeout(timer);
-}, [loadDashboard]);
+    return () => window.clearTimeout(timer);
+  }, [loadDashboard]);
 
-  const isAlreadyBought = (planId: string, planName: string) => {
-    return activePlans.some(
-      (item) => item._id === planId || item.planName === planName
-    );
+  const isAlreadyBought = (planName: string) => {
+    return activePlans.some((item) => item.planName === planName);
   };
 
   const buyPlan = async (planId: string) => {
@@ -217,7 +216,7 @@ export default function CustomerDashboard() {
         ) : (
           <div className="lead-grid">
             {plans.map((plan) => {
-              const bought = isAlreadyBought(plan._id, plan.planName);
+              const bought = isAlreadyBought(plan.planName);
 
               return (
                 <div className="lead-card" key={plan._id}>
@@ -292,12 +291,12 @@ export default function CustomerDashboard() {
                       fontWeight: 700,
                     }}
                   >
-                    ● {plan.policyStatus}
+                    ● {plan.policyStatus || "Pending"}
                   </span>
                 </div>
 
                 <p>
-                  <b>Category:</b> {plan.category}
+                  <b>Category:</b> {plan.category || "N/A"}
                 </p>
 
                 <p>
@@ -323,7 +322,7 @@ export default function CustomerDashboard() {
                       fontWeight: 700,
                     }}
                   >
-                    {plan.paymentStatus}
+                    {plan.paymentStatus || "Pending"}
                   </span>
                 </p>
 
