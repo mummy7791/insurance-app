@@ -43,6 +43,17 @@ type Activity = {
   createdAt?: string;
 };
 
+type Plan = {
+  _id: string;
+  planName: string;
+  category: string;
+  coverageAmount: number;
+  yearlyPremium: number;
+  paymentYears: number;
+  description?: string;
+  status?: string;
+};
+
 type ActivePlan = {
   _id: string;
   planName: string;
@@ -83,12 +94,19 @@ const normalizeDashboard = (result?: Partial<DashboardData>): DashboardData => (
 
 export default function CustomerDashboard() {
   const [data, setData] = useState<DashboardData>(initialData);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [activePlans, setActivePlans] = useState<ActivePlan[]>([]);
   const [loading, setLoading] = useState(false);
+  const [buyingId, setBuyingId] = useState("");
 
   const fetchDashboard = useCallback(async (): Promise<DashboardData> => {
     const res = await api.get<DashboardData>("/customer-dashboard");
     return normalizeDashboard(res.data);
+  }, []);
+
+  const fetchPlans = useCallback(async (): Promise<Plan[]> => {
+    const res = await api.get<Plan[]>("/plans");
+    return Array.isArray(res.data) ? res.data : [];
   }, []);
 
   const fetchActivePlans = useCallback(async (): Promise<ActivePlan[]> => {
@@ -100,34 +118,61 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
 
-      const [dashboardResult, activePlanResult] = await Promise.all([
+      const [dashboardResult, plansResult, activePlanResult] = await Promise.all([
         fetchDashboard(),
+        fetchPlans(),
         fetchActivePlans(),
       ]);
 
       setData(dashboardResult);
+      setPlans(plansResult);
       setActivePlans(activePlanResult);
     } catch (error) {
       console.error("Customer dashboard load error:", error);
       setData(initialData);
+      setPlans([]);
       setActivePlans([]);
     } finally {
       setLoading(false);
     }
-  }, [fetchDashboard, fetchActivePlans]);
+  }, [fetchDashboard, fetchPlans, fetchActivePlans]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadDashboard();
-    }, 0);
+  const timer = window.setTimeout(() => {
+    void loadDashboard();
+  }, 0);
 
-    return () => window.clearTimeout(timer);
-  }, [loadDashboard]);
+  return () => window.clearTimeout(timer);
+}, [loadDashboard]);
+
+  const isAlreadyBought = (planId: string, planName: string) => {
+    return activePlans.some(
+      (item) => item._id === planId || item.planName === planName
+    );
+  };
+
+  const buyPlan = async (planId: string) => {
+    try {
+      setBuyingId(planId);
+
+      await api.post("/plan-purchases/buy", {
+        planId,
+      });
+
+      alert("Plan purchased successfully!");
+      await loadDashboard();
+    } catch (error) {
+      console.error("Buy plan error:", error);
+      alert("Plan buy failed. Please try again.");
+    } finally {
+      setBuyingId("");
+    }
+  };
 
   return (
     <MainLayout
       title="Customer Dashboard"
-      subtitle="Customer profile, active plans, policies, premiums, claims and activities"
+      subtitle="Customer profile, available plans, active plans, policies, premiums, claims and activities"
     >
       {loading && <p>Loading customer dashboard...</p>}
 
@@ -136,6 +181,11 @@ export default function CustomerDashboard() {
           <h3>Customer</h3>
           <h1>{data.customer.name || "N/A"}</h1>
           <p>{data.customer.email || "N/A"}</p>
+        </div>
+
+        <div className="card">
+          <h3>Available Plans</h3>
+          <h1>{plans.length}</h1>
         </div>
 
         <div className="card">
@@ -154,14 +204,63 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="card">
-          <h3>Claims</h3>
-          <h1>{data.claims.length}</h1>
-        </div>
-
-        <div className="card">
           <h3>KYC Status</h3>
           <h1>{data.customer.kycStatus || "Pending"}</h1>
         </div>
+      </div>
+
+      <div className="section">
+        <h2>Available Plans</h2>
+
+        {plans.length === 0 ? (
+          <p>No plans available.</p>
+        ) : (
+          <div className="lead-grid">
+            {plans.map((plan) => {
+              const bought = isAlreadyBought(plan._id, plan.planName);
+
+              return (
+                <div className="lead-card" key={plan._id}>
+                  <h3>{plan.planName}</h3>
+
+                  <p>
+                    <b>Category:</b> {plan.category || "N/A"}
+                  </p>
+
+                  <p>
+                    <b>Coverage:</b> ₹
+                    {Number(plan.coverageAmount || 0).toLocaleString("en-IN")}
+                  </p>
+
+                  <p>
+                    <b>Yearly Premium:</b> ₹
+                    {Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}
+                  </p>
+
+                  <p>
+                    <b>Payment Years:</b> {plan.paymentYears || 1}
+                  </p>
+
+                  <p>
+                    <b>Description:</b> {plan.description || "N/A"}
+                  </p>
+
+                  <button
+                    className="btn small-btn"
+                    disabled={bought || buyingId === plan._id}
+                    onClick={() => void buyPlan(plan._id)}
+                  >
+                    {bought
+                      ? "Already Bought"
+                      : buyingId === plan._id
+                      ? "Buying..."
+                      : "Buy Plan"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="section">
