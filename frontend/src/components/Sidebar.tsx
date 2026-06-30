@@ -36,6 +36,14 @@ const menuItems: MenuItem[] = [
   { name: "Profile", path: "/profile", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Create Staff", path: "/admin-create-staff", icon: "👥", roles: ["admin"] },
   { name: "Admin Plans", path: "/admin-insurance-plans", icon: "🛡️", roles: ["admin"] },
+
+  {
+    name: "Policy Purchases",
+    path: "/policy-purchases",
+    icon: "🛒",
+    roles: ["admin", "bm", "unit_manager", "agency_manager"],
+  },
+
   { name: "Branches", path: "/branch", icon: "🏢", roles: ["admin", "bm"] },
   { name: "Employees", path: "/employees", icon: "👨‍💼", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Targets", path: "/targets", icon: "🎯", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
@@ -71,7 +79,7 @@ const menuItems: MenuItem[] = [
   { name: "File Manager", path: "/file-manager", icon: "📂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Customer Dashboard", path: "/customer-dashboard", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Customer Profile", path: "/customer-profile", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent",] },
+  { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Insurance Plans", path: "/insurance-plans", icon: "🛡️", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "AI Policy", path: "/ai-policy-recommendation", icon: "🤖", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Settings", path: "/settings", icon: "⚙️", roles: ["admin"] },

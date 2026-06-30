@@ -55,6 +55,7 @@ import CustomerOtpLogin from "./pages/CustomerOtpLogin";
 import AdminInsurancePlans from "./pages/AdminInsurancePlans";
 import PremiumCalculator from "./pages/PremiumCalculator";
 import AiPolicyRecommendation from "./pages/AiPolicyRecommendation";
+import PolicyPurchases from "./pages/PolicyPurchases";
 
 import "./styles/app.css";
 
@@ -338,6 +339,7 @@ function App() {
         <Route path="/admin-insurance-plans" element={<AdminInsurancePlans />} />
         <Route path="/ai-policy-recommendation" element={<AiPolicyRecommendation />} />
         <Route path="/payment/:planId" element={<Payment />} />
+        <Route path="/policy-purchases" element={<PolicyPurchases />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
