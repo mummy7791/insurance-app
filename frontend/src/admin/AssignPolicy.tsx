@@ -51,7 +51,10 @@ export default function AssignPolicy() {
           .filter(Boolean),
       };
 
-      const res = await fetch("http://localhost:5000/customer/assign-policy", {
+      const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://YOUR-RENDER-BACKEND-URL.onrender.com";
+
+const res = await fetch(`${API_BASE_URL}/customer/assign-policy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
