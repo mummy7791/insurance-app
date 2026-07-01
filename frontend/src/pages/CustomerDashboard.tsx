@@ -783,7 +783,6 @@ export default function CustomerDashboard() {
             <h2>Customer Profile</h2>
 
             <div className="profile-main">
-              // CustomerDashboard.tsx lo profile photo div replace cheyyi
 
 <div className="profile-photo">
   {customerDetails.photo &&
