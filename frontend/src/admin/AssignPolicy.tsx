@@ -52,7 +52,7 @@ export default function AssignPolicy() {
       };
 
       const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://YOUR-RENDER-BACKEND-URL.onrender.com";
+  import.meta.env.VITE_API_URL || "https://insurance-app-rose.vercel.app/login.com";
 
 const res = await fetch(`${API_BASE_URL}/customer/assign-policy`, {
         method: "POST",
