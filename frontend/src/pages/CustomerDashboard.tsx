@@ -12,6 +12,44 @@ type ChatMessage = {
   text: string;
 };
 
+type ActivePanel = "profile" | "dashboard" | null;
+
+type CustomerDetails = {
+  photo: string;
+  customerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  dob: string;
+  gender: string;
+  address: string;
+  aadhaar: string;
+  pan: string;
+  nominee: string;
+  nomineeRelation: string;
+  advisor: string;
+  agencyManager: string;
+  branch: string;
+  planName: string;
+  policyNo: string;
+  policyType: string;
+  status: string;
+  premium: string;
+  coverage: string;
+  startDate: string;
+  expiryDate: string;
+  renewalDate: string;
+  members: string[];
+  lastPayment: string;
+  nextPremium: string;
+  paymentMode: string;
+  transactionId: string;
+  claimsRaised: number;
+  approvedClaims: number;
+  pendingClaims: number;
+  rejectedClaims: number;
+};
+
 const navMenus = {
   "Motor Insurance": [
     ["🚗", "Car Insurance", "Custom cover for your car"],
@@ -245,8 +283,12 @@ export default function CustomerDashboard() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [whyIndex, setWhyIndex] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [apiCustomerDetails, setApiCustomerDetails] =
+    useState<Partial<CustomerDetails> | null>(null);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     { from: "bot", text: "Hello 👋 I am RIA. How can I help you today?" },
   ]);
@@ -269,10 +311,78 @@ export default function CustomerDashboard() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!user.email) return;
+
+    fetch(`http://localhost:5000/customer/me/${user.email}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Customer not found");
+        }
+
+        return res.json();
+      })
+      .then((data: Partial<CustomerDetails>) => {
+        setApiCustomerDetails(data);
+      })
+      .catch(() => {
+        setApiCustomerDetails(null);
+      });
+  }, [user.email]);
+
+  const fallbackDetails: CustomerDetails = {
+    photo: "👩",
+    customerId: "CUST-1001",
+    name: user.name || "Bhavani Jalla",
+    email: user.email || "bhavani@gmail.com",
+    phone: "Not added",
+    dob: "Not added",
+    gender: "Not added",
+    address: "Not added",
+    aadhaar: "XXXX-XXXX-XXXX",
+    pan: "Not added",
+    nominee: "Not added",
+    nomineeRelation: "Not added",
+    advisor: "Not assigned",
+    agencyManager: "Not assigned",
+    branch: "Not assigned",
+    planName: "No Plan Assigned",
+    policyNo: "Not issued",
+    policyType: "Not assigned",
+    status: "PENDING",
+    premium: "₹0",
+    coverage: "₹0",
+    startDate: "Not started",
+    expiryDate: "Not added",
+    renewalDate: "Not added",
+    members: [],
+    lastPayment: "₹0",
+    nextPremium: "₹0",
+    paymentMode: "Not added",
+    transactionId: "Not added",
+    claimsRaised: 0,
+    approvedClaims: 0,
+    pendingClaims: 0,
+    rejectedClaims: 0,
+  };
+
+  const customerDetails: CustomerDetails = {
+    ...fallbackDetails,
+    ...(apiCustomerDetails || {}),
+    name: apiCustomerDetails?.name || fallbackDetails.name,
+    email: apiCustomerDetails?.email || fallbackDetails.email,
+    members: apiCustomerDetails?.members || fallbackDetails.members,
+  };
+
   const logout = () => {
     localStorage.removeItem("insuranceToken");
     localStorage.removeItem("insuranceUser");
     window.location.href = "/login";
+  };
+
+  const openPanel = (panel: "profile" | "dashboard") => {
+    setActivePanel(panel);
+    setProfileOpen(false);
   };
 
   const sendMessage = () => {
@@ -300,7 +410,7 @@ export default function CustomerDashboard() {
         <span>Help⌄</span>
         <span>Info Centre⌄</span>
         <span>Investor Relations</span>
-        <button>Become an advisor⌄</button>
+        <button type="button">Become an advisor⌄</button>
 
         <div className="profile-box">
           <button
@@ -308,15 +418,21 @@ export default function CustomerDashboard() {
             className="profile-btn"
             onClick={() => setProfileOpen((prev) => !prev)}
           >
-            {user.name || "Customer"} ⌄
+            {customerDetails.name} ⌄
           </button>
 
           {profileOpen && (
             <div className="profile-dropdown">
-              <p>{user.email || "customer@email.com"}</p>
-              <button type="button">Profile</button>
-              <button type="button">Dashboard</button>
-              <button type="button" onClick={logout}>Logout</button>
+              <p>{customerDetails.email}</p>
+              <button type="button" onClick={() => openPanel("profile")}>
+                Profile
+              </button>
+              <button type="button" onClick={() => openPanel("dashboard")}>
+                Dashboard
+              </button>
+              <button type="button" onClick={logout}>
+                Logout
+              </button>
             </div>
           )}
         </div>
@@ -645,6 +761,122 @@ export default function CustomerDashboard() {
 
         <h4>Group Companies</h4>
       </section>
+
+      {activePanel === "profile" && (
+        <div className="crm-modal-overlay">
+          <div className="crm-modal">
+            <button type="button" className="crm-close" onClick={() => setActivePanel(null)}>
+              ×
+            </button>
+
+            <h2>Customer Profile</h2>
+
+            <div className="profile-main">
+              <div className="profile-photo">{customerDetails.photo}</div>
+
+              <div>
+                <h3>{customerDetails.name}</h3>
+                <p>{customerDetails.customerId}</p>
+                <span className="active-badge">🟢 {customerDetails.status}</span>
+              </div>
+            </div>
+
+            <h3>Personal Details</h3>
+            <div className="profile-grid">
+              <div><b>Email</b><p>{customerDetails.email}</p></div>
+              <div><b>Phone</b><p>{customerDetails.phone}</p></div>
+              <div><b>DOB</b><p>{customerDetails.dob}</p></div>
+              <div><b>Gender</b><p>{customerDetails.gender}</p></div>
+              <div><b>Address</b><p>{customerDetails.address}</p></div>
+              <div><b>Aadhaar</b><p>{customerDetails.aadhaar}</p></div>
+              <div><b>PAN</b><p>{customerDetails.pan}</p></div>
+              <div><b>Nominee</b><p>{customerDetails.nominee}</p></div>
+              <div><b>Relation</b><p>{customerDetails.nomineeRelation}</p></div>
+            </div>
+
+            <h3>Policy Details</h3>
+            <div className="policy-card">
+              <div className="policy-title-row">
+                <div>
+                  <h3>{customerDetails.planName}</h3>
+                  <p>Policy No: {customerDetails.policyNo}</p>
+                </div>
+                <span className="active-badge">🟢 {customerDetails.status}</span>
+              </div>
+
+              <div className="profile-grid">
+                <div><b>Policy Type</b><p>{customerDetails.policyType}</p></div>
+                <div><b>Premium</b><p>{customerDetails.premium}</p></div>
+                <div><b>Coverage</b><p>{customerDetails.coverage}</p></div>
+                <div><b>Start Date</b><p>{customerDetails.startDate}</p></div>
+                <div><b>Expiry Date</b><p>{customerDetails.expiryDate}</p></div>
+                <div><b>Renewal Date</b><p>{customerDetails.renewalDate}</p></div>
+              </div>
+            </div>
+
+            <h3>Advisor / Manager Details</h3>
+            <div className="profile-grid">
+              <div><b>Advisor</b><p>{customerDetails.advisor}</p></div>
+              <div><b>Agency Manager</b><p>{customerDetails.agencyManager}</p></div>
+              <div><b>Branch</b><p>{customerDetails.branch}</p></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activePanel === "dashboard" && (
+        <div className="crm-modal-overlay">
+          <div className="crm-modal">
+            <button type="button" className="crm-close" onClick={() => setActivePanel(null)}>
+              ×
+            </button>
+
+            <h2>My Insurance Dashboard</h2>
+
+            <div className="dashboard-policy-grid">
+              <div className="dash-policy-card">
+                <h3>{customerDetails.planName}</h3>
+                <span className="active-badge">🟢 {customerDetails.status}</span>
+                <p>{customerDetails.coverage}</p>
+                <p>{customerDetails.premium}</p>
+              </div>
+
+              <div className="dash-policy-card">
+                <h3>Renewal Date</h3>
+                <p>{customerDetails.renewalDate}</p>
+              </div>
+
+              <div className="dash-policy-card">
+                <h3>Claims</h3>
+                <p>{customerDetails.claimsRaised} Raised</p>
+                <p>{customerDetails.pendingClaims} Pending</p>
+              </div>
+
+              <div className="dash-policy-card">
+                <h3>Documents</h3>
+                <p>Policy PDF</p>
+                <p>Receipt</p>
+                <p>Health Card</p>
+              </div>
+            </div>
+
+            <h3>Members Covered</h3>
+            <div className="member-list">
+              {customerDetails.members.map((member) => (
+                <span key={member}>👤 {member}</span>
+              ))}
+            </div>
+
+            <h3>Payment Details</h3>
+            <div className="profile-grid">
+              <div><b>Last Payment</b><p>{customerDetails.lastPayment}</p></div>
+              <div><b>Next Premium</b><p>{customerDetails.nextPremium}</p></div>
+              <div><b>Payment Mode</b><p>{customerDetails.paymentMode}</p></div>
+              <div><b>Transaction ID</b><p>{customerDetails.transactionId}</p></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <button type="button" className="chat-bubble" onClick={() => setChatOpen(true)}>
         ASK RIA<br />LIVE CHAT

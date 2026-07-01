@@ -3,7 +3,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import Dashboard from "./pages/Dashboard";
 import RoleDashboard from "./pages/RoleDashboard";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile"
 
 import Leads from "./pages/Leads";
 import Customers from "./pages/Customers";
@@ -56,6 +56,7 @@ import AdminInsurancePlans from "./pages/AdminInsurancePlans";
 import PremiumCalculator from "./pages/PremiumCalculator";
 import AiPolicyRecommendation from "./pages/AiPolicyRecommendation";
 import PolicyPurchases from "./pages/PolicyPurchases";
+import AssignPolicy from "./admin/AssignPolicy";
 
 import "./styles/app.css";
 
@@ -340,6 +341,7 @@ function App() {
         <Route path="/ai-policy-recommendation" element={<AiPolicyRecommendation />} />
         <Route path="/payment/:planId" element={<Payment />} />
         <Route path="/policy-purchases" element={<PolicyPurchases />} />
+        <Route path="/assign-policy" element={<AssignPolicy />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -2,36 +2,46 @@ const mongoose = require("mongoose");
 
 const customerSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
+    name: String,
+    email: { type: String, unique: true, required: true },
+    phone: String,
+    photo: String,
 
-    phone: {
-      type: String,
-      required: true,
-    },
+    dob: String,
+    gender: String,
+    address: String,
+    aadhaar: String,
+    pan: String,
 
-    email: String,
-    city: String,
-    occupation: String,
-    income: Number,
+    nominee: String,
+    nomineeRelation: String,
 
-    leadStatus: {
-      type: String,
-      enum: ["new", "followup", "converted", "rejected"],
-      default: "new",
-    },
+    advisor: String,
+    agencyManager: String,
+    branch: String,
 
-    assignedAgent: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    planName: String,
+    policyNo: String,
+    policyType: String,
+    status: { type: String, default: "ACTIVE" },
 
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+    premium: String,
+    coverage: String,
+    startDate: String,
+    expiryDate: String,
+    renewalDate: String,
+
+    members: [String],
+
+    lastPayment: String,
+    nextPremium: String,
+    paymentMode: String,
+    transactionId: String,
+
+    claimsRaised: { type: Number, default: 0 },
+    approvedClaims: { type: Number, default: 0 },
+    pendingClaims: { type: Number, default: 0 },
+    rejectedClaims: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
