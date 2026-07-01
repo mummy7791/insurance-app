@@ -143,8 +143,10 @@ useRoute("/api/tickets", ticketRoutes);
 useRoute("/api/insurance-plans", insurancePlanRoutes);
 useRoute("/api/plan-purchases", planPurchaseRoutes);
 useRoute("/api/policy-purchases", policyPurchaseRoutes);
-useRoute("/api/customer", customerRoutes);
 
+/* Customer policy assignment routes */
+useRoute("/api/customer", customerRoutes);
+useRoute("/customer", customerRoutes);
 
 /* ================= TEST ROUTE ================= */
 app.get("/", (req, res) => {
@@ -163,8 +165,6 @@ app.use((req, res) => {
 server.on("error", (error) => {
   if (error.code === "EADDRINUSE") {
     console.log(`❌ Port ${PORT} already in use`);
-    console.log(`Run: netstat -ano | findstr :${PORT}`);
-    console.log("Then kill PID: taskkill /PID YOUR_PID /F");
   } else {
     console.log("❌ Server error:", error.message);
   }
