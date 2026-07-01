@@ -36,14 +36,8 @@ const menuItems: MenuItem[] = [
   { name: "Profile", path: "/profile", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Create Staff", path: "/admin-create-staff", icon: "👥", roles: ["admin"] },
   { name: "Admin Plans", path: "/admin-insurance-plans", icon: "🛡️", roles: ["admin"] },
-
-  {
-    name: "Policy Purchases",
-    path: "/policy-purchases",
-    icon: "🛒",
-    roles: ["admin", "bm", "unit_manager", "agency_manager"],
-  },
-
+  { name: "Assign Policy", path: "/assign-policy", icon: "📝", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
+  { name: "Policy Purchases", path: "/policy-purchases", icon: "🛒", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Branches", path: "/branch", icon: "🏢", roles: ["admin", "bm"] },
   { name: "Employees", path: "/employees", icon: "👨‍💼", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Targets", path: "/targets", icon: "🎯", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
