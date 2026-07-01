@@ -11,7 +11,6 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const leadRoutes = require("./routes/leadRoutes");
-const customerRoutes = require("./routes/customerRoutes");
 const policyRoutes = require("./routes/policyRoutes");
 const premiumRoutes = require("./routes/premiumRoutes");
 const claimRoutes = require("./routes/claimRoutes");
@@ -108,7 +107,6 @@ const useRoute = (routePath, routeHandler) => {
 useRoute("/api/auth", authRoutes);
 useRoute("/api/users", userRoutes);
 useRoute("/api/leads", leadRoutes);
-useRoute("/api/customers", customerRoutes);
 useRoute("/api/policies", policyRoutes);
 useRoute("/api/premiums", premiumRoutes);
 useRoute("/api/claims", claimRoutes);
@@ -145,7 +143,7 @@ useRoute("/api/tickets", ticketRoutes);
 useRoute("/api/insurance-plans", insurancePlanRoutes);
 useRoute("/api/plan-purchases", planPurchaseRoutes);
 useRoute("/api/policy-purchases", policyPurchaseRoutes);
-useRoute("/customer", customerRoutes);
+useRoute("/api/customer", customerRoutes);
 
 
 /* ================= TEST ROUTE ================= */
