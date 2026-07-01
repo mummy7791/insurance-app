@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import "../styles/LombardHome.css";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://insurance-app-7vkn.onrender.com";
+
+
 type User = {
   name?: string;
   email?: string;
@@ -312,23 +316,30 @@ export default function CustomerDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!user.email) return;
+  const email = user.email;
 
-    fetch(`http://localhost:5000/customer/me/${user.email}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Customer not found");
-        }
+  if (!email) return;
 
-        return res.json();
-      })
-      .then((data: Partial<CustomerDetails>) => {
-        setApiCustomerDetails(data);
-      })
-      .catch(() => {
-        setApiCustomerDetails(null);
-      });
-  }, [user.email]);
+  const loadCustomer = async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/customer/me/${encodeURIComponent(email)}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Customer not found");
+      }
+
+      const data: Partial<CustomerDetails> = await res.json();
+      setApiCustomerDetails(data);
+    } catch (err) {
+      console.log("Customer API error:", err);
+      setApiCustomerDetails(null);
+    }
+  };
+
+  void loadCustomer();
+}, [user.email]);
 
   const fallbackDetails: CustomerDetails = {
     photo: "👩",
