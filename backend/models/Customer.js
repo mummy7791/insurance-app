@@ -1,3 +1,5 @@
+// backend/models/Customer.js
+
 const mongoose = require("mongoose");
 
 const customerSchema = new mongoose.Schema(
@@ -5,7 +7,11 @@ const customerSchema = new mongoose.Schema(
     name: String,
     email: { type: String, unique: true, required: true },
     phone: String,
-    photo: String,
+
+    photo: {
+      type: String,
+      default: "",
+    },
 
     dob: String,
     gender: String,
