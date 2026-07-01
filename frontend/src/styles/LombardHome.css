@@ -1548,3 +1548,27 @@
 .profile-photo span {
   font-size: 45px;
 }
+.nav-button {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.click-menu {
+  top: 155px;
+}
+
+.mega-close {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #f05a00;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+}

@@ -292,6 +292,7 @@ export default function CustomerDashboard() {
   const [chatInput, setChatInput] = useState("");
   const [apiCustomerDetails, setApiCustomerDetails] =
     useState<Partial<CustomerDetails> | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { from: "bot", text: "Hello 👋 I am RIA. How can I help you today?" },
@@ -459,16 +460,25 @@ export default function CustomerDashboard() {
         </div>
 
         <nav>
-          {Object.keys(navMenus).map((menu) => (
-            <div
-              key={menu}
-              className="nav-item"
-              onMouseEnter={() => setActiveMenu(menu)}
-            >
-              {menu}⌄
-            </div>
-          ))}
-        </nav>
+  {Object.keys(navMenus).map((menu) => (
+    <button
+      type="button"
+      key={menu}
+      className="nav-item nav-button"
+      onClick={() => {
+        if (activeMenu === menu && isMenuOpen) {
+          setActiveMenu(null);
+          setIsMenuOpen(false);
+        } else {
+          setActiveMenu(menu);
+          setIsMenuOpen(true);
+        }
+      }}
+    >
+      {menu}⌄
+    </button>
+  ))}
+</nav>
       </header>
 
       {activeMenu && (
