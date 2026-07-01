@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/LombardHome.css";
 
 type User = {
   name?: string;
   email?: string;
   role?: string;
+};
+
+type ChatMessage = {
+  from: "bot" | "user";
+  text: string;
 };
 
 const navMenus = {
@@ -131,9 +136,52 @@ const productTabs = [
   ["🔁", "Renewal"],
 ];
 
+const heroSlides = [
+  {
+    tag: "Service Assure",
+    title: "Car troubles? Not on our watch",
+    text: "Our car insurance now comes with Service Assure – 30 min roadside assistance promise.",
+    icon: "🚘",
+  },
+  {
+    tag: "Health Cover",
+    title: "Cashless treatment made simple",
+    text: "Get easy health insurance, network hospitals and quick claim support.",
+    icon: "🏥",
+  },
+  {
+    tag: "Travel Safe",
+    title: "Travel worry-free worldwide",
+    text: "Coverage for missed flights, baggage loss and medical emergencies.",
+    icon: "✈️",
+  },
+];
+
+const whySlides = [
+  {
+    title: "Dependable",
+    sub: "You can rely on us at all times.",
+    text: "Be it emergencies, claims or renewals, we stand with customers when they need support.",
+    icon: "🛡️",
+  },
+  {
+    title: "Approachable",
+    sub: "You've got a friend in us.",
+    text: "Our support team guides you through policies, payments, claims and renewals.",
+    icon: "🤝",
+  },
+  {
+    title: "Transparent",
+    sub: "We give you the power of clarity.",
+    text: "Simple policy details, clear premium information and easy claim tracking.",
+    icon: "🔍",
+  },
+];
+
 const productCards = [
   {
     title: "Car",
+    icon: "🚗",
     points: [
       "Doorstep cashless repair & claims process",
       "Kms-based plans for low mileage drivers",
@@ -142,6 +190,7 @@ const productCards = [
   },
   {
     title: "Bike",
+    icon: "🛵",
     points: [
       "Cashless garage network",
       "Option of long-term policies",
@@ -150,6 +199,7 @@ const productCards = [
   },
   {
     title: "Health",
+    icon: "❤️",
     points: [
       "Personalised policies for all budgets & ages",
       "Cashless treatment at any hospital",
@@ -158,6 +208,7 @@ const productCards = [
   },
   {
     title: "Travel",
+    icon: "✈️",
     points: [
       "Cashless hospitalisation worldwide",
       "Coverage for missed flights, baggage & passport loss",
@@ -166,9 +217,39 @@ const productCards = [
   },
 ];
 
+const getBotReply = (question: string) => {
+  const q = question.toLowerCase();
+
+  if (q.includes("claim")) {
+    return "You can file or track your claim from the Claims section. Keep your policy number ready.";
+  }
+
+  if (q.includes("renew")) {
+    return "You can renew your policy from Renewals using policy number or registered mobile number.";
+  }
+
+  if (q.includes("health")) {
+    return "For health insurance, select Elevate, add members, enter contact details and click Get quote.";
+  }
+
+  if (q.includes("car") || q.includes("motor")) {
+    return "For car insurance, enter registration number, mobile number and email to get a quote.";
+  }
+
+  return "I can help you with insurance quotes, renewals, claims, health insurance, car insurance and policy details.";
+};
+
 export default function CustomerDashboard() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("Health");
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [whyIndex, setWhyIndex] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { from: "bot", text: "Hello 👋 I am RIA. How can I help you today?" },
+  ]);
 
   const [user] = useState<User>(() => {
     try {
@@ -179,11 +260,36 @@ export default function CustomerDashboard() {
     }
   });
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroSlides.length);
+      setWhyIndex((prev) => (prev + 1) % whySlides.length);
+    }, 3500);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const logout = () => {
     localStorage.removeItem("insuranceToken");
     localStorage.removeItem("insuranceUser");
     window.location.href = "/login";
   };
+
+  const sendMessage = () => {
+    const text = chatInput.trim();
+    if (!text) return;
+
+    setMessages((prev) => [
+      ...prev,
+      { from: "user", text },
+      { from: "bot", text: getBotReply(text) },
+    ]);
+
+    setChatInput("");
+  };
+
+  const slide = heroSlides[heroIndex];
+  const why = whySlides[whyIndex];
 
   return (
     <div className="icici-page">
@@ -195,7 +301,25 @@ export default function CustomerDashboard() {
         <span>Info Centre⌄</span>
         <span>Investor Relations</span>
         <button>Become an advisor⌄</button>
-        <button onClick={logout}>Login ❯</button>
+
+        <div className="profile-box">
+          <button
+            type="button"
+            className="profile-btn"
+            onClick={() => setProfileOpen((prev) => !prev)}
+          >
+            {user.name || "Customer"} ⌄
+          </button>
+
+          {profileOpen && (
+            <div className="profile-dropdown">
+              <p>{user.email || "customer@email.com"}</p>
+              <button type="button">Profile</button>
+              <button type="button">Dashboard</button>
+              <button type="button" onClick={logout}>Logout</button>
+            </div>
+          )}
+        </div>
       </div>
 
       <header className="main-nav">
@@ -254,28 +378,34 @@ export default function CustomerDashboard() {
       )}
 
       <div className="ticker">
-        Introducing Service Assure — 30-min roadside assistance promise. Now live with ICICI LIFE insurance. |
-        Settlement of Insurance Disputes through Permanent Lok Adalats | Under the second 100-Day Campaign
-        Saksham Niveshak - Shareholders are reminded to update their KYC details.
+        <div className="ticker-track">
+          Introducing Service Assure — 30-min roadside assistance promise. Now live with ICICI LIFE insurance. |
+          Settlement of Insurance Disputes through Permanent Lok Adalats | Saksham Niveshak - update your KYC details.
+        </div>
       </div>
 
-      <section className="hero">
-        <div className="hero-content">
-          <p className="tag">Service Assure</p>
-          <h1>Car troubles? Not on our watch</h1>
-          <p>
-            Our car insurance now comes with Service Assure – 30 min roadside
-            assistance promise.
-          </p>
+      <section className="hero-slider">
+        <div className="hero-slide">
+          <div className="hero-content">
+            <p className="tag">{slide.tag}</p>
+            <h1>{slide.title}</h1>
+            <p>{slide.text}</p>
+          </div>
+
+          <div className="hero-visual">
+            <span>{slide.icon}</span>
+          </div>
         </div>
 
-        <div className="hero-image-card">
-          <div className="car-shape">🚘</div>
-          <div>
-            <h3>{user.name || "Customer"}</h3>
-            <p>{user.role || "customer"}</p>
-            <small>{user.email}</small>
-          </div>
+        <div className="slider-dots">
+          {heroSlides.map((item, index) => (
+            <button
+              type="button"
+              key={item.title}
+              className={index === heroIndex ? "active" : ""}
+              onClick={() => setHeroIndex(index)}
+            />
+          ))}
         </div>
       </section>
 
@@ -321,7 +451,7 @@ export default function CustomerDashboard() {
               <input placeholder="Add details" />
             </label>
 
-            <button>Get quote</button>
+            <button type="button">Get quote</button>
 
             <div className="quote-links">
               <a>Port existing policy ›</a>
@@ -345,7 +475,7 @@ export default function CustomerDashboard() {
               <input placeholder="Enter email address" />
             </label>
 
-            <button>Get quote</button>
+            <button type="button">Get quote</button>
 
             <div className="quote-links">
               <a>Recent Quote</a>
@@ -363,46 +493,17 @@ export default function CustomerDashboard() {
       </section>
 
       <section className="stats">
-        <div>
-          <h2>37.57 Million</h2>
-          <p>Policies issued</p>
-          <small>FY 2024-25</small>
-        </div>
-        <div>
-          <h2>3.2 Million</h2>
-          <p>Claims processed</p>
-          <small>FY 2024-25</small>
-        </div>
-        <div>
-          <h2>15200+</h2>
-          <p>Network garages</p>
-          <small>As on 1st June 2026</small>
-        </div>
-        <div>
-          <h2>11000+</h2>
-          <p>Network hospitals</p>
-          <small>As on 17th March 2026</small>
-        </div>
+        <div><h2>37.57 Million</h2><p>Policies issued</p><small>FY 2024-25</small></div>
+        <div><h2>3.2 Million</h2><p>Claims processed</p><small>FY 2024-25</small></div>
+        <div><h2>15200+</h2><p>Network garages</p><small>As on 1st June 2026</small></div>
+        <div><h2>11000+</h2><p>Network hospitals</p><small>As on 17th March 2026</small></div>
       </section>
 
       <section className="promo-strip">
         {[
-          "25-years-web",
-          "ria-web",
-          "msme-day-campaign",
-          "ahmedabad-plane-crash",
-          "rev-annexure",
-          "base-product",
-          "dont-fall",
-          "cashless-everywhere",
-          "cyber-security",
-          "renewal",
-          "serviceassure",
-          "25years",
-          "road-safety1",
-          "road-safety2",
-          "travel-report",
-          "press-release",
+          "25-years-web", "ria-web", "msme-day-campaign", "base-product",
+          "cashless-everywhere", "cyber-security", "renewal", "serviceassure",
+          "road-safety1", "road-safety2", "travel-report", "press-release",
         ].map((item) => (
           <div key={item}>{item}</div>
         ))}
@@ -411,42 +512,27 @@ export default function CustomerDashboard() {
       <section className="why-section">
         <h2>Why choose ICICI LIFE?</h2>
 
-        <div className="why-block">
-          <div>
-            <h3>Dependable</h3>
-            <h4>You can rely on us at all times.</h4>
-            <p>
-              Be it during large calamities or minor accidents, we stand by our
-              customers in time of need. In times of trouble, be assured, we’ve
-              got your back.
-            </p>
+        <div className="image-carousel-card">
+          <div className="image-carousel-visual">
+            <span>{why.icon}</span>
           </div>
-          <div className="why-img">image-1</div>
-        </div>
 
-        <div className="why-block reverse">
-          <div className="why-img">image-2</div>
-          <div>
-            <h3>Approachable</h3>
-            <h4>You&apos;ve got a friend in us.</h4>
-            <p>
-              In your hour of need, you need more than claim support. Our team
-              guides you through the right course of action during emergencies.
-            </p>
-            <p><b>We are available where you are.</b> Call centre | Chat | 340+ branches</p>
+          <div className="image-carousel-content">
+            <h3>{why.title}</h3>
+            <h4>{why.sub}</h4>
+            <p>{why.text}</p>
           </div>
-        </div>
 
-        <div className="why-block">
-          <div>
-            <h3>Transparent</h3>
-            <h4>We give you the power of clarity.</h4>
-            <p>
-              From policy issuance to claims, you can count on us for keeping it
-              simple and clear.
-            </p>
+          <div className="image-carousel-dots">
+            {whySlides.map((item, index) => (
+              <button
+                type="button"
+                key={item.title}
+                className={index === whyIndex ? "active" : ""}
+                onClick={() => setWhyIndex(index)}
+              />
+            ))}
           </div>
-          <div className="why-img">image-3</div>
         </div>
       </section>
 
@@ -456,15 +542,16 @@ export default function CustomerDashboard() {
         <div className="product-grid">
           {productCards.map((product) => (
             <div className="product-card" key={product.title}>
+              <div className="product-icon">{product.icon}</div>
               <h3>{product.title}</h3>
               <ul>
                 {product.points.map((point) => (
                   <li key={point}>{point}</li>
                 ))}
               </ul>
-              <div>
-                <button>Check price</button>
-                <button className="outline-btn">Explore</button>
+              <div className="product-actions">
+                <button type="button">Check price</button>
+                <button type="button" className="outline-btn">Explore</button>
               </div>
             </div>
           ))}
@@ -474,39 +561,29 @@ export default function CustomerDashboard() {
       <section className="app-section">
         <div>
           <h2>Experience insurance on the go with IL TakeCare app</h2>
-          <p>
-            Buy policies, renew them, file claims or complete mobile
-            self-inspections — all from your phone.
-          </p>
+          <p>Buy policies, renew them, file claims or complete mobile self-inspections — all from your phone.</p>
           <h3>Benefits Beyond Insurance</h3>
           <ul>
             <li>Health vitals via face scan</li>
             <li>Driving insights and pattern</li>
             <li>Fitness tracking and challenges</li>
           </ul>
-          <button>Learn more</button>
+          <button type="button">Learn more</button>
         </div>
 
-        <div className="phone-card">iphone</div>
+        <div className="phone-card">📱</div>
       </section>
 
       <section className="info-section">
         <div>
           <h2>#LearnCPRSaveALife</h2>
-          <p>
-            Did you know? Effective CPR can double the chance of a person
-            surviving a cardiac arrest.
-          </p>
-          <div className="video-box">youtube</div>
+          <p>Effective CPR can double the chance of a person surviving a cardiac arrest.</p>
+          <div className="video-box">▶ youtube</div>
         </div>
 
         <div>
           <h2>PMFBY</h2>
-          <p>
-            The PMFBY was launched in 2016 and aims at adoption of technology
-            for yield estimation and improving crop insurance penetration in
-            India.
-          </p>
+          <p>PMFBY aims at adoption of technology for yield estimation and improving crop insurance penetration in India.</p>
         </div>
       </section>
 
@@ -517,17 +594,11 @@ export default function CustomerDashboard() {
         <div className="award-grid">
           <div>
             <h4>asia-award</h4>
-            <p>
-              Voted Domestic General Insurer of the Year - India at Insurance
-              Asia Awards.
-            </p>
+            <p>Voted Domestic General Insurer of the Year - India at Insurance Asia Awards.</p>
           </div>
-
           <div>
             <h4>etbfsi-exceller</h4>
-            <p>
-              Received Best Integrated Marketing Campaign of the Year.
-            </p>
+            <p>Received Best Integrated Marketing Campaign of the Year.</p>
           </div>
         </div>
 
@@ -536,10 +607,7 @@ export default function CustomerDashboard() {
 
       <section className="company-info">
         <h3>ICICI LIFE General Insurance Company Limited</h3>
-        <p>
-          ICICI LIFE House, 414, Veer Savarkar Marg, Near Siddhi Vinayak
-          Temple, Prabhadevi, Mumbai - 400025.
-        </p>
+        <p>ICICI LIFE House, 414, Veer Savarkar Marg, Near Siddhi Vinayak Temple, Prabhadevi, Mumbai - 400025.</p>
         <p>Reg. No.115</p>
         <p>Email-customersupport@icicilife.com</p>
         <p>Fax no - 022 61961323</p>
@@ -550,9 +618,7 @@ export default function CustomerDashboard() {
         {Object.entries(footerData).map(([title, items]) => (
           <div key={title}>
             <h3>{title}</h3>
-            {items.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
+            {items.map((item) => <p key={item}>{item}</p>)}
           </div>
         ))}
       </footer>
@@ -572,21 +638,49 @@ export default function CustomerDashboard() {
         </div>
 
         <p>
-          ICICI LIFE General Insurance Company Ltd. is one of the leading
-          private sector general insurance companies in India offering insurance
-          coverage for motor, health, travel, home, student travel and more.
-          Policies can be purchased and renewed online as well.
+          ICICI LIFE General Insurance Company Ltd. is one of the leading private sector general insurance companies in India offering insurance coverage for motor, health, travel, home, student travel and more.
         </p>
 
-        <p>
-          Insurance is the subject matter of solicitation. Please read the sales
-          brochure carefully before concluding a sale.
-        </p>
+        <p>Insurance is the subject matter of solicitation. Please read the sales brochure carefully before concluding a sale.</p>
 
         <h4>Group Companies</h4>
       </section>
 
-      <div className="chat-bubble">ASK RIA<br />LIVE CHAT</div>
+      <button type="button" className="chat-bubble" onClick={() => setChatOpen(true)}>
+        ASK RIA<br />LIVE CHAT
+      </button>
+
+      {chatOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <div>
+              <h3>ASK RIA</h3>
+              <p>AI Insurance Assistant</p>
+            </div>
+            <button type="button" onClick={() => setChatOpen(false)}>×</button>
+          </div>
+
+          <div className="chat-body">
+            {messages.map((msg, index) => (
+              <div key={`${msg.from}-${index}`} className={`chat-msg ${msg.from}`}>
+                {msg.text}
+              </div>
+            ))}
+          </div>
+
+          <div className="chat-input-row">
+            <input
+              value={chatInput}
+              placeholder="Ask about claims, renewals..."
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
+            />
+            <button type="button" onClick={sendMessage}>Send</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
