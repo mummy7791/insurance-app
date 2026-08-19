@@ -109,7 +109,7 @@ const footerData = {
     "Business Insurance",
     "Crop Insurance",
     "Cyber Insurance",
-    "ICICI Bharat Griha Raksha Policy",
+    "Generali Central Life & General Insurance Co. Ltd Bharat Griha Raksha Policy",
   ],
   Services: [
     "Customer Support",
@@ -135,7 +135,7 @@ const footerData = {
     "Disclosure under Stewardship Policy",
     "Policy for Policyholder’s Interest Protection & Grievance Redressal",
     "Advisory to Customer and Channel Partners",
-    "ICICI Lombard Product List",
+    "Generali Central Life & General Insurance Co. Ltd Product List",
     "GRO Details of Active Branches",
     "Motor Third Party claims - Statewise nodal officer details",
     "Whistle Blower Policy",
@@ -414,7 +414,7 @@ export default function CustomerDashboard() {
   const why = whySlides[whyIndex];
 
   return (
-    <div className="icici-page">
+    <div className="Generali Central Life & General Insurance Co. Ltd-page">
       <div className="top-strip">
         <span>☎ 1800 2666 <b>(Available 24 x 7)</b></span>
         <span>📞 Call Back</span>
@@ -746,7 +746,7 @@ export default function CustomerDashboard() {
         <h3>Generali Central General Insurance Company Limited</h3>
         <p>Generali Central House, 414, Veer Savarkar Marg, Near Siddhi Vinayak Temple, Prabhadevi, Mumbai - 400025.</p>
         <p>Reg. No.115</p>
-        <p>Email-customersupport@icicilife.com</p>
+        <p>Email-customersupport@Generali Central Life & General Insurance Co. Ltdlife.com</p>
         <p>Fax no - 022 61961323</p>
         <p>Contact - 1800 2666 (Available 24 x 7)</p>
       </section>
