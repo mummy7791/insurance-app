@@ -452,10 +452,10 @@ export default function CustomerDashboard() {
 
       <header className="main-nav">
         <div className="brand">
-          <img src="/ic_launcher.png" alt="ICICI LIFE" />
+          <img src="/ic_launcher.png" alt="Generali Central" />
           <div>
-            <h2>ICICI LIFE</h2>
-            <p>Insurance</p>
+            <h2>Generali Central</h2>
+            <p>Life & General Insurance Co. Ltd</p>
           </div>
         </div>
 
@@ -516,7 +516,7 @@ export default function CustomerDashboard() {
 
       <div className="ticker">
         <div className="ticker-track">
-          Introducing Service Assure — 30-min roadside assistance promise. Now live with ICICI LIFE insurance. |
+          Introducing Service Assure — 30-min roadside assistance promise. Now live with Generali Central insurance. |
           Settlement of Insurance Disputes through Permanent Lok Adalats | Saksham Niveshak - update your KYC details.
         </div>
       </div>
@@ -647,7 +647,7 @@ export default function CustomerDashboard() {
       </section>
 
       <section className="why-section">
-        <h2>Why choose ICICI LIFE?</h2>
+        <h2>Why choose Generali Central?</h2>
 
         <div className="image-carousel-card">
           <div className="image-carousel-visual">
@@ -743,8 +743,8 @@ export default function CustomerDashboard() {
       </section>
 
       <section className="company-info">
-        <h3>ICICI LIFE General Insurance Company Limited</h3>
-        <p>ICICI LIFE House, 414, Veer Savarkar Marg, Near Siddhi Vinayak Temple, Prabhadevi, Mumbai - 400025.</p>
+        <h3>Generali Central General Insurance Company Limited</h3>
+        <p>Generali Central House, 414, Veer Savarkar Marg, Near Siddhi Vinayak Temple, Prabhadevi, Mumbai - 400025.</p>
         <p>Reg. No.115</p>
         <p>Email-customersupport@icicilife.com</p>
         <p>Fax no - 022 61961323</p>
@@ -775,7 +775,7 @@ export default function CustomerDashboard() {
         </div>
 
         <p>
-          ICICI LIFE General Insurance Company Ltd. is one of the leading private sector general insurance companies in India offering insurance coverage for motor, health, travel, home, student travel and more.
+          Generali Central General Insurance Company Ltd. is one of the leading private sector general insurance companies in India offering insurance coverage for motor, health, travel, home, student travel and more.
         </p>
 
         <p>Insurance is the subject matter of solicitation. Please read the sales brochure carefully before concluding a sale.</p>
