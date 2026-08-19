@@ -86,7 +86,7 @@ export default function Login() {
       >
         <img
           src="ic_launcher.png"
-          alt="ICICI Life Logo"
+          alt="Generali Central Life & General Insurance Co. Ltd Life Logo"
           style={{
             width: 95,
             height: 95,
@@ -108,7 +108,7 @@ export default function Login() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          ICICI LIFE
+          Generali Central Life & General Insurance Co. Ltd LIFE
         </h1>
 
         <h3
