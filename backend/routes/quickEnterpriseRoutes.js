@@ -1,7 +1,6 @@
 const express = require("express");
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
-const XLSX = require("xlsx");
 
 const router = express.Router();
 
@@ -181,42 +180,6 @@ router.put("/kyc/:customerId", auth(["admin", "bm"]), async (req, res) => {
   } catch (error) {
     console.error("KYC error:", error);
     res.status(500).json({ message: "KYC update failed" });
-  }
-});
-
-router.get("/export/customers", auth(), async (req, res) => {
-  try {
-    const customers = await Customer.find().lean();
-
-    const cleanCustomers = customers.map((customer) => ({
-      Name: customer.name || customer.customerName || "",
-      Email: customer.email || "",
-      Phone: customer.phone || customer.mobile || "",
-      Status: customer.status || "",
-      KYC: customer.kycStatus || "",
-      CreatedAt: customer.createdAt || "",
-    }));
-
-    const sheet = XLSX.utils.json_to_sheet(cleanCustomers);
-    const book = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(book, sheet, "Customers");
-
-    const buffer = XLSX.write(book, {
-      type: "buffer",
-      bookType: "xlsx",
-    });
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader("Content-Disposition", "attachment; filename=customers.xlsx");
-
-    res.send(buffer);
-  } catch (error) {
-    console.error("Excel export error:", error);
-    res.status(500).json({ message: "Excel export failed" });
   }
 });
 
