@@ -18,23 +18,54 @@ const STAFF_ROLES = [
   "agent",
 ];
 
-const pickDocumentUpdateFields = (body = {}) => {
-  const allowedFields = [
-    "customerName",
-    "documentType",
-    "status",
-    "remarks",
-  ];
+const DOCUMENT_TYPES = new Set([
+  "Aadhaar",
+  "PAN",
+  "Customer Photo",
+  "Bank Passbook",
+  "Cancelled Cheque",
+  "Income Proof",
+  "Address Proof",
+  "Policy Document",
+]);
 
+const DOCUMENT_STATUSES = new Set([
+  "Pending",
+  "Verified",
+  "Rejected",
+]);
+
+const normalizeText = (value, maxLength) =>
+  typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+
+const pickDocumentUpdateFields = (body = {}) => {
   const payload = {};
 
-  for (const field of allowedFields) {
-    if (Object.prototype.hasOwnProperty.call(body, field)) {
-      payload[field] = body[field];
-    }
+  if (Object.prototype.hasOwnProperty.call(body, "customerName")) {
+    payload.customerName = normalizeText(body.customerName, 120);
   }
 
-  return payload;
+  if (Object.prototype.hasOwnProperty.call(body, "documentType")) {
+    const documentType = normalizeText(body.documentType, 50);
+    if (!DOCUMENT_TYPES.has(documentType)) {
+      return { error: "Invalid document type" };
+    }
+    payload.documentType = documentType;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "status")) {
+    const status = normalizeText(body.status, 20);
+    if (!DOCUMENT_STATUSES.has(status)) {
+      return { error: "Invalid document status" };
+    }
+    payload.status = status;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "remarks")) {
+    payload.remarks = normalizeText(body.remarks, 500);
+  }
+
+  return { payload };
 };
 
 const storage = multer.diskStorage({
@@ -136,7 +167,27 @@ router.post("/", auth(), (req, res, next) => {
       return res.status(400).json({ message: "File content does not match the allowed document type" });
     }
 
-    const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
+    const customerName = normalizeText(req.body.customerName, 120);
+    const policyNumber = normalizeText(req.body.policyNumber, 100);
+    const documentType = normalizeText(req.body.documentType, 50);
+    const remarks = normalizeText(req.body.remarks, 500);
+
+    if (!customerName) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "Customer name is required" });
+    }
+
+    if (!policyNumber) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "Policy number is required" });
+    }
+
+    if (!DOCUMENT_TYPES.has(documentType)) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "Invalid document type" });
+    }
+
+    const policy = await Policy.findOne({ policyNumber });
     if (!policy) {
       await removeUploadedFile(req.file.path);
       return res.status(404).json({ message: "Policy not found" });
@@ -153,14 +204,14 @@ router.post("/", auth(), (req, res, next) => {
     }
 
     const document = await Document.create({
-      customerName: req.body.customerName,
-      policyNumber: req.body.policyNumber,
-      documentType: req.body.documentType,
-      fileName: req.file.originalname,
+      customerName,
+      policyNumber,
+      documentType,
+      fileName: normalizeText(req.file.originalname, 255) || "document",
       filePath: `/uploads/${req.file.filename}`,
       uploadedDate: new Date().toISOString().split("T")[0],
       status: "Pending",
-      remarks: req.body.remarks || "No remarks",
+      remarks: remarks || "No remarks",
       customerId: policy.customerId,
       createdBy: req.user.id,
     });
@@ -239,9 +290,20 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
     const document = await Document.findById(req.params.id);
     if (!document) return res.status(404).json({ message: "Document not found" });
 
-    const payload = pickDocumentUpdateFields(req.body);
+    const update = pickDocumentUpdateFields(req.body);
 
-    Object.assign(document, payload);
+    if (update.error) {
+      return res.status(400).json({ message: update.error });
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(update.payload, "customerName") &&
+      !update.payload.customerName
+    ) {
+      return res.status(400).json({ message: "Customer name cannot be empty" });
+    }
+
+    Object.assign(document, update.payload);
     await document.save();
 
     res.json(document);
