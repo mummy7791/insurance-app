@@ -38,7 +38,7 @@ const sendMail = async ({ to, subject, message }) => {
   });
 };
 
-router.post("/send", auth(), async (req, res) => {
+router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const { to, subject, message, type } = req.body;
 
@@ -203,7 +203,7 @@ router.post("/bulk-leads", auth(["admin", "bm", "unit_manager", "agency_manager"
   }
 });
 
-router.get("/history", auth(), async (req, res) => {
+router.get("/history", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const history = await EmailCampaign.find()
       .sort({ createdAt: -1 })
