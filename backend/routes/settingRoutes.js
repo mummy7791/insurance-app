@@ -4,7 +4,7 @@ const router = express.Router();
 const Setting = require("../models/Setting");
 const auth = require("../middleware/auth");
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     let setting = await Setting.findOne();
 
