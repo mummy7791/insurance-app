@@ -33,6 +33,12 @@ type BuyForm = {
   customerEmail: string;
   customerPhone: string;
   address: string;
+  dateOfBirth: string;
+  panNumber: string;
+  nomineeName: string;
+  nomineeRelation: string;
+  nomineeDateOfBirth: string;
+  proposalConsent: boolean;
 };
 
 const initialForm: BuyForm = {
@@ -40,6 +46,12 @@ const initialForm: BuyForm = {
   customerEmail: "",
   customerPhone: "",
   address: "",
+  dateOfBirth: "",
+  panNumber: "",
+  nomineeName: "",
+  nomineeRelation: "",
+  nomineeDateOfBirth: "",
+  proposalConsent: false,
 };
 
 const getPolicyName = (policy: Policy) => {
@@ -100,7 +112,7 @@ export default function OnlinePolicyPurchase() {
     });
   }, [policies, search]);
 
-  const updateForm = (field: keyof BuyForm, value: string) => {
+  const updateForm = (field: keyof BuyForm, value: string | boolean) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
@@ -130,8 +142,8 @@ export default function OnlinePolicyPurchase() {
   const buyPolicy = async () => {
     if (!selectedPolicy) return;
 
-    if (!form.customerName || !form.customerEmail || !form.customerPhone) {
-      alert("Name, email and phone required");
+    if (!form.customerName || !form.customerEmail || !form.customerPhone || !form.dateOfBirth || !form.panNumber || !form.nomineeName || !form.nomineeRelation || !form.proposalConsent) {
+      alert("Please complete personal, PAN, nominee and consent details");
       return;
     }
 
@@ -158,8 +170,8 @@ export default function OnlinePolicyPurchase() {
 
   return (
     <MainLayout
-      title="Online Policy Purchase"
-      subtitle="Browse policies and submit purchase request"
+      title="Apply for Insurance"
+      subtitle="Complete your proposal details, nominee information and review before submission"
     >
       {loading && <p>Loading policies...</p>}
 
@@ -234,7 +246,7 @@ export default function OnlinePolicyPurchase() {
 
       {selectedPolicy && (
         <div className="section">
-          <h2>Buy Policy: {getPolicyName(selectedPolicy)}</h2>
+          <span className="eyebrow">INSURANCE PROPOSAL</span><h2>Apply: {getPolicyName(selectedPolicy)}</h2><div className="proposal-steps"><span className="active">1 Personal</span><span className="active">2 KYC</span><span className="active">3 Nominee</span><span>4 Review</span></div>
 
           <div className="form-grid">
             <input
@@ -255,12 +267,21 @@ export default function OnlinePolicyPurchase() {
               onChange={(e) => updateForm("customerPhone", e.target.value)}
             />
 
+            <input type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={(e) => updateForm("dateOfBirth", e.target.value)} />
+
+            <input placeholder="PAN Number" maxLength={10} value={form.panNumber} onChange={(e) => updateForm("panNumber", e.target.value.toUpperCase())} />
+
             <input
               placeholder="Address"
               value={form.address}
               onChange={(e) => updateForm("address", e.target.value)}
             />
+
+            <input placeholder="Nominee Full Name" value={form.nomineeName} onChange={(e) => updateForm("nomineeName", e.target.value)} />
+            <select value={form.nomineeRelation} onChange={(e) => updateForm("nomineeRelation", e.target.value)}><option value="">Nominee Relationship</option><option>Spouse</option><option>Father</option><option>Mother</option><option>Son</option><option>Daughter</option><option>Other</option></select>
+            <input type="date" aria-label="Nominee Date of Birth" value={form.nomineeDateOfBirth} onChange={(e) => updateForm("nomineeDateOfBirth", e.target.value)} />
           </div>
+          <label className="proposal-consent"><input type="checkbox" checked={form.proposalConsent} onChange={(e) => updateForm("proposalConsent", e.target.checked)} /> <span>I confirm the information provided is correct and I consent to proposal review and KYC verification.</span></label>
 
           <div style={{ marginTop: 15 }}>
             <button
@@ -268,7 +289,7 @@ export default function OnlinePolicyPurchase() {
               onClick={() => void buyPolicy()}
               disabled={buying}
             >
-              {buying ? "Submitting..." : "Submit Purchase"}
+              {buying ? "Submitting..." : "Review & Submit Proposal"}
             </button>
 
             <button

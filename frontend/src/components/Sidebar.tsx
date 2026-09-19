@@ -8,7 +8,8 @@ type UserRole =
   | "bm"
   | "unit_manager"
   | "agency_manager"
-  | "agent";
+  | "agent"
+  | "customer";
 
 type User = {
   id?: string;
@@ -22,6 +23,19 @@ type NotificationItem = {
   _id: string;
   status: "Unread" | "Read";
 };
+
+const customerMenu = [
+  { name: "My Dashboard", path: "/customer-dashboard", icon: "🏠" },
+  { name: "My Profile", path: "/customer-profile", icon: "👤" },
+  { name: "Insurance Plans", path: "/insurance-plans", icon: "🛡️" },
+  { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒" },
+  { name: "My Policies", path: "/policies", icon: "📑" },
+  { name: "Premium Payment", path: "/payment", icon: "💳" },
+  { name: "Claims", path: "/claims", icon: "🧾" },
+  { name: "Documents / KYC", path: "/documents", icon: "📂" },
+  { name: "Notifications", path: "/notifications", icon: "🔔" },
+  { name: "AI Policy Help", path: "/ai-policy-recommendation", icon: "✨" },
+];
 
 type MenuItem = {
   name: string;
@@ -94,9 +108,10 @@ export default function Sidebar() {
     }
   }, []);
 
-  const role: UserRole = user.role || "agent";
+  const role: UserRole = user.role || "customer";
 
   const filteredMenu = useMemo(() => {
+    if (role === "customer") return customerMenu;
     return menuItems.filter((item) => item.roles.includes(role));
   }, [role]);
 
@@ -160,7 +175,7 @@ export default function Sidebar() {
       localStorage.removeItem("firebaseToken");
       localStorage.removeItem("firebaseUser");
 
-      navigate("/email-otp-login", { replace: true });
+      navigate("/login", { replace: true });
     }
   };
 
@@ -181,11 +196,11 @@ export default function Sidebar() {
 
       <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
         <div className="sidebar-brand">
-          <img src="ic_launcher.png" alt="ICICI Life" className="sidebar-logo" />
+          <img src="/ic_launcher.png" alt="SecureLife Insurance" className="sidebar-logo" />
 
           <div className="sidebar-title">
-            <h2>ICICI</h2>
-            <small>ICICI LIFE</small>
+            <h2>SecureLife</h2>
+            <small>INSURANCE</small>
           </div>
         </div>
 

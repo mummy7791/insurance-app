@@ -39,6 +39,8 @@ export default function Premiums() {
   const [premiums, setPremiums] = useState<Premium[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PremiumForm>(initialForm);
+  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const isCustomer = user.role === "customer" || !user.role;
 
   const loadPremiums = useCallback(async () => {
     try {
@@ -134,8 +136,8 @@ export default function Premiums() {
 
   return (
     <MainLayout
-      title="Premium Collection"
-      subtitle="Track due, paid and overdue premium payments"
+      title={isCustomer ? "Premiums & Payments" : "Premium Collection"}
+      subtitle={isCustomer ? "View upcoming premiums and your payment history" : "Track due, paid and overdue premium payments"}
     >
       <div className="cards">
         <div className="card">
@@ -159,70 +161,22 @@ export default function Premiums() {
         </div>
       </div>
 
+{!isCustomer && (
       <div className="section">
         <h2>Add Premium Due</h2>
-
         <div className="form-grid">
-          <input
-            placeholder="Customer Name"
-            value={form.customerName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, customerName: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Policy Number"
-            value={form.policyNumber}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyNumber: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Amount"
-            value={form.amount}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, amount: e.target.value }))
-            }
-          />
-
-          <input
-            type="date"
-            value={form.dueDate}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, dueDate: e.target.value }))
-            }
-          />
-
-          <select
-            value={form.paymentMode}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                paymentMode: e.target.value as PaymentMode,
-              }))
-            }
-          >
-            <option value="UPI">UPI</option>
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-            <option value="Net Banking">Net Banking</option>
+          <input placeholder="Customer Name" value={form.customerName} onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))} />
+          <input placeholder="Policy Number" value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))} />
+          <input placeholder="Amount" value={form.amount} onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))} />
+          <input type="date" value={form.dueDate} onChange={(e) => setForm((prev) => ({ ...prev, dueDate: e.target.value }))} />
+          <select value={form.paymentMode} onChange={(e) => setForm((prev) => ({ ...prev, paymentMode: e.target.value as PaymentMode }))}>
+            <option value="UPI">UPI</option><option value="Cash">Cash</option><option value="Card">Card</option><option value="Net Banking">Net Banking</option>
           </select>
-
-          <input
-            placeholder="Receipt Number optional"
-            value={form.receiptNumber}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, receiptNumber: e.target.value }))
-            }
-          />
+          <input placeholder="Receipt Number optional" value={form.receiptNumber} onChange={(e) => setForm((prev) => ({ ...prev, receiptNumber: e.target.value }))} />
         </div>
-
-        <button className="btn small-btn" onClick={addPremium}>
-          Add Premium
-        </button>
+        <button className="btn small-btn" onClick={addPremium}>Add Premium</button>
       </div>
+      )}
 
       <div className="section">
         <h2>Premium List</h2>
@@ -247,7 +201,7 @@ export default function Premiums() {
                 <th>Mode</th>
                 <th>Receipt</th>
                 <th>Status</th>
-                <th>Action</th>
+                {!isCustomer && <th>Action</th>}
               </tr>
             </thead>
 
@@ -261,30 +215,12 @@ export default function Premiums() {
                   <td>{premium.paidDate || "-"}</td>
                   <td>{premium.paymentMode}</td>
                   <td>{premium.receiptNumber || "-"}</td>
-                  <td>
-                    <select
-                      className="status-select"
-                      value={premium.status}
-                      onChange={(e) =>
-                        updateStatus(
-                          premium._id,
-                          e.target.value as PremiumStatus
-                        )
-                      }
-                    >
-                      <option value="Due">Due</option>
-                      <option value="Paid">Paid</option>
-                      <option value="Overdue">Overdue</option>
+                  <td>{isCustomer ? <span className={`status-pill ${premium.status === "Overdue" ? "overdue" : premium.status === "Due" ? "due" : "active"}`}>{premium.status}</span> : (
+                    <select className="status-select" value={premium.status} onChange={(e) => updateStatus(premium._id, e.target.value as PremiumStatus)}>
+                      <option value="Due">Due</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option>
                     </select>
-                  </td>
-                  <td>
-                    <button
-                      className="mini-btn danger-btn"
-                      onClick={() => deletePremium(premium._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  )}</td>
+                  {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deletePremium(premium._id)}>Delete</button></td>}
                 </tr>
               ))}
             </tbody>

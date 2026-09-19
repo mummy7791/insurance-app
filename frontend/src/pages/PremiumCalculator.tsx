@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../services/api";
 
 type Category =
@@ -82,7 +83,7 @@ export default function PremiumCalculator() {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg,#b8003c,#10264f)",
+        background: "linear-gradient(135deg,#fff7ed,#fee2e2,#ffffff)",
         padding: 30,
       }}
     >
@@ -96,8 +97,8 @@ export default function PremiumCalculator() {
           boxShadow: "0 20px 60px rgba(0,0,0,.18)",
         }}
       >
-        <h1>🧮 Premium Calculator</h1>
-        <p>LifeSecure CRM public premium calculation</p>
+        <span className="eyebrow">SECURELIFE INSURANCE</span><h1>Premium Calculator</h1>
+        <p>Get an indicative yearly premium based on your age, cover and plan category.</p>
 
         <div className="form-grid">
           <select
@@ -172,6 +173,8 @@ export default function PremiumCalculator() {
                 <h1>₹{result.yearlyPremium}</h1>
               </div>
             </div>
+            <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>
+            <Link className="btn small-btn" to="/login">Sign in to explore plans</Link>
           </div>
         )}
       </div>

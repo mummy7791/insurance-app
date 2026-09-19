@@ -74,6 +74,9 @@ router.post("/verify-payment", auth(), async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
+    const existing = await PlanPurchase.findOne({ transactionId: razorpay_payment_id });
+    if (existing) return res.json({ message: "Payment already verified.", purchase: existing });
+
     const plan = await InsurancePlan.findById(planId);
 
     if (!plan) {
@@ -81,6 +84,10 @@ router.post("/verify-payment", auth(), async (req, res) => {
     }
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+
+    const stamp = Date.now().toString().slice(-8);
+    const policyNumber = `SLI-${new Date().getFullYear()}-${stamp}`;
+    const receiptNumber = `RCPT-${stamp}`;
 
     const purchase = await PlanPurchase.create({
       customerId: req.user.id,
@@ -94,6 +101,9 @@ router.post("/verify-payment", auth(), async (req, res) => {
       policyStatus: "Active",
       paymentMethod: "Online",
       transactionId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+      policyNumber,
+      receiptNumber,
       startDate: new Date(),
       endDate: new Date(
         new Date().setFullYear(
@@ -105,6 +115,7 @@ router.post("/verify-payment", auth(), async (req, res) => {
     res.status(201).json({
       message: "Payment successful. Plan activated.",
       purchase,
+      confirmation: { policyNumber, receiptNumber, transactionId: razorpay_payment_id },
     });
   } catch (error) {
     console.error("Verify payment error:", error);

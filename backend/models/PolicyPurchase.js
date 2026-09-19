@@ -71,10 +71,13 @@ const policyPurchaseSchema = new mongoose.Schema(
       required: true,
     },
 
-    address: {
-      type: String,
-      default: "",
-    },
+    address: { type: String, default: "" },
+    dateOfBirth: { type: String, default: "" },
+    panNumber: { type: String, default: "" },
+    nomineeName: { type: String, default: "" },
+    nomineeRelation: { type: String, default: "" },
+    nomineeDateOfBirth: { type: String, default: "" },
+    proposalConsent: { type: Boolean, default: false },
 
     status: {
       type: String,

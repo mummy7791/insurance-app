@@ -66,6 +66,7 @@ export default function Payment() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -134,7 +135,7 @@ export default function Payment() {
       key: order.razorpayKey,
       amount: order.amount * 100,
       currency: order.currency,
-      name: "LifeSecure CRM",
+      name: "SecureLife Insurance",
       description: order.plan.planName,
       order_id: order.orderId,
       prefill: {
@@ -143,7 +144,7 @@ export default function Payment() {
         contact: user.phone || "",
       },
       theme: {
-        color: "#2563eb",
+        color: "#d71920",
       },
       handler: (response) => {
         void verifyPayment(response);
@@ -161,15 +162,14 @@ export default function Payment() {
     try {
       setPaying(true);
 
-      await api.post("/plan-purchases/verify-payment", {
+      const verified = await api.post<{ confirmation: { policyNumber: string; receiptNumber: string; transactionId: string } }>("/plan-purchases/verify-payment", {
         planId,
         razorpay_order_id: response.razorpay_order_id,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_signature: response.razorpay_signature,
       });
 
-      alert("Payment successful. Plan activated.");
-      navigate("/customer-dashboard");
+      setConfirmation(verified.data.confirmation);
     } catch (error: unknown) {
       alert(getErrorMessage(error, "Payment verification failed"));
     } finally {
@@ -182,6 +182,20 @@ export default function Payment() {
       title="Online Payment"
       subtitle="Complete payment to activate your insurance plan"
     >
+      {confirmation ? (
+        <div className="section payment-success">
+          <div className="success-mark">✓</div>
+          <span className="eyebrow">PAYMENT VERIFIED</span>
+          <h2>Your policy is active</h2>
+          <p>Your payment was securely verified and your SecureLife policy reference has been generated.</p>
+          <div className="confirmation-grid">
+            <div><span>Policy Number</span><strong>{confirmation.policyNumber}</strong></div>
+            <div><span>Receipt Number</span><strong>{confirmation.receiptNumber}</strong></div>
+            <div><span>Transaction ID</span><strong>{confirmation.transactionId}</strong></div>
+          </div>
+          <button className="btn small-btn" onClick={() => navigate("/customer-dashboard")}>Go to My Dashboard</button>
+        </div>
+      ) : (
       <div className="section">
         {loading ? (
           <p>Creating payment order...</p>
@@ -229,6 +243,7 @@ export default function Payment() {
           </>
         )}
       </div>
+      )}
     </MainLayout>
   );
 }

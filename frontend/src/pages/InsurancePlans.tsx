@@ -38,18 +38,6 @@ export default function InsurancePlans() {
     return Array.isArray(res.data) ? res.data : [];
   }, []);
 
-  const loadPlans = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await fetchPlans();
-      setPlans(data);
-    } catch (error: unknown) {
-      alert(getErrorMessage(error, "Plans load failed"));
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchPlans]);
-
   useEffect(() => {
     let active = true;
 
@@ -74,16 +62,6 @@ export default function InsurancePlans() {
     };
   }, [fetchPlans]);
 
-  const seedPlans = async () => {
-    try {
-      await api.post("/insurance-plans/seed-default");
-      alert("Plans created");
-      void loadPlans();
-    } catch (error: unknown) {
-      alert(getErrorMessage(error, "Only admin can create plans"));
-    }
-  };
-
   const buyPlan = (planId: string) => {
     const token = localStorage.getItem("insuranceToken");
 
@@ -96,7 +74,7 @@ export default function InsurancePlans() {
     setBuyingId(planId);
 
     window.setTimeout(() => {
-      navigate(`/payment/${planId}`);
+      navigate(`/online-policy-purchase?plan=${planId}`);
       setBuyingId("");
     }, 300);
   };
@@ -109,41 +87,36 @@ export default function InsurancePlans() {
   return (
     <MainLayout
       title="Insurance Plans"
-      subtitle="Life, Health and Education Returns Plans"
+      subtitle="Compare protection plans, benefits, coverage and premiums"
     >
-      <div className="section">
-        <button className="btn small-btn" onClick={() => void seedPlans()}>
-          Create Default Plans
-        </button>
-      </div>
+
+      <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>
 
       <div className="section">
-        <h2>Available Plans</h2>
+        <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
           <p>Loading...</p>
         ) : plans.length === 0 ? (
           <p>No plans found.</p>
         ) : (
-          <div className="lead-grid">
+          <div className="insurance-plan-grid">
             {plans.map((plan) => {
               const premium = plan.yearlyPremium || plan.yearlyAmount || 0;
 
               return (
-                <div className="lead-card" key={plan._id}>
+                <div className="insurance-plan-card" key={plan._id}><span className="plan-category">{plan.category}</span>
                   <h3>{plan.planName}</h3>
 
-                  <p>
-                    <b>Category:</b> {plan.category}
-                  </p>
+                  
 
                   <p>
-                    <b>Coverage:</b> ₹
+                    <b>Life / Benefit Cover:</b> ₹
                     {(plan.coverageAmount || 0).toLocaleString("en-IN")}
                   </p>
 
                   <p>
-                    <b>Yearly Premium:</b> ₹
+                    <b>Premium from:</b> ₹
                     {premium.toLocaleString("en-IN")}
                   </p>
 
@@ -170,7 +143,7 @@ export default function InsurancePlans() {
                     disabled={buyingId === plan._id}
                     style={{ marginTop: 12 }}
                   >
-                    {buyingId === plan._id ? "Opening Payment..." : "Buy Plan"}
+                    {buyingId === plan._id ? "Opening..." : "View & Apply"}
                   </button>
                 </div>
               );

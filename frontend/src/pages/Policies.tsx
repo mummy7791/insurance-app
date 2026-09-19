@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
+import jsPDF from "jspdf";
 
 type Policy = {
   _id: string;
@@ -13,6 +14,8 @@ type Policy = {
   paymentMode: "monthly" | "quarterly" | "half_yearly" | "yearly";
   status: "pending" | "active" | "rejected" | "closed" | "expired";
 };
+
+type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; };
 
 type PolicyForm = {
   customerName: string;
@@ -37,16 +40,20 @@ const initialForm: PolicyForm = {
 export default function Policies() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(false);
+  const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
+  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const isCustomer = user.role === "customer" || !user.role;
 
   const loadPolicies = useCallback(async () => {
     try {
       setTimeout(() => setLoading(true), 0);
 
-      const res = await api.get<Policy[]>("/policies");
+      const [res, purchaseRes] = await Promise.all([api.get<Policy[]>("/policies"), isCustomer ? api.get<PurchasedPlan[]>("/plan-purchases/my-plans") : Promise.resolve({ data: [] as PurchasedPlan[] })]);
 
       setTimeout(() => {
         setPolicies(res.data);
+        setPurchasedPlans(purchaseRes.data);
         setLoading(false);
       }, 0);
     } catch (error) {
@@ -59,6 +66,17 @@ export default function Policies() {
   useEffect(() => {
     void loadPolicies();
   }, [loadPolicies]);
+
+  const downloadCertificate = (plan: PurchasedPlan) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
+    doc.setFontSize(13); doc.text("Policy Certificate & Payment Receipt", 20, 36);
+    doc.setFontSize(11);
+    const rows = [`Policy Number: ${plan.policyNumber || "Pending"}`, `Plan: ${plan.planName}`, `Category: ${plan.category}`, `Coverage: INR ${Number(plan.coverageAmount || 0).toLocaleString("en-IN")}`, `Yearly Premium: INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`, `Policy Status: ${plan.policyStatus}`, `Payment Status: ${plan.paymentStatus}`, `Receipt Number: ${plan.receiptNumber || "N/A"}`, `Transaction ID: ${plan.transactionId || "N/A"}`, `Start Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"}`, `Valid Until: ${plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}`];
+    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
+    doc.setFontSize(9); doc.text("This digitally generated document records the policy and verified payment details available in your SecureLife account.", 20, 160, { maxWidth: 170 });
+    doc.save(`${plan.policyNumber || "SecureLife-Policy"}.pdf`);
+  };
 
   const addPolicy = async () => {
     if (!form.policyName || !form.policyNumber || !form.premiumAmount) {
@@ -117,83 +135,30 @@ export default function Policies() {
   return (
     <MainLayout
       title="Policies"
-      subtitle="Create and manage insurance policies"
+      subtitle={isCustomer ? "View your policy coverage, premium and current status" : "Create and manage insurance policies"}
     >
+{!isCustomer && (
       <div className="section">
         <h2>Add New Policy</h2>
-
         <div className="form-grid">
-          <input
-            placeholder="Customer Name"
-            value={form.customerName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, customerName: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Customer Phone"
-            value={form.customerPhone}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, customerPhone: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Policy Name"
-            value={form.policyName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyName: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Policy Number"
-            value={form.policyNumber}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyNumber: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Premium Amount"
-            value={form.premiumAmount}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, premiumAmount: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Sum Assured"
-            value={form.sumAssured}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, sumAssured: e.target.value }))
-            }
-          />
-
-          <select
-            value={form.paymentMode}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                paymentMode: e.target.value as PolicyForm["paymentMode"],
-              }))
-            }
-          >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="half_yearly">Half Yearly</option>
-            <option value="yearly">Yearly</option>
+          <input placeholder="Customer Name" value={form.customerName} onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))} />
+          <input placeholder="Customer Phone" value={form.customerPhone} onChange={(e) => setForm((prev) => ({ ...prev, customerPhone: e.target.value }))} />
+          <input placeholder="Policy Name" value={form.policyName} onChange={(e) => setForm((prev) => ({ ...prev, policyName: e.target.value }))} />
+          <input placeholder="Policy Number" value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))} />
+          <input placeholder="Premium Amount" value={form.premiumAmount} onChange={(e) => setForm((prev) => ({ ...prev, premiumAmount: e.target.value }))} />
+          <input placeholder="Sum Assured" value={form.sumAssured} onChange={(e) => setForm((prev) => ({ ...prev, sumAssured: e.target.value }))} />
+          <select value={form.paymentMode} onChange={(e) => setForm((prev) => ({ ...prev, paymentMode: e.target.value as PolicyForm["paymentMode"] }))}>
+            <option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="half_yearly">Half Yearly</option><option value="yearly">Yearly</option>
           </select>
         </div>
-
-        <button className="btn small-btn" onClick={addPolicy}>
-          Add Policy
-        </button>
+        <button className="btn small-btn" onClick={addPolicy}>Add Policy</button>
       </div>
+      )}
+
+      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p><span className="status-pill active">{plan.policyStatus}</span><button className="btn small-btn" style={{marginTop:16}} onClick={() => downloadCertificate(plan)}>Download Certificate / Receipt</button></div>)}</div></div>}
 
       <div className="section">
-        <h2>Policy List</h2>
+        <h2>{isCustomer ? "Other Assigned Policies" : "Policy List"}</h2>
 
         <button className="mini-btn" onClick={loadPolicies}>
           Refresh
@@ -217,26 +182,16 @@ export default function Policies() {
 
                 <span className="badge">{policy.status}</span>
 
-                <select
-                  className="status-select"
-                  value={policy.status}
-                  onChange={(e) =>
-                    updateStatus(policy._id, e.target.value as Policy["status"])
-                  }
-                >
-                  <option value="pending">Pending</option>
-                  <option value="active">Active</option>
-                  <option value="expired">Expired</option>
-                  <option value="closed">Closed</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-
-                <button
-                  className="mini-btn danger-btn"
-                  onClick={() => deletePolicy(policy._id)}
-                >
-                  Delete
-                </button>
+{isCustomer ? (
+                  <span className="status-pill active">{policy.status}</span>
+                ) : (
+                  <>
+                    <select className="status-select" value={policy.status} onChange={(e) => updateStatus(policy._id, e.target.value as Policy["status"])}>
+                      <option value="pending">Pending</option><option value="active">Active</option><option value="expired">Expired</option><option value="closed">Closed</option><option value="rejected">Rejected</option>
+                    </select>
+                    <button className="mini-btn danger-btn" onClick={() => deletePolicy(policy._id)}>Delete</button>
+                  </>
+                )}
               </div>
             ))}
           </div>

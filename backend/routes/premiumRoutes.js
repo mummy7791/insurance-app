@@ -2,7 +2,7 @@ const router = require("express").Router();
 const Premium = require("../models/Premium");
 const auth = require("../middleware/auth");
 
-router.post("/", auth(), async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const premium = await Premium.create({
       ...req.body,
@@ -18,7 +18,8 @@ router.post("/", auth(), async (req, res) => {
 
 router.get("/", auth(), async (req, res) => {
   try {
-    const premiums = await Premium.find().sort({ createdAt: -1 });
+    const query = req.user.role === "customer" ? { createdBy: req.user.id } : {};
+    const premiums = await Premium.find(query).sort({ createdAt: -1 });
     res.json(premiums);
   } catch (error) {
     console.error("Premiums fetch error:", error);
@@ -26,7 +27,7 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(), async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const premium = await Premium.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -39,7 +40,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     await Premium.findByIdAndDelete(req.params.id);
     res.json({ message: "Premium deleted" });

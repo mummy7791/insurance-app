@@ -85,7 +85,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -103,7 +103,7 @@ function App() {
         <Route
           path="/leads"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Leads />
             </ProtectedRoute>
           }
@@ -112,7 +112,7 @@ function App() {
         <Route
           path="/customers"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Customers />
             </ProtectedRoute>
           }
@@ -148,7 +148,7 @@ function App() {
         <Route
           path="/commission"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Commission />
             </ProtectedRoute>
           }
@@ -175,7 +175,7 @@ function App() {
         <Route
           path="/calendar"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Calendar />
             </ProtectedRoute>
           }
@@ -184,7 +184,7 @@ function App() {
         <Route
           path="/gps-tracking"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <GpsTracking />
             </ProtectedRoute>
           }
@@ -321,27 +321,27 @@ function App() {
           }
         />
 
-        <Route path="/ai-followups" element={<AIFollowup />} />
-        <Route path="/ai-performance" element={<AIPerformance />} />
-        <Route path="/ai-lead-scoring" element={<AILeadScoring />} />
-        <Route path="/ai-sales-prediction" element={<AISalesPrediction />} />
-        <Route path="/customer-portal" element={<CustomerPortal />} />
-        <Route path="/email-marketing" element={<EmailMarketing />} />
-        <Route path="/policy-recommendation-ai" element={<PolicyRecommendationAI />} />
-        <Route path="/ceo-dashboard" element={<CEODashboard />} />
-        <Route path="/ocr-verification" element={<OCRVerification />} />
-        <Route path="/enterprise-tools" element={<EnterpriseTools />} />
-        <Route path="/file-manager" element={<FileManager />} />
-        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-        <Route path="/online-policy-purchase" element={<OnlinePolicyPurchase />} />
-        <Route path="/customer-profile" element={<CustomerProfile />} />
-        <Route path="/insurance-plans" element={<InsurancePlans />} />
-        <Route path="/admin-create-staff" element={<AdminCreateStaff />} />
-        <Route path="/admin-insurance-plans" element={<AdminInsurancePlans />} />
-        <Route path="/ai-policy-recommendation" element={<AiPolicyRecommendation />} />
-        <Route path="/payment/:planId" element={<Payment />} />
-        <Route path="/policy-purchases" element={<PolicyPurchases />} />
-        <Route path="/assign-policy" element={<AssignPolicy />} />
+        <Route path="/ai-followups" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AIFollowup /></ProtectedRoute>} />
+        <Route path="/ai-performance" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AIPerformance /></ProtectedRoute>} />
+        <Route path="/ai-lead-scoring" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AILeadScoring /></ProtectedRoute>} />
+        <Route path="/ai-sales-prediction" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AISalesPrediction /></ProtectedRoute>} />
+        <Route path="/customer-portal" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerPortal /></ProtectedRoute>} />
+        <Route path="/email-marketing" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><EmailMarketing /></ProtectedRoute>} />
+        <Route path="/policy-recommendation-ai" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><PolicyRecommendationAI /></ProtectedRoute>} />
+        <Route path="/ceo-dashboard" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><CEODashboard /></ProtectedRoute>} />
+        <Route path="/ocr-verification" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><OCRVerification /></ProtectedRoute>} />
+        <Route path="/enterprise-tools" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><EnterpriseTools /></ProtectedRoute>} />
+        <Route path="/file-manager" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><FileManager /></ProtectedRoute>} />
+        <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
+        <Route path="/online-policy-purchase" element={<ProtectedRoute allowedRoles={["customer"]}><OnlinePolicyPurchase /></ProtectedRoute>} />
+        <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
+        <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
+        <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminCreateStaff /></ProtectedRoute>} />
+        <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminInsurancePlans /></ProtectedRoute>} />
+        <Route path="/ai-policy-recommendation" element={<ProtectedRoute allowedRoles={["customer"]}><AiPolicyRecommendation /></ProtectedRoute>} />
+        <Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
+        <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><PolicyPurchases /></ProtectedRoute>} />
+        <Route path="/assign-policy" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AssignPolicy /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
