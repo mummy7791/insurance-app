@@ -12,7 +12,7 @@ type CustomerProfileData = {
   photo?: string;
 };
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://insurance-app-7vkn.onrender.com";
 
 export default function CustomerProfile() {
   const [profile, setProfile] = useState<CustomerProfileData>({});
