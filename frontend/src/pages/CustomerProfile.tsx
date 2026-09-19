@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
 
@@ -12,7 +12,6 @@ type CustomerProfileData = {
   photo?: string;
 };
 
-const API_BASE = "https://insurance-app-7vkn.onrender.com";
 
 export default function CustomerProfile() {
   const [profile, setProfile] = useState<CustomerProfileData>({});
@@ -20,21 +19,69 @@ export default function CustomerProfile() {
   const [saving, setSaving] = useState(false);
 
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const photoUrlRef = useRef("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  const loadProfilePhoto = useCallback(async () => {
+    try {
+      const res = await api.get<Blob>("/customer-profile/photo", {
+        responseType: "blob",
+      });
+
+      const nextUrl = URL.createObjectURL(res.data);
+
+      if (photoUrlRef.current) {
+        URL.revokeObjectURL(photoUrlRef.current);
+      }
+
+      photoUrlRef.current = nextUrl;
+      setPhotoUrl(nextUrl);
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined;
+
+      if (status !== 404) {
+        console.error("Profile photo load error:", error);
+      }
+
+      if (photoUrlRef.current) {
+        URL.revokeObjectURL(photoUrlRef.current);
+        photoUrlRef.current = "";
+      }
+
+      setPhotoUrl("");
+    }
+  }, []);
 
   const loadProfile = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get<CustomerProfileData>("/customer-profile");
-      setProfile(res.data || {});
+      const nextProfile = res.data || {};
+      setProfile(nextProfile);
+
+      if (nextProfile.photo) {
+        await loadProfilePhoto();
+      } else {
+        if (photoUrlRef.current) {
+          URL.revokeObjectURL(photoUrlRef.current);
+          photoUrlRef.current = "";
+        }
+        setPhotoUrl("");
+      }
     } catch (error) {
       console.error("Profile load error:", error);
       alert("Profile load failed");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadProfilePhoto]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -43,6 +90,15 @@ export default function CustomerProfile() {
 
     return () => window.clearTimeout(timer);
   }, [loadProfile]);
+
+  useEffect(() => {
+    return () => {
+      if (photoUrlRef.current) {
+        URL.revokeObjectURL(photoUrlRef.current);
+        photoUrlRef.current = "";
+      }
+    };
+  }, []);
 
   const updateProfile = async () => {
     try {
@@ -85,6 +141,7 @@ export default function CustomerProfile() {
 
       setProfile(res.data);
       setPhoto(null);
+      await loadProfilePhoto();
       alert("Photo uploaded");
     } catch (error) {
       console.error("Photo upload error:", error);
@@ -123,9 +180,9 @@ export default function CustomerProfile() {
       <div className="cards">
         <div className="card">
           <h3>Profile</h3>
-          {profile.photo ? (
+          {profile.photo && photoUrl ? (
             <img
-              src={`${API_BASE}${profile.photo}`}
+              src={photoUrl}
               alt="Profile"
               style={{
                 width: 90,

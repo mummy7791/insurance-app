@@ -220,6 +220,59 @@ router.put("/", auth(["customer"]), async (req, res) => {
   }
 });
 
+router.get("/photo", auth(["customer"]), async (req, res) => {
+  try {
+    const { customer } = await findCustomer(req);
+
+    if (!customer?.photo) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    const prefix = "/uploads/profiles/";
+
+    if (!customer.photo.startsWith(prefix)) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    const fileName = path.basename(customer.photo);
+    const filePath = path.join(uploadDir, fileName);
+    const resolvedUploadDir = path.resolve(uploadDir);
+    const resolvedFilePath = path.resolve(filePath);
+
+    if (
+      path.dirname(resolvedFilePath) !== resolvedUploadDir ||
+      !fs.existsSync(resolvedFilePath)
+    ) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    const extension = path.extname(fileName).toLowerCase();
+    const contentTypes = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".webp": "image/webp",
+    };
+
+    const contentType = contentTypes[extension];
+
+    if (!contentType) {
+      return res.status(404).json({ message: "Profile photo not found" });
+    }
+
+    res.set({
+      "Content-Type": contentType,
+      "Cache-Control": "private, max-age=300",
+      "X-Content-Type-Options": "nosniff",
+    });
+
+    return res.sendFile(resolvedFilePath);
+  } catch (error) {
+    console.error("Profile photo fetch error:", error);
+    return res.status(500).json({ message: "Profile photo fetch failed" });
+  }
+});
+
 const profilePhotoUpload = (req, res, next) => {
   upload.single("photo")(req, res, (error) => {
     if (!error) return next();
