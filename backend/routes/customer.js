@@ -12,6 +12,42 @@ const STAFF_ROLES = [
   "agent",
 ];
 
+const toCustomerSafeResponse = (customer) => {
+  if (!customer) return null;
+
+  const data =
+    typeof customer.toObject === "function"
+      ? customer.toObject()
+      : customer;
+
+  return {
+    _id: data._id,
+    name: data.name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+    photo: data.photo || "",
+    dob: data.dob || "",
+    gender: data.gender || "",
+    address: data.address || "",
+    nominee: data.nominee || "",
+    nomineeRelation: data.nomineeRelation || "",
+    planName: data.planName || "",
+    policyNo: data.policyNo || "",
+    policyType: data.policyType || "",
+    status: data.status || "",
+    kycStatus: data.kycStatus || "Pending",
+    premium: data.premium || "",
+    coverage: data.coverage || "",
+    startDate: data.startDate || "",
+    expiryDate: data.expiryDate || "",
+    renewalDate: data.renewalDate || "",
+    members: Array.isArray(data.members) ? data.members : [],
+    lastPayment: data.lastPayment || "",
+    nextPremium: data.nextPremium || "",
+    paymentMode: data.paymentMode || "",
+  };
+};
+
 /* CUSTOMER PROFILE BY EMAIL */
 router.get("/me/:email", auth(), async (req, res) => {
   try {
@@ -25,6 +61,10 @@ router.get("/me/:email", auth(), async (req, res) => {
 
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
+    }
+
+    if (req.user.role === "customer") {
+      return res.json(toCustomerSafeResponse(customer));
     }
 
     return res.json(customer);
