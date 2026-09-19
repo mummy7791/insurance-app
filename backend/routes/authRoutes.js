@@ -46,43 +46,6 @@ router.get("/test", (req, res) => {
   res.json({ message: "Auth route working" });
 });
 
-router.post("/create-admin", async (req, res) => {
-  try {
-    const email = "admin@gmail.com";
-    const password = "mummy@7791";
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const admin = await User.findOneAndUpdate(
-      { email },
-      {
-        name: "Super Admin",
-        email,
-        password: hashedPassword,
-        role: "admin",
-        status: "active",
-        isEmailVerified: true,
-        permissions: getPermissionsByRole("admin"),
-      },
-      { upsert: true, new: true }
-    );
-
-    res.json({
-      message: "Admin ready successfully",
-      email,
-      password,
-      user: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
-      },
-    });
-  } catch (error) {
-    console.error("Create admin error:", error);
-    res.status(500).json({ message: "Create admin failed" });
-  }
-});
-
 router.post("/admin-login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -114,6 +77,7 @@ router.post("/admin-login", async (req, res) => {
 });
 
 router.post("/create-staff", async (req, res) => {
+  // Staff creation is handled by protected staff-management routes in production.
   try {
     const { name, email, password, role, branch, phone } = req.body;
     const allowedRoles = ["bm", "unit_manager", "agency_manager", "advisor", "agent"];
