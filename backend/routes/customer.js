@@ -1,11 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const Customer = require("../models/Customer");
+const auth = require("../middleware/auth");
+
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "advisor",
+  "agent",
+];
 
 /* CUSTOMER PROFILE BY EMAIL */
-router.get("/me/:email", async (req, res) => {
+router.get("/me/:email", auth(), async (req, res) => {
   try {
     const email = String(req.params.email || "").trim().toLowerCase();
+
+    if (req.user.role === "customer" && req.user.email !== email) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     const customer = await Customer.findOne({ email });
 
@@ -21,7 +35,7 @@ router.get("/me/:email", async (req, res) => {
 });
 
 /* ADMIN CREATE / ASSIGN CUSTOMER POLICY */
-router.post("/assign-policy", async (req, res) => {
+router.post("/assign-policy", auth(STAFF_ROLES), async (req, res) => {
   try {
     const data = req.body || {};
 
@@ -32,16 +46,39 @@ router.post("/assign-policy", async (req, res) => {
     const email = String(data.email).trim().toLowerCase();
 
     const payload = {
-      ...data,
       email,
       name: data.name || "Customer",
+      phone: data.phone || "",
+      photo: data.photo || "",
+      dob: data.dob || "",
+      gender: data.gender || "",
+      address: data.address || "",
+      aadhaar: data.aadhaar || "",
+      pan: data.pan || "",
+      nominee: data.nominee || "",
+      nomineeRelation: data.nomineeRelation || "",
+      advisor: data.advisor || "",
+      agencyManager: data.agencyManager || "",
+      branch: data.branch || "",
+      planName: data.planName || "",
+      policyNo: data.policyNo || "",
+      policyType: data.policyType || "",
       status: data.status || "ACTIVE",
+      premium: data.premium || "",
+      coverage: data.coverage || "",
+      startDate: data.startDate || "",
+      expiryDate: data.expiryDate || "",
+      renewalDate: data.renewalDate || "",
       members: Array.isArray(data.members)
         ? data.members
         : String(data.members || "")
             .split(",")
             .map((m) => m.trim())
             .filter(Boolean),
+      lastPayment: data.lastPayment || "",
+      nextPremium: data.nextPremium || "",
+      paymentMode: data.paymentMode || "",
+      transactionId: data.transactionId || "",
     };
 
     const customer = await Customer.findOneAndUpdate(
@@ -69,7 +106,7 @@ router.post("/assign-policy", async (req, res) => {
 });
 
 /* ADMIN GET ALL CUSTOMERS */
-router.get("/", async (req, res) => {
+router.get("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const customers = await Customer.find().sort({ createdAt: -1 });
     return res.json(customers);
