@@ -9,7 +9,7 @@ const Employee = require("../models/Employee");
 const Commission = require("../models/Commission");
 const auth = require("../middleware/auth");
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const [
       totalCustomers,
