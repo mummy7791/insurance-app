@@ -38,6 +38,8 @@ export default function Policies() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PolicyForm>(initialForm);
+  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const isCustomer = user.role === "customer" || !user.role;
 
   const loadPolicies = useCallback(async () => {
     try {
@@ -117,80 +119,25 @@ export default function Policies() {
   return (
     <MainLayout
       title="Policies"
-      subtitle="Create and manage insurance policies"
+      subtitle={isCustomer ? "View your policy coverage, premium and current status" : "Create and manage insurance policies"}
     >
+{!isCustomer && (
       <div className="section">
         <h2>Add New Policy</h2>
-
         <div className="form-grid">
-          <input
-            placeholder="Customer Name"
-            value={form.customerName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, customerName: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Customer Phone"
-            value={form.customerPhone}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, customerPhone: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Policy Name"
-            value={form.policyName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyName: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Policy Number"
-            value={form.policyNumber}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyNumber: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Premium Amount"
-            value={form.premiumAmount}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, premiumAmount: e.target.value }))
-            }
-          />
-
-          <input
-            placeholder="Sum Assured"
-            value={form.sumAssured}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, sumAssured: e.target.value }))
-            }
-          />
-
-          <select
-            value={form.paymentMode}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                paymentMode: e.target.value as PolicyForm["paymentMode"],
-              }))
-            }
-          >
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="half_yearly">Half Yearly</option>
-            <option value="yearly">Yearly</option>
+          <input placeholder="Customer Name" value={form.customerName} onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))} />
+          <input placeholder="Customer Phone" value={form.customerPhone} onChange={(e) => setForm((prev) => ({ ...prev, customerPhone: e.target.value }))} />
+          <input placeholder="Policy Name" value={form.policyName} onChange={(e) => setForm((prev) => ({ ...prev, policyName: e.target.value }))} />
+          <input placeholder="Policy Number" value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))} />
+          <input placeholder="Premium Amount" value={form.premiumAmount} onChange={(e) => setForm((prev) => ({ ...prev, premiumAmount: e.target.value }))} />
+          <input placeholder="Sum Assured" value={form.sumAssured} onChange={(e) => setForm((prev) => ({ ...prev, sumAssured: e.target.value }))} />
+          <select value={form.paymentMode} onChange={(e) => setForm((prev) => ({ ...prev, paymentMode: e.target.value as PolicyForm["paymentMode"] }))}>
+            <option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="half_yearly">Half Yearly</option><option value="yearly">Yearly</option>
           </select>
         </div>
-
-        <button className="btn small-btn" onClick={addPolicy}>
-          Add Policy
-        </button>
+        <button className="btn small-btn" onClick={addPolicy}>Add Policy</button>
       </div>
+      )}
 
       <div className="section">
         <h2>Policy List</h2>
@@ -217,26 +164,16 @@ export default function Policies() {
 
                 <span className="badge">{policy.status}</span>
 
-                <select
-                  className="status-select"
-                  value={policy.status}
-                  onChange={(e) =>
-                    updateStatus(policy._id, e.target.value as Policy["status"])
-                  }
-                >
-                  <option value="pending">Pending</option>
-                  <option value="active">Active</option>
-                  <option value="expired">Expired</option>
-                  <option value="closed">Closed</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-
-                <button
-                  className="mini-btn danger-btn"
-                  onClick={() => deletePolicy(policy._id)}
-                >
-                  Delete
-                </button>
+{isCustomer ? (
+                  <span className="status-pill active">{policy.status}</span>
+                ) : (
+                  <>
+                    <select className="status-select" value={policy.status} onChange={(e) => updateStatus(policy._id, e.target.value as Policy["status"])}>
+                      <option value="pending">Pending</option><option value="active">Active</option><option value="expired">Expired</option><option value="closed">Closed</option><option value="rejected">Rejected</option>
+                    </select>
+                    <button className="mini-btn danger-btn" onClick={() => deletePolicy(policy._id)}>Delete</button>
+                  </>
+                )}
               </div>
             ))}
           </div>
