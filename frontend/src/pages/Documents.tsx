@@ -120,8 +120,18 @@ export default function Documents() {
     }
   };
 
-  const getFileUrl = (filePath: string) => {
-    return `https://insurance-app-7vkn.onrender.com${filePath}`;
+  const viewDocument = async (doc: DocumentItem) => {
+    try {
+      const res = await api.get(`/documents/${doc._id}/file`, {
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(res.data);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) {
+      console.error("Document view error:", error);
+      alert("Document access failed");
+    }
   };
 
   return (
@@ -249,13 +259,13 @@ export default function Documents() {
                   <td>{doc.policyNumber}</td>
                   <td>{doc.documentType}</td>
                   <td>
-                    <a
-                      href={getFileUrl(doc.filePath)}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      className="mini-btn"
+                      onClick={() => void viewDocument(doc)}
                     >
                       {doc.fileName}
-                    </a>
+                    </button>
                   </td>
                   <td>{doc.uploadedDate}</td>
                   <td>{isCustomer ? <span className={`status-pill ${doc.status === "Verified" ? "active" : doc.status === "Rejected" ? "overdue" : "due"}`}>{doc.status}</span> : (
