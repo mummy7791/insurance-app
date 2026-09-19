@@ -24,21 +24,28 @@ router.get("/test", (req, res) => {
     message: "Plan Purchase API Working",
   });
 });
-router.post("/create-order/:planId", auth(), async (req, res) => {
+router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
-    if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can purchase plans" });
-    }
     const plan = await InsurancePlan.findById(req.params.planId);
 
     if (!plan) {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+    if (!["Approved", "Active"].includes(plan.status)) {
+      return res.status(400).json({ message: "This plan is not available for purchase" });
+    }
 
-    if (!amount) {
-      return res.status(400).json({ message: "Plan premium missing" });
+    const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+    const amountPaise = Math.round(amount * 100);
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      !Number.isSafeInteger(amountPaise) ||
+      amountPaise <= 0
+    ) {
+      return res.status(400).json({ message: "Plan premium is invalid" });
     }
 
     const staleBefore = new Date(Date.now() - 30 * 60 * 1000);
@@ -53,7 +60,7 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
     );
 
     const order = await razorpay.orders.create({
-      amount: amount * 100,
+      amount: amountPaise,
       currency: "INR",
       receipt: makeReference("PLAN"),
     });
@@ -92,11 +99,8 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
   }
 });
 
-router.post("/verify-payment", auth(), async (req, res) => {
+router.post("/verify-payment", auth(["customer"]), async (req, res) => {
   try {
-    if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can verify plan payments" });
-    }
     const { planId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
 
@@ -146,11 +150,22 @@ router.post("/verify-payment", auth(), async (req, res) => {
     if (!plan) return res.status(404).json({ message: "Plan not found" });
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    if (Number(purchase.yearlyPremium) !== amount) {
-      return res.status(400).json({ message: "Plan premium changed. Please create a new payment order." });
+    const expectedAmountPaise = Math.round(amount * 100);
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      !Number.isSafeInteger(expectedAmountPaise) ||
+      expectedAmountPaise <= 0
+    ) {
+      return res.status(400).json({ message: "Plan premium is invalid" });
     }
 
-    const expectedAmountPaise = Math.round(amount * 100);
+    if (Number(purchase.yearlyPremium) !== amount) {
+      return res.status(400).json({
+        message: "Plan premium changed. Please create a new payment order.",
+      });
+    }
     const [razorpayOrder, razorpayPayment] = await Promise.all([
       razorpay.orders.fetch(razorpay_order_id),
       razorpay.payments.fetch(razorpay_payment_id),
@@ -231,9 +246,12 @@ router.post("/verify-payment", auth(), async (req, res) => {
     );
 
     res.status(201).json({
-      message: purchase.createdAt.getTime() === purchase.updatedAt.getTime() ? "Payment successful. Plan activated." : "Payment verified. Plan is active.",
-      purchase,
-      confirmation: { policyNumber, receiptNumber, transactionId: razorpay_payment_id },
+      message: "Payment verified. Plan is active.",
+      confirmation: {
+        policyNumber,
+        receiptNumber,
+        transactionId: razorpay_payment_id,
+      },
     });
   } catch (error) {
     console.error("Verify payment error:", error);
@@ -300,22 +318,22 @@ const syncPaidPurchase = async (purchase, customerId) => {
   return purchase;
 };
 
-router.get("/my-plans", auth(), async (req, res) => {
+router.get("/my-plans", auth(["customer"]), async (req, res) => {
   try {
-    if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Customer access only" });
-    }
     const purchases = await PlanPurchase.find({ customerId: req.user.id }).sort({ createdAt: -1 });
 
     for (const purchase of purchases) {
       await syncPaidPurchase(purchase, req.user.id);
     }
 
-    const hydrated = await PlanPurchase.find({ customerId: req.user.id })
-      .populate("planId")
-      .sort({ createdAt: -1 });
+    const customerPlans = await PlanPurchase.find({ customerId: req.user.id })
+      .select(
+        "_id planId planName category coverageAmount yearlyPremium paymentYears paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.json(hydrated);
+    res.json(customerPlans);
   } catch (error) {
     console.error("My plans error:", error);
     res.status(500).json({ message: "My plans fetch failed" });
