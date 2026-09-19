@@ -52,9 +52,14 @@ router.get("/", auth(), async (req, res) => {
 
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    const claim = await Claim.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const claim = await Claim.findById(req.params.id);
+    if (!claim) return res.status(404).json({ message: "Claim not found" });
+
+    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
+    for (const field of protectedFields) delete req.body[field];
+
+    Object.assign(claim, req.body);
+    await claim.save();
 
     res.json(claim);
   } catch (error) {
@@ -65,7 +70,10 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
 
 router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    await Claim.findByIdAndDelete(req.params.id);
+    const claim = await Claim.findById(req.params.id);
+    if (!claim) return res.status(404).json({ message: "Claim not found" });
+
+    await claim.deleteOne();
     res.json({ message: "Claim deleted" });
   } catch (error) {
     console.error("Claim delete error:", error);
