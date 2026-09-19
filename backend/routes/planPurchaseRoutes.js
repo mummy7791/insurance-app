@@ -225,16 +225,81 @@ router.post("/verify-payment", auth(), async (req, res) => {
   }
 });
 
+const syncPaidPurchase = async (purchase, customerId) => {
+  if (purchase.paymentStatus !== "Paid") return purchase;
+
+  const customer = await User.findById(customerId).select("name");
+  const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
+  const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
+
+  if (!purchase.policyNumber || !purchase.receiptNumber || purchase.policyStatus !== "Active") {
+    purchase.policyNumber = policyNumber;
+    purchase.receiptNumber = receiptNumber;
+    purchase.policyStatus = "Active";
+    purchase.startDate = purchase.startDate || new Date();
+    if (!purchase.endDate) {
+      const endDate = new Date(purchase.startDate);
+      endDate.setFullYear(endDate.getFullYear() + Number(purchase.paymentYears || 1));
+      purchase.endDate = endDate;
+    }
+    await purchase.save();
+  }
+
+  await Policy.findOneAndUpdate(
+    { policyNumber },
+    {
+      customerName: customer?.name || "Customer",
+      policyName: purchase.planName || "Insurance Plan",
+      policyNumber,
+      premiumAmount: Number(purchase.yearlyPremium || 0),
+      sumAssured: Number(purchase.coverageAmount || 0),
+      paymentMode: "yearly",
+      status: "active",
+      customerId,
+      createdBy: customerId,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  if (receiptNumber) {
+    const nextDueDate = new Date(purchase.startDate || purchase.createdAt);
+    nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+    await Premium.findOneAndUpdate(
+      { policyNumber, receiptNumber },
+      {
+        customerName: customer?.name || "Customer",
+        policyNumber,
+        amount: Number(purchase.yearlyPremium || 0),
+        dueDate: nextDueDate.toISOString().split("T")[0],
+        paidDate: new Date(purchase.startDate || purchase.createdAt).toISOString().split("T")[0],
+        paymentMode: "Card",
+        receiptNumber,
+        status: "Paid",
+        createdBy: customerId,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+
+  return purchase;
+};
+
 router.get("/my-plans", auth(), async (req, res) => {
   try {
     if (req.user.role !== "customer") {
       return res.status(403).json({ message: "Customer access only" });
     }
-    const purchases = await PlanPurchase.find({ customerId: req.user.id })
+    const purchases = await PlanPurchase.find({ customerId: req.user.id }).sort({ createdAt: -1 });
+
+    for (const purchase of purchases) {
+      await syncPaidPurchase(purchase, req.user.id);
+    }
+
+    const hydrated = await PlanPurchase.find({ customerId: req.user.id })
       .populate("planId")
       .sort({ createdAt: -1 });
 
-    res.json(purchases);
+    res.json(hydrated);
   } catch (error) {
     console.error("My plans error:", error);
     res.status(500).json({ message: "My plans fetch failed" });
