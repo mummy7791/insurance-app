@@ -82,11 +82,15 @@ router.get("/test", (req, res) => {
 router.post("/admin-login", authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail =
+      typeof email === "string" ? email.toLowerCase().trim() : "";
 
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-      role: "admin",
-    });
+    const user = normalizedEmail
+      ? await User.findOne({
+          email: normalizedEmail,
+          role: "admin",
+        })
+      : null;
 
     const ok = await bcrypt.compare(
       typeof password === "string" ? password : "",
@@ -138,7 +142,13 @@ router.post("/create-staff", auth(["admin"]), async (req, res) => {
     const otp = generateOtp();
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail =
+      typeof email === "string" ? email.toLowerCase().trim() : "";
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Valid email is required" });
+    }
+
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({ message: "An account with this email already exists" });
@@ -188,7 +198,14 @@ router.post("/register", authRateLimit, async (req, res) => {
       return res.status(400).json({ message: "Name, email and password required" });
     }
 
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail =
+      typeof email === "string" ? email.toLowerCase().trim() : "";
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: "Valid email is required" });
+    }
+
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) return res.status(400).json({ message: "User already exists" });
 
     const otp = generateOtp();
@@ -196,7 +213,7 @@ router.post("/register", authRateLimit, async (req, res) => {
 
     const user = await User.create({
       name,
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       phone: phone || "",
       password: hashedPassword,
       role: "customer",
@@ -433,8 +450,12 @@ router.post("/verify-otp", authRateLimit, async (req, res) => {
 router.post("/login", authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail =
+      typeof email === "string" ? email.toLowerCase().trim() : "";
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = normalizedEmail
+      ? await User.findOne({ email: normalizedEmail })
+      : null;
 
     const ok = await bcrypt.compare(
       typeof password === "string" ? password : "",
