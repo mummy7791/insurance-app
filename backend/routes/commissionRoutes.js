@@ -67,7 +67,7 @@ const validateCommissionNumbers = (payload, requireAll = false) => {
   return null;
 };
 
-router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     const payload = pickCommissionFields(req.body);
     const validationError = validateCommissionNumbers(payload, true);
@@ -92,7 +92,11 @@ router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor
 
 router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
-    const commissions = await Commission.find().sort({
+    const query = ["advisor", "agent"].includes(req.user.role)
+      ? { createdBy: req.user.id }
+      : {};
+
+    const commissions = await Commission.find(query).sort({
       createdAt: -1,
     });
 
@@ -107,7 +111,14 @@ router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor"
 
 router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
-    const commission = await Commission.findById(req.params.id);
+    const query = {
+      _id: req.params.id,
+      ...(["advisor", "agent"].includes(req.user.role)
+        ? { createdBy: req.user.id }
+        : {}),
+    };
+
+    const commission = await Commission.findOne(query);
 
     if (!commission) {
       return res.status(404).json({
@@ -124,7 +135,7 @@ router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advis
   }
 });
 
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     const payload = pickCommissionFields(req.body);
     const validationError = validateCommissionNumbers(payload);
@@ -155,7 +166,7 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advis
   }
 });
 
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     await Commission.findByIdAndDelete(req.params.id);
 
