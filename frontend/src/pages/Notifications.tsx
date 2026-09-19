@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
-import socket from "../services/socket";
+import socket, { connectSocket } from "../services/socket";
 import MainLayout from "../layouts/MainLayout";
 
 type NotificationType =
@@ -69,6 +69,8 @@ export default function Notifications() {
   }, [loadNotifications]);
 
   useEffect(() => {
+    connectSocket();
+
     const handleNewNotification = (notification: NotificationItem) => {
       setNotifications((prev) => {
         const exists = prev.some((item) => item._id === notification._id);
