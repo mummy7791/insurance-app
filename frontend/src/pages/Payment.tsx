@@ -134,7 +134,7 @@ export default function Payment() {
       key: order.razorpayKey,
       amount: order.amount * 100,
       currency: order.currency,
-      name: "LifeSecure CRM",
+      name: "SecureLife Insurance",
       description: order.plan.planName,
       order_id: order.orderId,
       prefill: {
@@ -143,7 +143,7 @@ export default function Payment() {
         contact: user.phone || "",
       },
       theme: {
-        color: "#2563eb",
+        color: "#d71920",
       },
       handler: (response) => {
         void verifyPayment(response);
