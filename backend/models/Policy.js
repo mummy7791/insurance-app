@@ -42,6 +42,12 @@ const policySchema = new mongoose.Schema(
       default: "pending",
     },
 
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
