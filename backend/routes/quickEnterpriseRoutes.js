@@ -206,11 +206,18 @@ router.get("/document-expiry", auth(["admin", "bm", "unit_manager", "agency_mana
 router.put("/kyc/:customerId", auth(["admin", "bm"]), async (req, res) => {
   try {
     const { kycStatus } = req.body;
+    const allowedKycStatuses = ["Pending", "Approved", "Rejected"];
+
+    if (!allowedKycStatuses.includes(kycStatus)) {
+      return res.status(400).json({
+        message: "Invalid KYC status",
+      });
+    }
 
     const customer = await Customer.findByIdAndUpdate(
       req.params.customerId,
-      { kycStatus: kycStatus || "Approved" },
-      { new: true }
+      { kycStatus },
+      { new: true, runValidators: true }
     );
 
     if (!customer) {

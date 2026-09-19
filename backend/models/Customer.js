@@ -31,6 +31,12 @@ const customerSchema = new mongoose.Schema(
     policyType: String,
     status: { type: String, default: "ACTIVE" },
 
+    kycStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
+    },
+
     premium: String,
     coverage: String,
     startDate: String,
