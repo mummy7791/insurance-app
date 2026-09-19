@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
+const helmet = require("helmet");
 require("dotenv").config();
 
 /* ================= ROUTES ================= */
@@ -107,6 +108,11 @@ io.on("connection", (socket) => {
 });
 
 /* ================= MIDDLEWARE ================= */
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(
   cors(corsOptions)
 );
