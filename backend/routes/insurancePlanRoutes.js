@@ -19,6 +19,23 @@ const validCategories = [
   "Pension Retirement Plan",
 ];
 
+const toFiniteNumber = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const isPositiveNumber = (value) => {
+  const number = toFiniteNumber(value);
+  return number !== null && number > 0;
+};
+
+const isValidAge = (value) => {
+  const number = toFiniteNumber(value);
+  return number !== null && number >= 0 && number <= 120;
+};
+
 const calculatePremium = ({
   category,
   coverageAmount,
@@ -63,7 +80,7 @@ router.post("/calculate-premium", (req, res) => {
   try {
     const { category, coverageAmount, age, paymentYears } = req.body;
 
-    if (!category || !coverageAmount || !age) {
+    if (!category || coverageAmount === undefined || age === undefined) {
       return res.status(400).json({
         message: "Category, coverage amount and age required",
       });
@@ -73,11 +90,29 @@ router.post("/calculate-premium", (req, res) => {
       return res.status(400).json({ message: "Invalid category" });
     }
 
+    if (!isPositiveNumber(coverageAmount)) {
+      return res.status(400).json({ message: "Coverage amount must be a positive number" });
+    }
+
+    if (!isValidAge(age) || Number(age) <= 0) {
+      return res.status(400).json({ message: "Age must be between 1 and 120" });
+    }
+
+    if (
+      paymentYears !== undefined &&
+      paymentYears !== "" &&
+      !isPositiveNumber(paymentYears)
+    ) {
+      return res.status(400).json({ message: "Payment years must be a positive number" });
+    }
+
     const yearlyPremium = calculatePremium({
       category,
-      coverageAmount,
-      age,
-      paymentYears: paymentYears || 1,
+      coverageAmount: Number(coverageAmount),
+      age: Number(age),
+      paymentYears: paymentYears === undefined || paymentYears === ""
+        ? 1
+        : Number(paymentYears),
     });
 
     res.json({
@@ -127,9 +162,56 @@ router.post("/", auth(["admin"]), async (req, res) => {
       return res.status(400).json({ message: "Invalid category" });
     }
 
+    if (!isPositiveNumber(coverageAmount)) {
+      return res.status(400).json({ message: "Coverage amount must be a positive number" });
+    }
+
+    if (
+      paymentYears !== undefined &&
+      paymentYears !== "" &&
+      !isPositiveNumber(paymentYears)
+    ) {
+      return res.status(400).json({ message: "Payment years must be a positive number" });
+    }
+
+    if (ageMin !== undefined && ageMin !== "" && !isValidAge(ageMin)) {
+      return res.status(400).json({ message: "Minimum age must be between 0 and 120" });
+    }
+
+    if (ageMax !== undefined && ageMax !== "" && !isValidAge(ageMax)) {
+      return res.status(400).json({ message: "Maximum age must be between 0 and 120" });
+    }
+
+    const finalAgeMin = ageMin === undefined || ageMin === "" ? 0 : Number(ageMin);
+    const finalAgeMax = ageMax === undefined || ageMax === "" ? 100 : Number(ageMax);
+
+    if (finalAgeMin > finalAgeMax) {
+      return res.status(400).json({ message: "Minimum age cannot exceed maximum age" });
+    }
+
+    if (premiumMode && !["auto", "manual"].includes(premiumMode)) {
+      return res.status(400).json({ message: "Invalid premium mode" });
+    }
+
+    if (
+      status &&
+      !["Pending", "Approved", "Rejected", "Active", "Inactive"].includes(status)
+    ) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const effectivePremiumMode = premiumMode || "auto";
+
+    if (
+      effectivePremiumMode === "manual" &&
+      !isPositiveNumber(yearlyPremium || yearlyAmount)
+    ) {
+      return res.status(400).json({ message: "Yearly premium must be a positive number" });
+    }
+
     let finalPremium = Number(yearlyPremium || yearlyAmount || 0);
 
-    if (premiumMode === "auto") {
+    if (effectivePremiumMode === "auto") {
       finalPremium = calculatePremium({
         category,
         coverageAmount,
@@ -146,14 +228,14 @@ router.post("/", auth(["admin"]), async (req, res) => {
       yearlyPremium: finalPremium,
       yearlyAmount: finalPremium,
       paymentYears: Number(paymentYears || 1),
-      ageMin: Number(ageMin || 0),
-      ageMax: Number(ageMax || 100),
+      ageMin: finalAgeMin,
+      ageMax: finalAgeMax,
       eligibleFrom: eligibleFrom || "",
       eligibleTo: eligibleTo || "",
       benefits: Array.isArray(benefits) ? benefits : [],
       coverage: coverage || "",
       description: description || "",
-      premiumMode: premiumMode || "auto",
+      premiumMode: effectivePremiumMode,
       status: status || "Approved",
       createdBy: req.user?.id || null,
     });
@@ -471,9 +553,63 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
       return res.status(400).json({ message: "Invalid category" });
     }
 
+    if (
+      coverageAmount !== undefined &&
+      coverageAmount !== "" &&
+      !isPositiveNumber(coverageAmount)
+    ) {
+      return res.status(400).json({ message: "Coverage amount must be a positive number" });
+    }
+
+    if (
+      paymentYears !== undefined &&
+      paymentYears !== "" &&
+      !isPositiveNumber(paymentYears)
+    ) {
+      return res.status(400).json({ message: "Payment years must be a positive number" });
+    }
+
+    if (ageMin !== undefined && ageMin !== "" && !isValidAge(ageMin)) {
+      return res.status(400).json({ message: "Minimum age must be between 0 and 120" });
+    }
+
+    if (ageMax !== undefined && ageMax !== "" && !isValidAge(ageMax)) {
+      return res.status(400).json({ message: "Maximum age must be between 0 and 120" });
+    }
+
+    const finalAgeMin =
+      ageMin === undefined || ageMin === "" ? Number(plan.ageMin || 0) : Number(ageMin);
+    const finalAgeMax =
+      ageMax === undefined || ageMax === "" ? Number(plan.ageMax ?? 100) : Number(ageMax);
+
+    if (finalAgeMin > finalAgeMax) {
+      return res.status(400).json({ message: "Minimum age cannot exceed maximum age" });
+    }
+
+    if (premiumMode && !["auto", "manual"].includes(premiumMode)) {
+      return res.status(400).json({ message: "Invalid premium mode" });
+    }
+
+    if (
+      status &&
+      !["Pending", "Approved", "Rejected", "Active", "Inactive"].includes(status)
+    ) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const effectivePremiumMode = premiumMode || plan.premiumMode || "auto";
+
+    if (
+      effectivePremiumMode === "manual" &&
+      (yearlyPremium !== undefined || yearlyAmount !== undefined) &&
+      !isPositiveNumber(yearlyPremium || yearlyAmount)
+    ) {
+      return res.status(400).json({ message: "Yearly premium must be a positive number" });
+    }
+
     let finalPremium = Number(yearlyPremium || yearlyAmount || plan.yearlyPremium || 0);
 
-    if ((premiumMode || plan.premiumMode) === "auto") {
+    if (effectivePremiumMode === "auto") {
       finalPremium = calculatePremium({
         category: category || plan.category,
         coverageAmount: coverageAmount || plan.coverageAmount,
@@ -489,8 +625,8 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
     plan.yearlyPremium = finalPremium;
     plan.yearlyAmount = finalPremium;
     plan.paymentYears = Number(paymentYears || plan.paymentYears || 1);
-    plan.ageMin = Number(ageMin || plan.ageMin || 0);
-    plan.ageMax = Number(ageMax || plan.ageMax || 100);
+    plan.ageMin = finalAgeMin;
+    plan.ageMax = finalAgeMax;
     plan.eligibleFrom = eligibleFrom || plan.eligibleFrom || "";
     plan.eligibleTo = eligibleTo || plan.eligibleTo || "";
     plan.benefits = Array.isArray(benefits) ? benefits : plan.benefits;
@@ -563,21 +699,57 @@ router.get("/search/filter", auth(), async (req, res) => {
     };
 
     if (category && category !== "All") {
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
       query.category = category;
     }
 
     if (search) {
-      query.$or = [
-        { planName: { $regex: search, $options: "i" } },
-        { planType: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
+      const escapedSearch = String(search)
+        .trim()
+        .slice(0, 100)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      if (escapedSearch) {
+        query.$or = [
+          { planName: { $regex: escapedSearch, $options: "i" } },
+          { planType: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
+        ];
+      }
     }
 
-    if (minPremium || maxPremium) {
+    const minPremiumNumber =
+      minPremium === undefined || minPremium === ""
+        ? null
+        : toFiniteNumber(minPremium);
+    const maxPremiumNumber =
+      maxPremium === undefined || maxPremium === ""
+        ? null
+        : toFiniteNumber(maxPremium);
+
+    if (
+      (minPremiumNumber !== null && minPremiumNumber < 0) ||
+      (maxPremiumNumber !== null && maxPremiumNumber < 0) ||
+      (minPremium !== undefined && minPremium !== "" && minPremiumNumber === null) ||
+      (maxPremium !== undefined && maxPremium !== "" && maxPremiumNumber === null)
+    ) {
+      return res.status(400).json({ message: "Premium filters must be valid non-negative numbers" });
+    }
+
+    if (
+      minPremiumNumber !== null &&
+      maxPremiumNumber !== null &&
+      minPremiumNumber > maxPremiumNumber
+    ) {
+      return res.status(400).json({ message: "Minimum premium cannot exceed maximum premium" });
+    }
+
+    if (minPremiumNumber !== null || maxPremiumNumber !== null) {
       query.yearlyPremium = {};
-      if (minPremium) query.yearlyPremium.$gte = Number(minPremium);
-      if (maxPremium) query.yearlyPremium.$lte = Number(maxPremium);
+      if (minPremiumNumber !== null) query.yearlyPremium.$gte = minPremiumNumber;
+      if (maxPremiumNumber !== null) query.yearlyPremium.$lte = maxPremiumNumber;
     }
 
     const plans = await InsurancePlan.find(query).sort({ yearlyPremium: 1 });
