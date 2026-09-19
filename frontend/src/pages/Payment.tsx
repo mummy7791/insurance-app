@@ -66,6 +66,7 @@ export default function Payment() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -161,15 +162,14 @@ export default function Payment() {
     try {
       setPaying(true);
 
-      await api.post("/plan-purchases/verify-payment", {
+      const verified = await api.post<{ confirmation: { policyNumber: string; receiptNumber: string; transactionId: string } }>("/plan-purchases/verify-payment", {
         planId,
         razorpay_order_id: response.razorpay_order_id,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_signature: response.razorpay_signature,
       });
 
-      alert("Payment successful. Plan activated.");
-      navigate("/customer-dashboard");
+      setConfirmation(verified.data.confirmation);
     } catch (error: unknown) {
       alert(getErrorMessage(error, "Payment verification failed"));
     } finally {
@@ -182,8 +182,7 @@ export default function Payment() {
       title="Online Payment"
       subtitle="Complete payment to activate your insurance plan"
     >
-      <div className="section">
-        {loading ? (
+      {confirmation ? (\n        <div className="section payment-success">\n          <div className="success-mark">✓</div>\n          <span className="eyebrow">PAYMENT VERIFIED</span>\n          <h2>Your policy is active</h2>\n          <p>Your payment was securely verified and your SecureLife policy reference has been generated.</p>\n          <div className="confirmation-grid">\n            <div><span>Policy Number</span><strong>{confirmation.policyNumber}</strong></div>\n            <div><span>Receipt Number</span><strong>{confirmation.receiptNumber}</strong></div>\n            <div><span>Transaction ID</span><strong>{confirmation.transactionId}</strong></div>\n          </div>\n          <button className="btn small-btn" onClick={() => navigate("/customer-dashboard")}>Go to My Dashboard</button>\n        </div>\n      ) : (\n      <div className="section">\n        {loading ? (
           <p>Creating payment order...</p>
         ) : !order ? (
           <p>No payment order found.</p>
@@ -228,7 +227,6 @@ export default function Payment() {
             </button>
           </>
         )}
-      </div>
-    </MainLayout>
+      </div>\n      )}\n    </MainLayout>
   );
 }
