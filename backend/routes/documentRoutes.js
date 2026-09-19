@@ -9,6 +9,34 @@ const Policy = require("../models/Policy");
 
 const router = express.Router();
 
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "agent",
+];
+
+const pickDocumentUpdateFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "documentType",
+    "uploadedDate",
+    "status",
+    "remarks",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -110,14 +138,17 @@ router.post("/", auth(), (req, res, next) => {
 
     const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
     if (!policy) {
+      await removeUploadedFile(req.file.path);
       return res.status(404).json({ message: "Policy not found" });
     }
 
     if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+      await removeUploadedFile(req.file.path);
       return res.status(403).json({ message: "Policy does not belong to this customer" });
     }
 
     if (!policy.customerId) {
+      await removeUploadedFile(req.file.path);
       return res.status(400).json({ message: "Policy is not linked to a customer account" });
     }
 
@@ -136,6 +167,14 @@ router.post("/", auth(), (req, res, next) => {
 
     res.status(201).json(document);
   } catch (error) {
+    if (req.file?.path) {
+      try {
+        await removeUploadedFile(req.file.path);
+      } catch (cleanupError) {
+        console.error("Document upload cleanup error:", cleanupError);
+      }
+    }
+
     console.error("Document upload error:", error);
     res.status(500).json({ message: "Document upload failed" });
   }
@@ -195,15 +234,14 @@ router.get("/:id/file", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const document = await Document.findById(req.params.id);
     if (!document) return res.status(404).json({ message: "Document not found" });
 
-    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
-    for (const field of protectedFields) delete req.body[field];
+    const payload = pickDocumentUpdateFields(req.body);
 
-    Object.assign(document, req.body);
+    Object.assign(document, payload);
     await document.save();
 
     res.json(document);
@@ -213,7 +251,7 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
   }
 });
 
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const document = await Document.findById(req.params.id);
     if (!document) return res.status(404).json({ message: "Document not found" });

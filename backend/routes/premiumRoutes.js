@@ -3,10 +3,43 @@ const Premium = require("../models/Premium");
 const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
 
-router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "agent",
+];
+
+const pickPremiumFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "policyNumber",
+    "amount",
+    "dueDate",
+    "paidDate",
+    "paymentMode",
+    "receiptNumber",
+    "status",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
+router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
+    const payload = pickPremiumFields(req.body);
+
     const premium = await Premium.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -34,15 +67,17 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const premium = await Premium.findById(req.params.id);
     if (!premium) return res.status(404).json({ message: "Premium not found" });
 
-    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber", "receiptNumber"];
-    for (const field of protectedFields) delete req.body[field];
+    const payload = pickPremiumFields(req.body);
 
-    Object.assign(premium, req.body);
+    delete payload.policyNumber;
+    delete payload.receiptNumber;
+
+    Object.assign(premium, payload);
     await premium.save();
 
     res.json(premium);
@@ -52,7 +87,7 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
   }
 });
 
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const premium = await Premium.findById(req.params.id);
     if (!premium) return res.status(404).json({ message: "Premium not found" });

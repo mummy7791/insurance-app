@@ -3,6 +3,55 @@ const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
 
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "agent",
+];
+
+const pickClaimCreateFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "policyNumber",
+    "claimType",
+    "claimAmount",
+    "submittedDate",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
+const pickClaimUpdateFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "claimType",
+    "claimAmount",
+    "submittedDate",
+    "status",
+    "remarks",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 router.post("/", auth(), async (req, res) => {
   try {
     const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
@@ -18,8 +67,12 @@ router.post("/", auth(), async (req, res) => {
       return res.status(400).json({ message: "Policy is not linked to a customer account" });
     }
 
+    const payload = pickClaimCreateFields(req.body);
+
     const claim = await Claim.create({
-      ...req.body,
+      ...payload,
+      status: "Submitted",
+      remarks: "No remarks",
       customerId: policy.customerId,
       createdBy: req.user.id,
     });
@@ -52,15 +105,14 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const claim = await Claim.findById(req.params.id);
     if (!claim) return res.status(404).json({ message: "Claim not found" });
 
-    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
-    for (const field of protectedFields) delete req.body[field];
+    const payload = pickClaimUpdateFields(req.body);
 
-    Object.assign(claim, req.body);
+    Object.assign(claim, payload);
     await claim.save();
 
     res.json(claim);
@@ -70,7 +122,7 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
   }
 });
 
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const claim = await Claim.findById(req.params.id);
     if (!claim) return res.status(404).json({ message: "Claim not found" });

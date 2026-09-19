@@ -2,11 +2,44 @@ const router = require("express").Router();
 const Policy = require("../models/Policy");
 const auth = require("../middleware/auth");
 
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "agent",
+];
+
+const pickPolicyFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "customerPhone",
+    "policyName",
+    "policyNumber",
+    "premiumAmount",
+    "sumAssured",
+    "paymentMode",
+    "status",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 /* CREATE POLICY */
-router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
+    const payload = pickPolicyFields(req.body);
+
     const policy = await Policy.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -17,10 +50,14 @@ router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]
   }
 });
 
-/* GET ALL POLICIES - customer ki kanipinchadaniki */
+/* GET ALL POLICIES */
 router.get("/", auth(), async (req, res) => {
   try {
-    const query = req.user.role === "customer" ? { customerId: req.user.id } : {};
+    const query =
+      req.user.role === "customer"
+        ? { customerId: req.user.id }
+        : {};
+
     const policies = await Policy.find(query).sort({ createdAt: -1 });
     res.json(policies);
   } catch (error) {
@@ -29,20 +66,27 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-/* POLICY PURCHASES
-   Customer purchases are created only through the verified plan-payment flow.
-   Do not expose a generic endpoint that can assign an existing policy to a customer. */
+/*
+  Customer purchases are created only through the verified
+  plan-payment flow. Do not expose a generic endpoint that can
+  assign an existing policy to a customer.
+*/
 
 /* UPDATE POLICY */
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const policy = await Policy.findById(req.params.id);
-    if (!policy) return res.status(404).json({ message: "Policy not found" });
 
-    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
-    for (const field of protectedFields) delete req.body[field];
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
 
-    Object.assign(policy, req.body);
+    const payload = pickPolicyFields(req.body);
+
+    // Policy number is an identity/reference field after creation.
+    delete payload.policyNumber;
+
+    Object.assign(policy, payload);
     await policy.save();
 
     res.json(policy);
@@ -53,10 +97,13 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
 });
 
 /* DELETE POLICY */
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const policy = await Policy.findById(req.params.id);
-    if (!policy) return res.status(404).json({ message: "Policy not found" });
+
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
 
     await policy.deleteOne();
     res.json({ message: "Policy deleted" });
