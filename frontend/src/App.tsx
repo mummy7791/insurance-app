@@ -85,7 +85,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -103,7 +103,7 @@ function App() {
         <Route
           path="/leads"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Leads />
             </ProtectedRoute>
           }
@@ -112,7 +112,7 @@ function App() {
         <Route
           path="/customers"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Customers />
             </ProtectedRoute>
           }
@@ -148,7 +148,7 @@ function App() {
         <Route
           path="/commission"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Commission />
             </ProtectedRoute>
           }
@@ -175,7 +175,7 @@ function App() {
         <Route
           path="/calendar"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <Calendar />
             </ProtectedRoute>
           }
@@ -184,7 +184,7 @@ function App() {
         <Route
           path="/gps-tracking"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
               <GpsTracking />
             </ProtectedRoute>
           }
