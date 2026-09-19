@@ -36,9 +36,14 @@ router.get("/", auth(), async (req, res) => {
 /* UPDATE POLICY */
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    const policy = await Policy.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const policy = await Policy.findById(req.params.id);
+    if (!policy) return res.status(404).json({ message: "Policy not found" });
+
+    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
+    for (const field of protectedFields) delete req.body[field];
+
+    Object.assign(policy, req.body);
+    await policy.save();
 
     res.json(policy);
   } catch (error) {
@@ -50,7 +55,10 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
 /* DELETE POLICY */
 router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    await Policy.findByIdAndDelete(req.params.id);
+    const policy = await Policy.findById(req.params.id);
+    if (!policy) return res.status(404).json({ message: "Policy not found" });
+
+    await policy.deleteOne();
     res.json({ message: "Policy deleted" });
   } catch (error) {
     console.error("Policy delete error:", error);
