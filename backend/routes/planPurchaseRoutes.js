@@ -4,6 +4,9 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
+const makeReference = (prefix) =>
+  `${prefix}-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+
 const auth = require("../middleware/auth");
 const InsurancePlan = require("../models/InsurancePlan");
 const PlanPurchase = require("../models/PlanPurchase");
@@ -38,7 +41,7 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
     const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
-      receipt: `PLAN-${Date.now()}`,
+      receipt: makeReference("PLAN"),
     });
 
     res.json({
@@ -66,6 +69,10 @@ router.post("/verify-payment", auth(), async (req, res) => {
     const { planId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
 
+    if (!planId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: "Incomplete payment verification data" });
+    }
+
     const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
 
     const expectedSign = crypto
@@ -73,7 +80,13 @@ router.post("/verify-payment", auth(), async (req, res) => {
       .update(sign)
       .digest("hex");
 
-    if (expectedSign !== razorpay_signature) {
+    const expectedBuffer = Buffer.from(expectedSign, "hex");
+    const receivedBuffer = Buffer.from(String(razorpay_signature), "hex");
+
+    if (
+      expectedBuffer.length !== receivedBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+    ) {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
@@ -88,9 +101,8 @@ router.post("/verify-payment", auth(), async (req, res) => {
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
 
-    const stamp = Date.now().toString().slice(-8);
-    const policyNumber = `SLI-${new Date().getFullYear()}-${stamp}`;
-    const receiptNumber = `RCPT-${stamp}`;
+    const policyNumber = makeReference(`SLI-${new Date().getFullYear()}`);
+    const receiptNumber = makeReference("RCPT");
 
     const customer = await User.findById(req.user.id).select("name");
 
