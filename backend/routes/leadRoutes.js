@@ -3,7 +3,7 @@ const Lead = require("../models/Lead");
 const auth = require("../middleware/auth");
 
 // Add Lead
-router.post("/", auth, async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const lead = await Lead.create({
       ...req.body,
@@ -19,7 +19,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // Get All Leads
-router.get("/", auth, async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const leads = await Lead.find().sort({
       createdAt: -1,
@@ -34,7 +34,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // Update Lead
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const lead = await Lead.findByIdAndUpdate(
       req.params.id,
@@ -53,7 +53,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Delete Lead
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     await Lead.findByIdAndDelete(req.params.id);
 
