@@ -8,6 +8,42 @@ const EmailCampaign = require("../models/EmailCampaign");
 const Customer = require("../models/Customer");
 const Lead = require("../models/Lead");
 
+const escapeHtml = (value) =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const isValidEmail = (value) =>
+  typeof value === "string" &&
+  /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value.trim()) &&
+  value.trim().length <= 254;
+
+const normalizeCampaignContent = (subject, message) => {
+  if (
+    typeof subject !== "string" ||
+    typeof message !== "string" ||
+    !subject.trim() ||
+    !message.trim()
+  ) {
+    return null;
+  }
+
+  const cleanSubject = subject.trim();
+  const cleanMessage = message.trim();
+
+  if (cleanSubject.length > 200 || cleanMessage.length > 20000) {
+    return null;
+  }
+
+  return {
+    subject: cleanSubject,
+    message: cleanMessage,
+  };
+};
+
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
@@ -20,16 +56,18 @@ const createTransporter = () => {
 
 const sendMail = async ({ to, subject, message }) => {
   const transporter = createTransporter();
+  const safeMessageHtml = escapeHtml(message).replace(/\r?\n/g, "<br />");
 
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
     to,
     subject,
+    text: message,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px;">
         <h2 style="color:#be0038;">LifeSecure CRM</h2>
         <div style="line-height:1.6;color:#111;">
-          ${message}
+          ${safeMessageHtml}
         </div>
         <hr />
         <small style="color:#777;">LifeSecure CRM</small>
@@ -42,19 +80,27 @@ router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "adv
   try {
     const { to, subject, message, type } = req.body;
 
-    if (!to || !subject || !message) {
+    const content = normalizeCampaignContent(subject, message);
+
+    if (!isValidEmail(to) || !content) {
       return res.status(400).json({
-        message: "To, subject and message are required",
+        message: "Valid recipient, subject and message are required",
       });
     }
 
+    const safeTo = to.trim();
+
     try {
-      await sendMail({ to, subject, message });
+      await sendMail({
+        to: safeTo,
+        subject: content.subject,
+        message: content.message,
+      });
 
       const record = await EmailCampaign.create({
-        to,
-        subject,
-        message,
+        to: safeTo,
+        subject: content.subject,
+        message: content.message,
         type: type || "Single",
         status: "Sent",
         sentBy: req.user?.id,
@@ -63,9 +109,9 @@ router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "adv
       res.status(201).json(record);
     } catch (mailError) {
       const record = await EmailCampaign.create({
-        to,
-        subject,
-        message,
+        to: safeTo,
+        subject: content.subject,
+        message: content.message,
         type: type || "Single",
         status: "Failed",
         error: mailError.message,
@@ -87,9 +133,11 @@ router.post("/bulk-customers", auth(["admin", "bm", "unit_manager", "agency_mana
   try {
     const { subject, message } = req.body;
 
-    if (!subject || !message) {
+    const content = normalizeCampaignContent(subject, message);
+
+    if (!content) {
       return res.status(400).json({
-        message: "Subject and message are required",
+        message: "Valid subject and message are required",
       });
     }
 
@@ -102,14 +150,14 @@ router.post("/bulk-customers", auth(["admin", "bm", "unit_manager", "agency_mana
       try {
         await sendMail({
           to: customer.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
         });
 
         await EmailCampaign.create({
           to: customer.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
           type: "Bulk",
           status: "Sent",
           sentBy: req.user?.id,
@@ -119,8 +167,8 @@ router.post("/bulk-customers", auth(["admin", "bm", "unit_manager", "agency_mana
       } catch (error) {
         await EmailCampaign.create({
           to: customer.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
           type: "Bulk",
           status: "Failed",
           error: error.message,
@@ -147,9 +195,11 @@ router.post("/bulk-leads", auth(["admin", "bm", "unit_manager", "agency_manager"
   try {
     const { subject, message } = req.body;
 
-    if (!subject || !message) {
+    const content = normalizeCampaignContent(subject, message);
+
+    if (!content) {
       return res.status(400).json({
-        message: "Subject and message are required",
+        message: "Valid subject and message are required",
       });
     }
 
@@ -162,14 +212,14 @@ router.post("/bulk-leads", auth(["admin", "bm", "unit_manager", "agency_manager"
       try {
         await sendMail({
           to: lead.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
         });
 
         await EmailCampaign.create({
           to: lead.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
           type: "Lead",
           status: "Sent",
           sentBy: req.user?.id,
@@ -179,8 +229,8 @@ router.post("/bulk-leads", auth(["admin", "bm", "unit_manager", "agency_manager"
       } catch (error) {
         await EmailCampaign.create({
           to: lead.email,
-          subject,
-          message,
+          subject: content.subject,
+          message: content.message,
           type: "Lead",
           status: "Failed",
           error: error.message,
