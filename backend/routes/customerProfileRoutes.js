@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 
 const router = express.Router();
@@ -16,17 +17,89 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const PROFILE_IMAGE_TYPES = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "-");
-    cb(null, `${Date.now()}-${safeName}`);
+    const extension = PROFILE_IMAGE_TYPES[file.mimetype] || "";
+    cb(null, `${crypto.randomBytes(24).toString("hex")}${extension}`);
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+  },
+  fileFilter: (req, file, cb) => {
+    if (!PROFILE_IMAGE_TYPES[file.mimetype]) {
+      const error = new Error("Only JPEG, PNG and WEBP images are allowed");
+      error.code = "INVALID_PROFILE_IMAGE_TYPE";
+      return cb(error);
+    }
+
+    cb(null, true);
+  },
+});
+
+const removeFile = async (filePath) => {
+  if (!filePath) return;
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error("Profile photo cleanup error:", error);
+    }
+  }
+};
+
+const hasValidImageSignature = async (filePath, mimetype) => {
+  const handle = await fs.promises.open(filePath, "r");
+
+  try {
+    const buffer = Buffer.alloc(12);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+
+    if (mimetype === "image/jpeg") {
+      return (
+        bytesRead >= 3 &&
+        buffer[0] === 0xff &&
+        buffer[1] === 0xd8 &&
+        buffer[2] === 0xff
+      );
+    }
+
+    if (mimetype === "image/png") {
+      const pngSignature = Buffer.from([
+        0x89, 0x50, 0x4e, 0x47,
+        0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
+
+      return bytesRead >= 8 && buffer.subarray(0, 8).equals(pngSignature);
+    }
+
+    if (mimetype === "image/webp") {
+      return (
+        bytesRead >= 12 &&
+        buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+        buffer.subarray(8, 12).toString("ascii") === "WEBP"
+      );
+    }
+
+    return false;
+  } finally {
+    await handle.close();
+  }
+};
 
 const getUserEmail = async (req) => {
   if (req.user?.email) return req.user.email;
@@ -111,34 +184,90 @@ router.put("/", auth(["customer"]), async (req, res) => {
   }
 });
 
-router.post("/photo", auth(), upload.single("photo"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "Photo is required" });
-    }
+const profilePhotoUpload = (req, res, next) => {
+  upload.single("photo")(req, res, (error) => {
+    if (!error) return next();
 
-    const found = await findCustomer(req);
-    let customer = found.customer;
-
-    if (!customer) {
-      customer = await Customer.create({
-        name: "",
-        email: found.userEmail || "",
-        phone: "",
-        address: "",
-        kycStatus: "Pending",
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        message: "Profile photo must be 5 MB or smaller",
       });
     }
 
-    customer.photo = `/uploads/profiles/${req.file.filename}`;
-    await customer.save();
+    if (error.code === "INVALID_PROFILE_IMAGE_TYPE") {
+      return res.status(400).json({
+        message: "Only JPEG, PNG and WEBP images are allowed",
+      });
+    }
 
-    res.json(customer);
-  } catch (error) {
-    console.error("Profile photo upload error:", error);
-    res.status(500).json({ message: "Profile photo upload failed" });
+    console.error("Profile photo upload middleware error:", error);
+    return res.status(400).json({ message: "Invalid profile photo upload" });
+  });
+};
+
+router.post(
+  "/photo",
+  auth(["customer"]),
+  profilePhotoUpload,
+  async (req, res) => {
+    const uploadedPath = req.file?.path || "";
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Photo is required" });
+      }
+
+      const validSignature = await hasValidImageSignature(
+        req.file.path,
+        req.file.mimetype
+      );
+
+      if (!validSignature) {
+        await removeFile(req.file.path);
+        return res.status(400).json({ message: "Invalid image file" });
+      }
+
+      const found = await findCustomer(req);
+
+      if (!found.userEmail) {
+        await removeFile(req.file.path);
+        return res.status(400).json({ message: "Account email is required" });
+      }
+
+      let customer = found.customer;
+
+      if (!customer) {
+        customer = await Customer.create({
+          name: "",
+          email: found.userEmail,
+          phone: "",
+          address: "",
+          kycStatus: "Pending",
+        });
+      }
+
+      const previousPhoto = customer.photo || "";
+
+      customer.photo = `/uploads/profiles/${req.file.filename}`;
+      await customer.save();
+
+      if (previousPhoto.startsWith("/uploads/profiles/")) {
+        const previousFileName = path.basename(previousPhoto);
+        const previousPath = path.join(uploadDir, previousFileName);
+
+        if (previousPath !== req.file.path) {
+          await removeFile(previousPath);
+        }
+      }
+
+      res.json(customer);
+    } catch (error) {
+      await removeFile(uploadedPath);
+      console.error("Profile photo upload error:", error);
+      res.status(500).json({ message: "Profile photo upload failed" });
+    }
   }
-});
+);
 
 router.put("/password", auth(["customer"]), async (req, res) => {
   try {
