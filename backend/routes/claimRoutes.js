@@ -5,20 +5,22 @@ const Policy = require("../models/Policy");
 
 router.post("/", auth(), async (req, res) => {
   try {
-    if (req.user.role === "customer") {
-      const policy = await Policy.findOne({
-        policyNumber: req.body.policyNumber,
-        customerId: req.user.id,
-      });
+    const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
 
-      if (!policy) {
-        return res.status(403).json({ message: "Policy does not belong to this customer" });
-      }
+    if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+      return res.status(403).json({ message: "Policy does not belong to this customer" });
+    }
+
+    if (!policy.customerId) {
+      return res.status(400).json({ message: "Policy is not linked to a customer account" });
     }
 
     const claim = await Claim.create({
       ...req.body,
-      customerId: req.user.role === "customer" ? req.user.id : req.body.customerId,
+      customerId: policy.customerId,
       createdBy: req.user.id,
     });
 
