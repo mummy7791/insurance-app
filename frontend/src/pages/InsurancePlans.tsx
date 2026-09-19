@@ -102,7 +102,10 @@ export default function InsurancePlans() {
       subtitle="Compare protection plans, benefits, coverage and premiums"
     >
 
-      <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>\n\n      <div className="section">\n        <h2>Plans designed around your protection needs</h2>
+      <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>
+
+      <div className="section">
+        <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
           <p>Loading...</p>
