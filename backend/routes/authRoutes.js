@@ -56,7 +56,7 @@ const safeSendOTP = async (email, otp) => {
     await sendOTP(email, otp);
     return true;
   } catch (error) {
-    console.log("Email sending failed, but user created:", error.message);
+    console.error("OTP email sending failed:", error.message);
     return false;
   }
 };
@@ -265,8 +265,8 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
     }
 
     if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.status(429).json({
-        message: "Too many OTP attempts. Please try again later.",
+      return res.json({
+        message: "If an eligible customer account exists, an OTP will be sent.",
       });
     }
 
@@ -278,13 +278,7 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    const emailSent = await safeSendOTP(user.email, otp);
-
-    if (!emailSent) {
-      return res.status(503).json({
-        message: "OTP email could not be sent. Please try again later.",
-      });
-    }
+    await safeSendOTP(user.email, otp);
 
     return res.json({
       message: "If an eligible customer account exists, an OTP will be sent.",
