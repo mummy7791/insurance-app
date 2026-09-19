@@ -44,6 +44,20 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
       receipt: makeReference("PLAN"),
     });
 
+    await PlanPurchase.create({
+      customerId: req.user.id,
+      planId: plan._id,
+      planName: plan.planName,
+      category: plan.category,
+      coverageAmount: plan.coverageAmount || 0,
+      yearlyPremium: amount,
+      paymentYears: plan.paymentYears || 1,
+      paymentStatus: "Pending",
+      policyStatus: "Inactive",
+      paymentMethod: "Online",
+      orderId: order.id,
+    });
+
     res.json({
       orderId: order.id,
       amount,
@@ -90,44 +104,52 @@ router.post("/verify-payment", auth(), async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
-    const existing = await PlanPurchase.findOne({ transactionId: razorpay_payment_id });
-    if (existing) return res.json({ message: "Payment already verified.", purchase: existing });
+    const purchase = await PlanPurchase.findOne({
+      orderId: razorpay_order_id,
+      customerId: req.user.id,
+      planId,
+    });
 
-    const plan = await InsurancePlan.findById(planId);
-
-    if (!plan) {
-      return res.status(404).json({ message: "Plan not found" });
+    if (!purchase) {
+      return res.status(400).json({ message: "Payment order does not match this customer and plan" });
     }
 
+    const plan = await InsurancePlan.findById(planId);
+    if (!plan) return res.status(404).json({ message: "Plan not found" });
+
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+    if (Number(purchase.yearlyPremium) !== amount) {
+      return res.status(400).json({ message: "Plan premium changed. Please create a new payment order." });
+    }
 
-    const policyNumber = makeReference(`SLI-${new Date().getFullYear()}`);
-    const receiptNumber = makeReference("RCPT");
+    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    if (
+      Number(razorpayOrder.amount) !== amount * 100 ||
+      razorpayOrder.currency !== "INR"
+    ) {
+      return res.status(400).json({ message: "Payment amount verification failed" });
+    }
 
+    if (purchase.transactionId && purchase.transactionId !== razorpay_payment_id) {
+      return res.status(409).json({ message: "Payment order already used" });
+    }
+
+    const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
+    const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
     const customer = await User.findById(req.user.id).select("name");
 
-    const purchase = await PlanPurchase.create({
-      customerId: req.user.id,
-      planId: plan._id,
-      planName: plan.planName,
-      category: plan.category,
-      coverageAmount: plan.coverageAmount || 0,
-      yearlyPremium: amount,
-      paymentYears: plan.paymentYears || 1,
-      paymentStatus: "Paid",
-      policyStatus: "Active",
-      paymentMethod: "Online",
-      transactionId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      policyNumber,
-      receiptNumber,
-      startDate: new Date(),
-      endDate: new Date(
-        new Date().setFullYear(
-          new Date().getFullYear() + Number(plan.paymentYears || 1)
-        )
-      ),
-    });
+    purchase.paymentStatus = "Paid";
+    purchase.policyStatus = "Active";
+    purchase.transactionId = razorpay_payment_id;
+    purchase.policyNumber = policyNumber;
+    purchase.receiptNumber = receiptNumber;
+    purchase.startDate = purchase.startDate || new Date();
+    if (!purchase.endDate) {
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + Number(plan.paymentYears || 1));
+      purchase.endDate = endDate;
+    }
+    await purchase.save();
 
     await Policy.findOneAndUpdate(
       { policyNumber },
@@ -165,7 +187,7 @@ router.post("/verify-payment", auth(), async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Payment successful. Plan activated.",
+      message: purchase.createdAt.getTime() === purchase.updatedAt.getTime() ? "Payment successful. Plan activated." : "Payment verified. Plan is active.",
       purchase,
       confirmation: { policyNumber, receiptNumber, transactionId: razorpay_payment_id },
     });
