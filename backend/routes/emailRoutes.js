@@ -14,7 +14,7 @@ const createTransporter = () => {
   });
 };
 
-router.post("/send", auth(), async (req, res) => {
+router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const { to, subject, message } = req.body;
 
