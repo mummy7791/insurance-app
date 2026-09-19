@@ -30,7 +30,7 @@ const calculateLeadScore = (lead) => {
   return { score, category };
 };
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const leads = await Lead.find().sort({ createdAt: -1 });
 
