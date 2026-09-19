@@ -7,6 +7,9 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const InsurancePlan = require("../models/InsurancePlan");
 const PlanPurchase = require("../models/PlanPurchase");
+const Policy = require("../models/Policy");
+const Premium = require("../models/Premium");
+const User = require("../models/User");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -89,6 +92,8 @@ router.post("/verify-payment", auth(), async (req, res) => {
     const policyNumber = `SLI-${new Date().getFullYear()}-${stamp}`;
     const receiptNumber = `RCPT-${stamp}`;
 
+    const customer = await User.findById(req.user.id).select("name");
+
     const purchase = await PlanPurchase.create({
       customerId: req.user.id,
       planId: plan._id,
@@ -111,6 +116,41 @@ router.post("/verify-payment", auth(), async (req, res) => {
         )
       ),
     });
+
+    await Policy.findOneAndUpdate(
+      { policyNumber },
+      {
+        customerName: customer?.name || "Customer",
+        policyName: plan.planName,
+        policyNumber,
+        premiumAmount: amount,
+        sumAssured: plan.coverageAmount || 0,
+        paymentMode: "yearly",
+        status: "active",
+        customerId: req.user.id,
+        createdBy: req.user.id,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    const nextDueDate = new Date();
+    nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+
+    await Premium.findOneAndUpdate(
+      { policyNumber, receiptNumber },
+      {
+        customerName: customer?.name || "Customer",
+        policyNumber,
+        amount,
+        dueDate: nextDueDate.toISOString().split("T")[0],
+        paidDate: new Date().toISOString().split("T")[0],
+        paymentMode: "Card",
+        receiptNumber,
+        status: "Paid",
+        createdBy: req.user.id,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     res.status(201).json({
       message: "Payment successful. Plan activated.",
