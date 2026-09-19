@@ -36,9 +36,14 @@ router.get("/", auth(), async (req, res) => {
 
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    const premium = await Premium.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const premium = await Premium.findById(req.params.id);
+    if (!premium) return res.status(404).json({ message: "Premium not found" });
+
+    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber", "receiptNumber"];
+    for (const field of protectedFields) delete req.body[field];
+
+    Object.assign(premium, req.body);
+    await premium.save();
 
     res.json(premium);
   } catch (error) {
@@ -49,7 +54,10 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
 
 router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    await Premium.findByIdAndDelete(req.params.id);
+    const premium = await Premium.findById(req.params.id);
+    if (!premium) return res.status(404).json({ message: "Premium not found" });
+
+    await premium.deleteOne();
     res.json({ message: "Premium deleted" });
   } catch (error) {
     console.error("Premium delete error:", error);
