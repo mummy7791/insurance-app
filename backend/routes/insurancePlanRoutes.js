@@ -36,6 +36,9 @@ const isValidAge = (value) => {
   return number !== null && number >= 0 && number <= 120;
 };
 
+const customerPlanFields =
+  "_id planName category planType coverageAmount yearlyPremium yearlyAmount paymentYears ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
+
 const calculatePremium = ({
   category,
   coverageAmount,
@@ -253,7 +256,10 @@ router.get("/", auth(), async (req, res) => {
   try {
     const plans = await InsurancePlan.find({
       status: { $in: ["Approved", "Active"] },
-    }).sort({ createdAt: -1 });
+    })
+      .select(customerPlanFields)
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(plans);
   } catch (error) {
@@ -265,9 +271,7 @@ router.get("/", auth(), async (req, res) => {
 
 router.post("/seed-default", auth(["admin"]), async (req, res) => {
   try {
-    await InsurancePlan.deleteMany({});
-
-    const plans = await InsurancePlan.insertMany([
+    const defaultPlans = [
       {
         planName: "Term Insurance",
         category: "Life Insurance",
@@ -468,10 +472,29 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
           "Retirement Security",
         status: "Approved",
       },
-    ]);
+    ];
+
+    await InsurancePlan.bulkWrite(
+      defaultPlans.map((plan) => ({
+        updateOne: {
+          filter: { planName: plan.planName },
+          update: {
+            $setOnInsert: {
+              ...plan,
+              createdBy: req.user.id,
+            },
+          },
+          upsert: true,
+        },
+      }))
+    );
+
+    const plans = await InsurancePlan.find({
+      planName: { $in: defaultPlans.map((plan) => plan.planName) },
+    }).sort({ planName: 1 });
 
     res.json({
-      message: "Default Plans Created Successfully",
+      message: "Default Plans Seeded Successfully",
       plans,
     });
   } catch (error) {
@@ -503,7 +526,20 @@ router.get("/admin/all", auth(["admin"]), async (req, res) => {
 
 router.get("/:id", auth(), async (req, res) => {
   try {
-    const plan = await InsurancePlan.findById(req.params.id);
+    const isAdmin = req.user.role === "admin";
+
+    const query = {
+      _id: req.params.id,
+      ...(isAdmin ? {} : { status: { $in: ["Approved", "Active"] } }),
+    };
+
+    const planQuery = InsurancePlan.findOne(query);
+
+    if (!isAdmin) {
+      planQuery.select(customerPlanFields);
+    }
+
+    const plan = await planQuery.lean();
 
     if (!plan) {
       return res.status(404).json({
@@ -752,7 +788,10 @@ router.get("/search/filter", auth(), async (req, res) => {
       if (maxPremiumNumber !== null) query.yearlyPremium.$lte = maxPremiumNumber;
     }
 
-    const plans = await InsurancePlan.find(query).sort({ yearlyPremium: 1 });
+    const plans = await InsurancePlan.find(query)
+      .select(customerPlanFields)
+      .sort({ yearlyPremium: 1 })
+      .lean();
 
     res.json(plans);
   } catch (error) {
@@ -767,9 +806,43 @@ router.post("/ai-recommend", auth(), async (req, res) => {
   try {
     const { age, income, goal, familyMembers, healthIssue, budget } = req.body;
 
+    const ageNumber =
+      age === undefined || age === "" ? null : toFiniteNumber(age);
+    const incomeNumber =
+      income === undefined || income === "" ? null : toFiniteNumber(income);
+    const familyMembersNumber =
+      familyMembers === undefined || familyMembers === ""
+        ? null
+        : toFiniteNumber(familyMembers);
+    const budgetNumber =
+      budget === undefined || budget === "" ? null : toFiniteNumber(budget);
+
+    if (ageNumber !== null && (ageNumber < 1 || ageNumber > 120)) {
+      return res.status(400).json({ message: "Age must be between 1 and 120" });
+    }
+
+    if (
+      (age !== undefined && age !== "" && ageNumber === null) ||
+      (income !== undefined && income !== "" && (incomeNumber === null || incomeNumber < 0)) ||
+      (familyMembers !== undefined &&
+        familyMembers !== "" &&
+        (familyMembersNumber === null ||
+          familyMembersNumber < 0 ||
+          !Number.isInteger(familyMembersNumber))) ||
+      (budget !== undefined && budget !== "" && (budgetNumber === null || budgetNumber < 0))
+    ) {
+      return res.status(400).json({
+        message: "Age, income, family members and budget must contain valid numbers",
+      });
+    }
+
+    const safeGoal = typeof goal === "string" ? goal.slice(0, 500) : "";
+    const safeHealthIssue =
+      typeof healthIssue === "string" ? healthIssue.slice(0, 500) : "";
+
     let category = "Life Insurance";
 
-    const text = `${goal || ""} ${healthIssue || ""}`.toLowerCase();
+    const text = `${safeGoal} ${safeHealthIssue}`.toLowerCase();
 
     if (text.includes("health") || text.includes("medical")) {
       category = "Health Insurance";
@@ -796,25 +869,35 @@ router.post("/ai-recommend", auth(), async (req, res) => {
       category,
     };
 
-    if (budget) {
-      query.yearlyPremium = { $lte: Number(budget) };
+    if (budgetNumber !== null) {
+      query.yearlyPremium = { $lte: budgetNumber };
     }
 
-    let plans = await InsurancePlan.find(query).sort({ yearlyPremium: 1 });
+    let plans = await InsurancePlan.find(query)
+      .select(customerPlanFields)
+      .sort({ yearlyPremium: 1 });
 
     if (plans.length === 0) {
       plans = await InsurancePlan.find({
         status: { $in: ["Approved", "Active"] },
-      }).sort({ yearlyPremium: 1 });
+      })
+        .select(customerPlanFields)
+        .sort({ yearlyPremium: 1 });
     }
 
     const recommendations = plans.slice(0, 5).map((plan) => {
       let score = 60;
 
-      if (Number(age) >= plan.ageMin && Number(age) <= plan.ageMax) score += 15;
-      if (budget && plan.yearlyPremium <= Number(budget)) score += 15;
-      if (income && Number(income) > 300000) score += 5;
-      if (familyMembers && Number(familyMembers) > 2) score += 5;
+      if (
+        ageNumber !== null &&
+        ageNumber >= plan.ageMin &&
+        ageNumber <= plan.ageMax
+      ) {
+        score += 15;
+      }
+      if (budgetNumber !== null && plan.yearlyPremium <= budgetNumber) score += 15;
+      if (incomeNumber !== null && incomeNumber > 300000) score += 5;
+      if (familyMembersNumber !== null && familyMembersNumber > 2) score += 5;
 
       return {
         ...plan.toObject(),
