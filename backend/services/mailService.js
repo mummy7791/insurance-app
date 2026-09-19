@@ -1,27 +1,34 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const { Resend } = require("resend");
 
 const sendOTP = async (email, otp) => {
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM || "onboarding@resend.dev",
     to: email,
-    subject: "LifeSecure CRM - OTP Verification",
+    subject: "Your Insurance App Verification OTP",
     html: `
-      <div style="font-family:Arial,sans-serif;padding:20px">
-        <h2 style="color:#c4003b">LifeSecure CRM</h2>
-        <p>Your OTP verification code is:</p>
-        <h1 style="letter-spacing:4px;color:#0f172a">${otp}</h1>
-        <p>This OTP is valid for <b>10 minutes</b>.</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px">
+        <h2>Email Verification</h2>
+        <p>Your verification OTP is:</p>
+        <div style="font-size:32px;font-weight:bold;letter-spacing:6px;margin:20px 0">
+          ${otp}
+        </div>
+        <p>This OTP is valid for a limited time.</p>
+        <p>If you did not request this OTP, you can ignore this email.</p>
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(error.message || "Failed to send OTP email");
+  }
+
+  return data;
 };
 
 module.exports = sendOTP;
