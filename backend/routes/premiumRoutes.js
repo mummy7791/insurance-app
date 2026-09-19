@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Premium = require("../models/Premium");
 const auth = require("../middleware/auth");
+const Policy = require("../models/Policy");
 
 router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
@@ -18,7 +19,13 @@ router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]
 
 router.get("/", auth(), async (req, res) => {
   try {
-    const query = req.user.role === "customer" ? { createdBy: req.user.id } : {};
+    let query = {};
+
+    if (req.user.role === "customer") {
+      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");
+      query = { policyNumber: { $in: policies.map((policy) => policy.policyNumber) } };
+    }
+
     const premiums = await Premium.find(query).sort({ createdAt: -1 });
     res.json(premiums);
   } catch (error) {
