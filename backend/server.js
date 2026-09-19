@@ -2,8 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const path = require("path");
 const http = require("http");
+const jwt = require("jsonwebtoken");
 const { Server } = require("socket.io");
 const helmet = require("helmet");
 require("dotenv").config();
@@ -97,10 +97,25 @@ const io = new Server(server, {
   cors: corsOptions,
 });
 
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error("Authentication required"));
+
+    socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    return next();
+  } catch {
+    return next(new Error("Invalid or expired token"));
+  }
+});
+
 app.set("io", io);
 
 io.on("connection", (socket) => {
-  console.log("🟢 Socket connected:", socket.id);
+  const userId = String(socket.user.id);
+  socket.join(`user:${userId}`);
+
+  console.log("🟢 Authenticated socket connected:", socket.id);
 
   socket.on("disconnect", () => {
     console.log("🔴 Socket disconnected:", socket.id);
@@ -113,9 +128,7 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
-app.use(
-  cors(corsOptions)
-);
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
