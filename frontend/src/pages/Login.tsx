@@ -85,8 +85,8 @@ export default function Login() {
         }}
       >
         <img
-          src="ic_launcher.png"
-          alt="Generali Central Life & General Insurance Co. Ltd Life Logo"
+          src="/ic_launcher.png"
+          alt="SecureLife Insurance Logo"
           style={{
             width: 95,
             height: 95,
@@ -108,7 +108,7 @@ export default function Login() {
             WebkitTextFillColor: "transparent",
           }}
         >
-          Generali Central Life & General Insurance Co. Ltd LIFE
+          SecureLife Insurance
         </h1>
 
         <h3
@@ -119,7 +119,7 @@ export default function Login() {
             fontWeight: 600,
           }}
         >
-          Customer Login
+          Sign in to your insurance account
         </h3>
 
         {error && (
