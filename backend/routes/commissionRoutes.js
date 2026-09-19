@@ -4,7 +4,7 @@ const router = express.Router();
 const Commission = require("../models/Commission");
 const auth = require("../middleware/auth");
 
-router.post("/", auth(), async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const commission = await Commission.create({
       ...req.body,
@@ -20,7 +20,7 @@ router.post("/", auth(), async (req, res) => {
   }
 });
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const commissions = await Commission.find().sort({
       createdAt: -1,
@@ -35,7 +35,7 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.get("/:id", auth(), async (req, res) => {
+router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const commission = await Commission.findById(req.params.id);
 
@@ -54,7 +54,7 @@ router.get("/:id", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(), async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const commission = await Commission.findByIdAndUpdate(
       req.params.id,
@@ -73,7 +73,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     await Commission.findByIdAndDelete(req.params.id);
 
