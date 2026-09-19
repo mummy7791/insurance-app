@@ -40,8 +40,11 @@ export default function Login() {
       localStorage.setItem("insuranceToken", res.data.token);
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
 
-      alert("Login Successful");
-      navigate("/customer-dashboard");
+      if (res.data.user.role === "customer") {
+        navigate("/customer-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: unknown) {
       if (typeof err === "object" && err !== null && "response" in err) {
         const error = err as {
