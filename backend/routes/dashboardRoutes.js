@@ -11,7 +11,7 @@ const Claim = require("../models/Claim");
 const Commission = require("../models/Commission");
 const User = require("../models/User");
 
-router.get("/stats", auth(), async (req, res) => {
+router.get("/stats", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const [
       totalLeads,
@@ -63,7 +63,7 @@ router.get("/stats", auth(), async (req, res) => {
   }
 });
 
-router.get("/charts", auth(), async (req, res) => {
+router.get("/charts", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const premiumByMonth = await Premium.aggregate([
       {
