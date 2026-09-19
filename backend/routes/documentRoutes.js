@@ -21,9 +21,33 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const allowedMimeTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
-router.post("/", auth(), upload.single("file"), async (req, res) => {
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      return cb(new Error("Only PDF, JPG, PNG and WEBP files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+router.post("/", auth(), (req, res, next) => {
+  upload.single("file")(req, res, (error) => {
+    if (!error) return next();
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File size must be 5 MB or less" });
+    }
+    return res.status(400).json({ message: error.message || "Invalid file upload" });
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "File required" });
