@@ -13,6 +13,8 @@ type Policy = {
   status: string;
 };
 
+type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; coverageAmount:number; yearlyPremium:number; policyStatus:string; };
+
 type Premium = {
   _id: string;
   policyNumber: string;
@@ -39,6 +41,7 @@ const money = (value: number) =>
 export default function CustomerDashboard() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [premiums, setPremiums] = useState<Premium[]>([]);
+  const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,16 +58,18 @@ export default function CustomerDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [policyRes, premiumRes, claimRes] = await Promise.all([
+        const [policyRes, premiumRes, claimRes, purchaseRes] = await Promise.all([
           api.get<Policy[]>("/policies"),
           api.get<Premium[]>("/premiums"),
           api.get<Claim[]>("/claims"),
+          api.get<PurchasedPlan[]>("/plan-purchases/my-plans"),
         ]);
 
         if (!active) return;
         setPolicies(policyRes.data);
         setPremiums(premiumRes.data);
         setClaims(claimRes.data);
+        setPurchasedPlans(purchaseRes.data);
       } catch (error) {
         console.error("Customer dashboard load error:", error);
       } finally {
@@ -77,7 +82,9 @@ export default function CustomerDashboard() {
   }, []);
 
   const activePolicies = policies.filter((p) => p.status === "active");
-  const totalCoverage = activePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0);
+  const activePurchased = purchasedPlans.filter((p) => p.policyStatus === "Active");
+  const activePolicyCount = activePolicies.length + activePurchased.length;
+  const totalCoverage = activePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0) + activePurchased.reduce((sum, p) => sum + Number(p.coverageAmount || 0), 0);
   const duePremiums = premiums.filter((p) => p.status === "Due" || p.status === "Overdue");
   const dueAmount = duePremiums.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const openClaims = claims.filter((c) => !["Settled", "Rejected"].includes(c.status));
@@ -102,8 +109,8 @@ export default function CustomerDashboard() {
           <div className="customer-summary-grid">
             <div className="customer-summary-card">
               <span>Active Policies</span>
-              <strong>{activePolicies.length}</strong>
-              <small>{policies.length} total policies</small>
+              <strong>{activePolicyCount}</strong>
+              <small>{policies.length + purchasedPlans.length} total policies</small>
             </div>
             <div className="customer-summary-card">
               <span>Total Protection</span>
