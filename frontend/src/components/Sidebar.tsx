@@ -30,7 +30,7 @@ const customerMenu = [
   { name: "Insurance Plans", path: "/insurance-plans", icon: "🛡️" },
   { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒" },
   { name: "My Policies", path: "/policies", icon: "📑" },
-  { name: "Premium Payment", path: "/payment", icon: "💳" },
+  { name: "Premium Payment", path: "/premiums", icon: "💳" },
   { name: "Claims", path: "/claims", icon: "🧾" },
   { name: "Documents / KYC", path: "/documents", icon: "📂" },
   { name: "Notifications", path: "/notifications", icon: "🔔" },
