@@ -27,7 +27,7 @@ const addDays = (days) => {
   return date;
 };
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const followups = await AIFollowup.find()
       .sort({ followupDate: 1, createdAt: -1 })
@@ -40,7 +40,7 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.get("/today", auth(), async (req, res) => {
+router.get("/today", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const followups = await AIFollowup.find({
       status: "Pending",
@@ -57,7 +57,7 @@ router.get("/today", auth(), async (req, res) => {
   }
 });
 
-router.get("/overdue", auth(), async (req, res) => {
+router.get("/overdue", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const followups = await AIFollowup.find({
       status: "Pending",
@@ -71,7 +71,7 @@ router.get("/overdue", auth(), async (req, res) => {
   }
 });
 
-router.get("/upcoming", auth(), async (req, res) => {
+router.get("/upcoming", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const followups = await AIFollowup.find({
       status: "Pending",
@@ -88,7 +88,7 @@ router.get("/upcoming", auth(), async (req, res) => {
   }
 });
 
-router.post("/generate", auth(), async (req, res) => {
+router.post("/generate", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const created = [];
 
@@ -216,7 +216,7 @@ router.post("/generate", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id/complete", auth(), async (req, res) => {
+router.put("/:id/complete", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const followup = await AIFollowup.findByIdAndUpdate(
       req.params.id,
