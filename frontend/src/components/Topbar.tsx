@@ -21,7 +21,7 @@ export default function Topbar({
       <div className="user-box">
         <strong>{user.name}</strong>
         <br />
-        <small>{user.role}</small>
+        <small>{user.role === "customer" || !user.role ? "Policyholder" : user.role}</small>
       </div>
     </div>
   );
