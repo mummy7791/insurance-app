@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const Document = require("../models/Document");
 const auth = require("../middleware/auth");
@@ -157,7 +158,23 @@ router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "ag
     const document = await Document.findById(req.params.id);
     if (!document) return res.status(404).json({ message: "Document not found" });
 
+    const fileName = path.basename(document.filePath || "");
+    const absolutePath = fileName
+      ? path.join(__dirname, "..", "uploads", fileName)
+      : null;
+
     await document.deleteOne();
+
+    if (absolutePath) {
+      try {
+        await fs.promises.unlink(absolutePath);
+      } catch (fileError) {
+        if (fileError.code !== "ENOENT") {
+          console.error("Document file cleanup error:", fileError);
+        }
+      }
+    }
+
     res.json({ message: "Document deleted" });
   } catch (error) {
     console.error("Document delete error:", error);
