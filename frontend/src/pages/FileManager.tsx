@@ -17,8 +17,6 @@ type FileItem = {
   createdAt?: string;
 };
 
-const API_BASE_URL = "http://localhost:5000";
-
 export default function FileManager() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [title, setTitle] = useState("");
@@ -57,6 +55,32 @@ export default function FileManager() {
 
     return () => window.clearTimeout(timer);
   }, [loadFiles]);
+
+  const downloadFile = async (file: FileItem) => {
+    try {
+      const res = await api.get(`/file-manager/${file._id}/download`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], {
+        type: file.mimeType || "application/octet-stream",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = file.originalName || file.fileName || "download";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("File download error:", error);
+      alert("File download failed");
+    }
+  };
 
   const uploadFile = async () => {
     if (!selectedFile) {
@@ -252,13 +276,13 @@ export default function FileManager() {
                     <span className="badge">{file.category}</span>
                   </td>
                   <td>
-                    <a
-                      href={`${API_BASE_URL}${file.filePath}`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      className="mini-btn"
+                      onClick={() => void downloadFile(file)}
                     >
                       {file.originalName || file.fileName}
-                    </a>
+                    </button>
                   </td>
                   <td>{Math.round((file.size || 0) / 1024)} KB</td>
                   <td>{file.linkedId || "N/A"}</td>
