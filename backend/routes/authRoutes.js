@@ -7,6 +7,7 @@ const router = express.Router();
 const User = require("../models/User");
 const sendOTP = require("../services/mailService");
 const sendEmail = require("../utils/sendEmail");
+const auth = require("../middleware/auth");
 
 const createToken = (user) =>
   jwt.sign(
@@ -57,6 +58,10 @@ router.post("/admin-login", async (req, res) => {
 
     if (!user) return res.status(401).json({ message: "Admin not found" });
 
+    if (user.status && user.status !== "active") {
+      return res.status(403).json({ message: "Account is not active" });
+    }
+
     const ok = await bcrypt.compare(password, user.password || "");
     if (!ok) return res.status(401).json({ message: "Invalid password" });
 
@@ -76,7 +81,7 @@ router.post("/admin-login", async (req, res) => {
   }
 });
 
-router.post("/create-staff", async (req, res) => {
+router.post("/create-staff", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   // Staff creation is handled by protected staff-management routes in production.
   try {
     const { name, email, password, role, branch, phone } = req.body;
@@ -202,7 +207,7 @@ router.post("/send-login-otp", async (req, res) => {
   }
 });
 
-router.get("/test-email", async (req, res) => {
+router.get("/test-email", auth(["admin"]), async (req, res) => {
   try {
     await sendEmail(
       process.env.EMAIL_USER,
@@ -224,7 +229,7 @@ router.post("/verify-otp", async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+    if (!otp || user.otp !== String(otp).trim()) return res.status(400).json({ message: "Invalid OTP" });
 
     if (!user.otpExpires || user.otpExpires < new Date()) {
       return res.status(400).json({ message: "OTP expired" });
