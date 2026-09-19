@@ -54,6 +54,38 @@ const app = express();
 const server = http.createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+const PRODUCTION_CLIENT_URL = "https://insurance-app-rose.vercel.app";
+
+const allowedOrigins = new Set([
+  CLIENT_URL,
+  PRODUCTION_CLIENT_URL,
+  "http://localhost:5173",
+]);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return (
+      protocol === "https:" &&
+      (hostname === "insurance-app-git-main-mummy7791s-projects.vercel.app" ||
+        /^insurance-[a-z0-9-]+-mummy7791s-projects\.vercel\.app$/i.test(hostname))
+    );
+  } catch {
+    return false;
+  }
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error("Origin not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+};
 const PORT = process.env.PORT || 5000;
 const MONGO_URL =
   process.env.MONGO_URL ||
@@ -62,11 +94,7 @@ const MONGO_URL =
 
 /* ================= SOCKET.IO ================= */
 const io = new Server(server, {
-  cors: {
-    origin: CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  },
+  cors: corsOptions,
 });
 
 app.set("io", io);
@@ -81,11 +109,7 @@ io.on("connection", (socket) => {
 
 /* ================= MIDDLEWARE ================= */
 app.use(
-  cors({
-    origin: CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  })
+  cors(corsOptions)
 );
 
 app.use(express.json({ limit: "20mb" }));
