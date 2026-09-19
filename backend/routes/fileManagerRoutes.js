@@ -28,7 +28,7 @@ router.get("/test", (req, res) => {
   res.json({ message: "File Manager Route Working" });
 });
 
-router.post("/upload", auth(), upload.single("file"), async (req, res) => {
+router.post("/upload", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), upload.single("file"), async (req, res) => {
   try {
     const { title, category, linkedId } = req.body;
 
@@ -55,7 +55,7 @@ router.post("/upload", auth(), upload.single("file"), async (req, res) => {
   }
 });
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const { category, search } = req.query;
 
