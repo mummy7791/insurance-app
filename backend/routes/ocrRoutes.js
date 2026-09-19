@@ -28,7 +28,7 @@ router.get("/test", (req, res) => {
   res.json({ message: "OCR Route Working" });
 });
 
-router.get("/history", auth(), async (req, res) => {
+router.get("/history", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const docs = await OCRDocument.find({}).sort({ createdAt: -1 }).lean();
     res.json(Array.isArray(docs) ? docs : []);
@@ -38,7 +38,7 @@ router.get("/history", auth(), async (req, res) => {
   }
 });
 
-router.post("/upload", auth(), upload.single("document"), async (req, res) => {
+router.post("/upload", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), upload.single("document"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Document file required" });
