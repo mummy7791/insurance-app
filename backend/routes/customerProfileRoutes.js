@@ -38,31 +38,14 @@ const getUserEmail = async (req) => {
 };
 
 const findCustomer = async (req) => {
-  const userId = req.user?.id;
   const userEmail = await getUserEmail(req);
+  const normalizedEmail = String(userEmail || "").trim().toLowerCase();
 
-  let customer = null;
+  const customer = normalizedEmail
+    ? await Customer.findOne({ email: normalizedEmail })
+    : null;
 
-  if (userEmail) {
-    customer = await Customer.findOne({
-      email: userEmail.toLowerCase().trim(),
-    });
-  }
-
-  if (!customer && userId) {
-    customer = await Customer.findOne({
-      $or: [
-        { userId },
-        { userId: String(userId) },
-        { user: userId },
-        { user: String(userId) },
-        { createdBy: userId },
-        { createdBy: String(userId) },
-      ],
-    });
-  }
-
-  return { customer, userEmail };
+  return { customer, userEmail: normalizedEmail };
 };
 
 router.get("/test", (req, res) => {
@@ -93,25 +76,29 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/", auth(), async (req, res) => {
+router.put("/", auth(["customer"]), async (req, res) => {
   try {
-    const { name, email, phone, address } = req.body;
+    const { name, phone, address } = req.body;
 
     const found = await findCustomer(req);
     let customer = found.customer;
+    const accountEmail = String(found.userEmail || "").trim().toLowerCase();
+
+    if (!accountEmail) {
+      return res.status(400).json({ message: "Account email is required" });
+    }
 
     if (!customer) {
       customer = await Customer.create({
         name: name || "",
-        email: email || found.userEmail || "",
+        email: accountEmail,
         phone: phone || "",
         address: address || "",
-        createdBy: req.user?.id || null,
         kycStatus: "Pending",
       });
     } else {
       customer.name = name || customer.name || "";
-      customer.email = email || customer.email || found.userEmail || "";
+      customer.email = accountEmail;
       customer.phone = phone || customer.phone || "";
       customer.address = address || customer.address || "";
       await customer.save();
@@ -139,7 +126,6 @@ router.post("/photo", auth(), upload.single("photo"), async (req, res) => {
         email: found.userEmail || "",
         phone: "",
         address: "",
-        createdBy: req.user?.id || null,
         kycStatus: "Pending",
       });
     }
@@ -154,12 +140,20 @@ router.post("/photo", auth(), upload.single("photo"), async (req, res) => {
   }
 });
 
-router.put("/password", auth(), async (req, res) => {
+router.put("/password", auth(["customer"]), async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    if (!newPassword) {
-      return res.status(400).json({ message: "New password is required" });
+    const strongPassword =
+      typeof newPassword === "string" &&
+      newPassword.length >= 8 &&
+      /[A-Za-z]/.test(newPassword) &&
+      /\\d/.test(newPassword);
+
+    if (!strongPassword) {
+      return res.status(400).json({
+        message: "New password must be at least 8 characters and include a letter and number",
+      });
     }
 
     const user = await User.findById(req.user?.id);
