@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
-type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "agent";
+type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "agent" | "customer";
 
 type ProtectedRouteProps = {
   children: ReactNode;
@@ -20,11 +20,11 @@ export default function ProtectedRoute({
   const user: User = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
 
   if (!token) {
-    return <Navigate to="/email-otp-login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && (!user.role || !allowedRoles.includes(user.role))) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={user.role === "customer" ? "/customer-dashboard" : "/dashboard"} replace />;
   }
 
   return children;
