@@ -150,12 +150,28 @@ router.post("/verify-payment", auth(), async (req, res) => {
       return res.status(400).json({ message: "Plan premium changed. Please create a new payment order." });
     }
 
-    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    const expectedAmountPaise = Math.round(amount * 100);
+    const [razorpayOrder, razorpayPayment] = await Promise.all([
+      razorpay.orders.fetch(razorpay_order_id),
+      razorpay.payments.fetch(razorpay_payment_id),
+    ]);
+
     if (
-      Number(razorpayOrder.amount) !== amount * 100 ||
+      Number(razorpayOrder.amount) !== expectedAmountPaise ||
       razorpayOrder.currency !== "INR"
     ) {
       return res.status(400).json({ message: "Payment amount verification failed" });
+    }
+
+    if (
+      razorpayPayment.order_id !== razorpay_order_id ||
+      Number(razorpayPayment.amount) !== expectedAmountPaise ||
+      razorpayPayment.currency !== "INR" ||
+      razorpayPayment.status !== "captured"
+    ) {
+      return res.status(400).json({
+        message: "Payment is not captured or does not match this order",
+      });
     }
 
     if (purchase.transactionId && purchase.transactionId !== razorpay_payment_id) {
