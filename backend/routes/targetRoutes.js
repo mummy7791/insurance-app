@@ -30,14 +30,31 @@ const getStatus = (target, achieved) => {
   return "Pending";
 };
 
+const parseNonNegativeNumber = (value) => {
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+
+  return number;
+};
+
 router.post(
   "/",
   auth(["admin", "bm", "unit_manager", "agency_manager"]),
   async (req, res) => {
     try {
       const payload = pickTargetFields(req.body);
-      const targetValue = Number(payload.target || 0);
-      const achievedValue = Number(payload.achieved || 0);
+
+      const targetValue = parseNonNegativeNumber(payload.target ?? 0);
+      const achievedValue = parseNonNegativeNumber(payload.achieved ?? 0);
+
+      if (targetValue === null || achievedValue === null) {
+        return res.status(400).json({
+          message: "Target and achieved must be valid non-negative numbers",
+        });
+      }
 
       const target = await Target.create({
         ...payload,
@@ -83,12 +100,18 @@ router.put(
       const payload = pickTargetFields(req.body);
 
       const targetValue = Object.prototype.hasOwnProperty.call(payload, "target")
-        ? Number(payload.target)
+        ? parseNonNegativeNumber(payload.target)
         : existingTarget.target;
 
       const achievedValue = Object.prototype.hasOwnProperty.call(payload, "achieved")
-        ? Number(payload.achieved)
+        ? parseNonNegativeNumber(payload.achieved)
         : existingTarget.achieved;
+
+      if (targetValue === null || achievedValue === null) {
+        return res.status(400).json({
+          message: "Target and achieved must be valid non-negative numbers",
+        });
+      }
 
       Object.assign(existingTarget, payload);
       existingTarget.target = targetValue;
