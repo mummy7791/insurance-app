@@ -19,6 +19,12 @@ const createToken = (user) =>
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+const isStrongPassword = (password) =>
+  typeof password === "string" &&
+  password.length >= 8 &&
+  /[A-Za-z]/.test(password) &&
+  /\d/.test(password);
+
 const safeSendOTP = async (email, otp) => {
   try {
     await sendOTP(email, otp);
@@ -93,6 +99,10 @@ router.post("/create-staff", auth(["admin", "bm", "unit_manager", "agency_manage
 
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid staff role" });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters and include a letter and number" });
     }
 
     const otp = generateOtp();
@@ -187,9 +197,15 @@ router.post("/send-login-otp", async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
+      return res.status(429).json({ message: "Too many OTP attempts. Please try again later." });
+    }
+
     const otp = generateOtp();
 
     user.otp = otp;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
@@ -229,7 +245,19 @@ router.post("/verify-otp", async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (!otp || user.otp !== String(otp).trim()) return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
+      return res.status(429).json({ message: "Too many OTP attempts. Please try again later." });
+    }
+
+    if (!otp || user.otp !== String(otp).trim()) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      if (user.otpAttempts >= 5) {
+        user.otpLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+        user.otpAttempts = 0;
+      }
+      await user.save();
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
 
     if (!user.otpExpires || user.otpExpires < new Date()) {
       return res.status(400).json({ message: "OTP expired" });
@@ -237,6 +265,8 @@ router.post("/verify-otp", async (req, res) => {
 
     user.otp = "";
     user.otpExpires = null;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
     user.isEmailVerified = true;
     await user.save();
 
@@ -263,6 +293,10 @@ router.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(401).json({ message: "User not found" });
+
+    if (user.status && user.status !== "active") {
+      return res.status(403).json({ message: "Account is not active" });
+    }
 
     if (user.role === "admin") {
       return res.status(403).json({ message: "Please use Admin Login" });
