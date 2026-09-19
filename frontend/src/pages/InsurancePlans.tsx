@@ -86,7 +86,7 @@ export default function InsurancePlans() {
     setBuyingId(planId);
 
     window.setTimeout(() => {
-      navigate(`/payment/${planId}`);
+      navigate(`/online-policy-purchase?plan=${planId}`);
       setBuyingId("");
     }, 300);
   };
@@ -102,33 +102,30 @@ export default function InsurancePlans() {
       subtitle="Compare protection plans, benefits, coverage and premiums"
     >
 
-      <div className="section">
-        <h2>Plans designed around your protection needs</h2>
+      <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>\n\n      <div className="section">\n        <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
           <p>Loading...</p>
         ) : plans.length === 0 ? (
           <p>No plans found.</p>
         ) : (
-          <div className="lead-grid">
+          <div className="insurance-plan-grid">
             {plans.map((plan) => {
               const premium = plan.yearlyPremium || plan.yearlyAmount || 0;
 
               return (
-                <div className="lead-card" key={plan._id}>
+                <div className="insurance-plan-card" key={plan._id}><span className="plan-category">{plan.category}</span>
                   <h3>{plan.planName}</h3>
 
-                  <p>
-                    <b>Category:</b> {plan.category}
-                  </p>
+                  
 
                   <p>
-                    <b>Coverage:</b> ₹
+                    <b>Life / Benefit Cover:</b> ₹
                     {(plan.coverageAmount || 0).toLocaleString("en-IN")}
                   </p>
 
                   <p>
-                    <b>Yearly Premium:</b> ₹
+                    <b>Premium from:</b> ₹
                     {premium.toLocaleString("en-IN")}
                   </p>
 
@@ -155,7 +152,7 @@ export default function InsurancePlans() {
                     disabled={buyingId === plan._id}
                     style={{ marginTop: 12 }}
                   >
-                    {buyingId === plan._id ? "Opening Payment..." : "Buy Plan"}
+                    {buyingId === plan._id ? "Opening..." : "View & Apply"}
                   </button>
                 </div>
               );
