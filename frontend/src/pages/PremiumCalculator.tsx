@@ -97,7 +97,8 @@ export default function PremiumCalculator() {
           boxShadow: "0 20px 60px rgba(0,0,0,.18)",
         }}
       >
-        <span className="eyebrow">SECURELIFE INSURANCE</span><h1>Premium Calculator</h1>\n        <p>Get an indicative yearly premium based on your age, cover and plan category.</p>
+        <span className="eyebrow">SECURELIFE INSURANCE</span><h1>Premium Calculator</h1>
+        <p>Get an indicative yearly premium based on your age, cover and plan category.</p>
 
         <div className="form-grid">
           <select
@@ -171,7 +172,11 @@ export default function PremiumCalculator() {
                 <h3>Yearly Premium</h3>
                 <h1>₹{result.yearlyPremium}</h1>
               </div>
-            </div>\n            <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>\n            <Link className="btn small-btn" to="/login">Sign in to explore plans</Link>\n          </div>\n        )}
+            </div>
+            <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>
+            <Link className="btn small-btn" to="/login">Sign in to explore plans</Link>
+          </div>
+        )}
       </div>
     </div>
   );
