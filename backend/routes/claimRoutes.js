@@ -1,9 +1,21 @@
 const router = require("express").Router();
 const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
+const Policy = require("../models/Policy");
 
 router.post("/", auth(), async (req, res) => {
   try {
+    if (req.user.role === "customer") {
+      const policy = await Policy.findOne({
+        policyNumber: req.body.policyNumber,
+        customerId: req.user.id,
+      });
+
+      if (!policy) {
+        return res.status(403).json({ message: "Policy does not belong to this customer" });
+      }
+    }
+
     const claim = await Claim.create({
       ...req.body,
       createdBy: req.user.id,
