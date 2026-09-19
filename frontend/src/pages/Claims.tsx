@@ -48,6 +48,8 @@ export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ClaimForm>(initialForm);
+  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const isCustomer = user.role === "customer" || !user.role;
 
   const loadClaims = useCallback(async () => {
     try {
@@ -125,8 +127,8 @@ export default function Claims() {
 
   return (
     <MainLayout
-      title="Claims Management"
-      subtitle="Track claim requests, approval status and settlement details"
+      title={isCustomer ? "Claims" : "Claims Management"}
+      subtitle={isCustomer ? "Submit a claim and track its progress" : "Track claim requests, approval status and settlement details"}
     >
       <div className="cards">
         <div className="card">
@@ -151,7 +153,7 @@ export default function Claims() {
       </div>
 
       <div className="section">
-        <h2>Add Claim</h2>
+        <h2>{isCustomer ? "File a Claim" : "Add Claim"}</h2>
 
         <div className="form-grid">
           <input
@@ -237,7 +239,7 @@ export default function Claims() {
                 <th>Date</th>
                 <th>Status</th>
                 <th>Remarks</th>
-                <th>Action</th>
+                {!isCustomer && <th>Action</th>}
               </tr>
             </thead>
 
@@ -249,30 +251,13 @@ export default function Claims() {
                   <td>{claim.claimType}</td>
                   <td>₹{claim.claimAmount}</td>
                   <td>{claim.submittedDate}</td>
-                  <td>
-                    <select
-                      className="status-select"
-                      value={claim.status}
-                      onChange={(e) =>
-                        updateStatus(claim._id, e.target.value as ClaimStatus)
-                      }
-                    >
-                      <option value="Submitted">Submitted</option>
-                      <option value="Under Review">Under Review</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Rejected">Rejected</option>
-                      <option value="Settled">Settled</option>
+                  <td>{isCustomer ? <span className="status-pill due">{claim.status}</span> : (
+                    <select className="status-select" value={claim.status} onChange={(e) => updateStatus(claim._id, e.target.value as ClaimStatus)}>
+                      <option value="Submitted">Submitted</option><option value="Under Review">Under Review</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Settled">Settled</option>
                     </select>
-                  </td>
+                  )}</td>
                   <td>{claim.remarks}</td>
-                  <td>
-                    <button
-                      className="mini-btn danger-btn"
-                      onClick={() => deleteClaim(claim._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deleteClaim(claim._id)}>Delete</button></td>}
                 </tr>
               ))}
             </tbody>
