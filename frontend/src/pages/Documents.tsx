@@ -35,6 +35,8 @@ export default function Documents() {
   const [form, setForm] = useState<DocumentForm>(initialForm);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const isCustomer = user.role === "customer" || !user.role;
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -124,8 +126,8 @@ export default function Documents() {
 
   return (
     <MainLayout
-      title="Document / KYC Management"
-      subtitle="Upload and verify Aadhaar, PAN, Bank, Income and Policy documents"
+      title={isCustomer ? "Documents & KYC" : "Document / KYC Management"}
+      subtitle={isCustomer ? "Upload required documents and track verification status" : "Upload and verify Aadhaar, PAN, Bank, Income and Policy documents"}
     >
       <div className="cards">
         <div className="card">
@@ -236,7 +238,7 @@ export default function Documents() {
                 <th>Date</th>
                 <th>Status</th>
                 <th>Remarks</th>
-                <th>Action</th>
+                {!isCustomer && <th>Action</th>}
               </tr>
             </thead>
 
@@ -256,28 +258,13 @@ export default function Documents() {
                     </a>
                   </td>
                   <td>{doc.uploadedDate}</td>
-                  <td>
-                    <select
-                      className="status-select"
-                      value={doc.status}
-                      onChange={(e) =>
-                        updateStatus(doc._id, e.target.value as VerifyStatus)
-                      }
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Verified">Verified</option>
-                      <option value="Rejected">Rejected</option>
+                  <td>{isCustomer ? <span className={`status-pill ${doc.status === "Verified" ? "active" : doc.status === "Rejected" ? "overdue" : "due"}`}>{doc.status}</span> : (
+                    <select className="status-select" value={doc.status} onChange={(e) => updateStatus(doc._id, e.target.value as VerifyStatus)}>
+                      <option value="Pending">Pending</option><option value="Verified">Verified</option><option value="Rejected">Rejected</option>
                     </select>
-                  </td>
+                  )}</td>
                   <td>{doc.remarks}</td>
-                  <td>
-                    <button
-                      className="mini-btn danger-btn"
-                      onClick={() => deleteDocument(doc._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                  {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deleteDocument(doc._id)}>Delete</button></td>}
                 </tr>
               ))}
             </tbody>
