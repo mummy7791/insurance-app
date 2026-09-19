@@ -29,9 +29,52 @@ const pickCommissionFields = (body = {}) => {
   return payload;
 };
 
+const parseNonNegativeNumber = (value) => {
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+
+  return number;
+};
+
+const validateCommissionNumbers = (payload, requireAll = false) => {
+  const numericFields = [
+    "premiumAmount",
+    "commissionRate",
+    "commissionAmount",
+  ];
+
+  for (const field of numericFields) {
+    const hasField = Object.prototype.hasOwnProperty.call(payload, field);
+
+    if (requireAll && !hasField) {
+      return `${field} is required`;
+    }
+
+    if (hasField) {
+      const value = parseNonNegativeNumber(payload[field]);
+
+      if (value === null) {
+        return `${field} must be a valid non-negative number`;
+      }
+
+      payload[field] = value;
+    }
+  }
+
+  return null;
+};
+
 router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const payload = pickCommissionFields(req.body);
+    const validationError = validateCommissionNumbers(payload, true);
+
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
 
     const commission = await Commission.create({
       ...payload,
@@ -84,6 +127,11 @@ router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advis
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const payload = pickCommissionFields(req.body);
+    const validationError = validateCommissionNumbers(payload);
+
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
 
     const commission = await Commission.findByIdAndUpdate(
       req.params.id,
