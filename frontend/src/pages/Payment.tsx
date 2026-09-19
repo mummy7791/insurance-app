@@ -182,7 +182,22 @@ export default function Payment() {
       title="Online Payment"
       subtitle="Complete payment to activate your insurance plan"
     >
-      {confirmation ? (\n        <div className="section payment-success">\n          <div className="success-mark">✓</div>\n          <span className="eyebrow">PAYMENT VERIFIED</span>\n          <h2>Your policy is active</h2>\n          <p>Your payment was securely verified and your SecureLife policy reference has been generated.</p>\n          <div className="confirmation-grid">\n            <div><span>Policy Number</span><strong>{confirmation.policyNumber}</strong></div>\n            <div><span>Receipt Number</span><strong>{confirmation.receiptNumber}</strong></div>\n            <div><span>Transaction ID</span><strong>{confirmation.transactionId}</strong></div>\n          </div>\n          <button className="btn small-btn" onClick={() => navigate("/customer-dashboard")}>Go to My Dashboard</button>\n        </div>\n      ) : (\n      <div className="section">\n        {loading ? (
+      {confirmation ? (
+        <div className="section payment-success">
+          <div className="success-mark">✓</div>
+          <span className="eyebrow">PAYMENT VERIFIED</span>
+          <h2>Your policy is active</h2>
+          <p>Your payment was securely verified and your SecureLife policy reference has been generated.</p>
+          <div className="confirmation-grid">
+            <div><span>Policy Number</span><strong>{confirmation.policyNumber}</strong></div>
+            <div><span>Receipt Number</span><strong>{confirmation.receiptNumber}</strong></div>
+            <div><span>Transaction ID</span><strong>{confirmation.transactionId}</strong></div>
+          </div>
+          <button className="btn small-btn" onClick={() => navigate("/customer-dashboard")}>Go to My Dashboard</button>
+        </div>
+      ) : (
+      <div className="section">
+        {loading ? (
           <p>Creating payment order...</p>
         ) : !order ? (
           <p>No payment order found.</p>
@@ -227,6 +242,8 @@ export default function Payment() {
             </button>
           </>
         )}
-      </div>\n      )}\n    </MainLayout>
+      </div>
+      )}
+    </MainLayout>
   );
 }
