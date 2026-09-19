@@ -26,6 +26,9 @@ router.get("/test", (req, res) => {
 });
 router.post("/create-order/:planId", auth(), async (req, res) => {
   try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ message: "Only customers can purchase plans" });
+    }
     const plan = await InsurancePlan.findById(req.params.planId);
 
     if (!plan) {
@@ -80,6 +83,9 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
 
 router.post("/verify-payment", auth(), async (req, res) => {
   try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ message: "Only customers can verify plan payments" });
+    }
     const { planId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
 
@@ -199,6 +205,9 @@ router.post("/verify-payment", auth(), async (req, res) => {
 
 router.get("/my-plans", auth(), async (req, res) => {
   try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ message: "Customer access only" });
+    }
     const purchases = await PlanPurchase.find({ customerId: req.user.id })
       .populate("planId")
       .sort({ createdAt: -1 });
