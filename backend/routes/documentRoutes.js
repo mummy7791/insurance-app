@@ -105,6 +105,35 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
+router.get("/:id/file", auth(), async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: "Document not found" });
+
+    if (req.user.role === "customer") {
+      const ownsPolicy = await Policy.exists({
+        policyNumber: document.policyNumber,
+        customerId: req.user.id,
+      });
+      const ownsDocument =
+        String(document.customerId || "") === String(req.user.id) ||
+        String(document.createdBy || "") === String(req.user.id);
+
+      if (!ownsDocument && !ownsPolicy) {
+        return res.status(403).json({ message: "Document access denied" });
+      }
+    }
+
+    const fileName = path.basename(document.filePath);
+    const absolutePath = path.join(__dirname, "..", "uploads", fileName);
+    res.setHeader("Content-Disposition", `inline; filename="${String(document.fileName).replace(/"/g, "")}"`);
+    return res.sendFile(absolutePath);
+  } catch (error) {
+    console.error("Document file access error:", error);
+    return res.status(500).json({ message: "Document file access failed" });
+  }
+});
+
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const document = await Document.findById(req.params.id);
