@@ -74,16 +74,6 @@ export default function InsurancePlans() {
     };
   }, [fetchPlans]);
 
-  const seedPlans = async () => {
-    try {
-      await api.post("/insurance-plans/seed-default");
-      alert("Plans created");
-      void loadPlans();
-    } catch (error: unknown) {
-      alert(getErrorMessage(error, "Only admin can create plans"));
-    }
-  };
-
   const buyPlan = (planId: string) => {
     const token = localStorage.getItem("insuranceToken");
 
@@ -109,16 +99,11 @@ export default function InsurancePlans() {
   return (
     <MainLayout
       title="Insurance Plans"
-      subtitle="Life, Health and Education Returns Plans"
+      subtitle="Compare protection plans, benefits, coverage and premiums"
     >
-      <div className="section">
-        <button className="btn small-btn" onClick={() => void seedPlans()}>
-          Create Default Plans
-        </button>
-      </div>
 
       <div className="section">
-        <h2>Available Plans</h2>
+        <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
           <p>Loading...</p>
