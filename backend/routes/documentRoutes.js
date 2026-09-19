@@ -4,6 +4,7 @@ const path = require("path");
 
 const Document = require("../models/Document");
 const auth = require("../middleware/auth");
+const Policy = require("../models/Policy");
 
 const router = express.Router();
 
@@ -26,6 +27,17 @@ router.post("/", auth(), upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "File required" });
+    }
+
+    if (req.user.role === "customer") {
+      const policy = await Policy.findOne({
+        policyNumber: req.body.policyNumber,
+        customerId: req.user.id,
+      });
+
+      if (!policy) {
+        return res.status(403).json({ message: "Policy does not belong to this customer" });
+      }
     }
 
     const document = await Document.create({
