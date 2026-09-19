@@ -15,8 +15,15 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
+    const extensionByMime = {
+      "application/pdf": ".pdf",
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp",
+    };
+    const extension = extensionByMime[file.mimetype] || "";
     const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+      Date.now() + "-" + Math.round(Math.random() * 1e9) + extension;
 
     cb(null, uniqueName);
   },
@@ -40,6 +47,47 @@ const upload = multer({
   },
 });
 
+const detectFileType = async (filePath) => {
+  const handle = await fs.promises.open(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(16);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    const bytes = buffer.subarray(0, bytesRead);
+
+    if (bytes.length >= 5 && bytes.subarray(0, 5).toString("ascii") === "%PDF-") {
+      return "application/pdf";
+    }
+    if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+      return "image/jpeg";
+    }
+    if (
+      bytes.length >= 8 &&
+      bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    ) {
+      return "image/png";
+    }
+    if (
+      bytes.length >= 12 &&
+      bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+      bytes.subarray(8, 12).toString("ascii") === "WEBP"
+    ) {
+      return "image/webp";
+    }
+    return null;
+  } finally {
+    await handle.close();
+  }
+};
+
+const removeUploadedFile = async (filePath) => {
+  if (!filePath) return;
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+};
+
 router.post("/", auth(), (req, res, next) => {
   upload.single("file")(req, res, (error) => {
     if (!error) return next();
@@ -52,6 +100,12 @@ router.post("/", auth(), (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "File required" });
+    }
+
+    const detectedMimeType = await detectFileType(req.file.path);
+    if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "File content does not match the allowed document type" });
     }
 
     const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
@@ -129,7 +183,11 @@ router.get("/:id/file", auth(), async (req, res) => {
 
     const fileName = path.basename(document.filePath);
     const absolutePath = path.join(__dirname, "..", "uploads", fileName);
-    res.setHeader("Content-Disposition", `inline; filename="${String(document.fileName).replace(/"/g, "")}"`);
+    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r\n]/g, "");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "private, no-store, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Content-Disposition", `attachment; filename="${downloadName}"`);
     return res.sendFile(absolutePath);
   } catch (error) {
     console.error("Document file access error:", error);
