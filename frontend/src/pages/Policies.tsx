@@ -157,7 +157,8 @@ export default function Policies() {
 
       {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p><span className="status-pill active">{plan.policyStatus}</span><button className="btn small-btn" style={{marginTop:16}} onClick={() => downloadCertificate(plan)}>Download Certificate / Receipt</button></div>)}</div></div>}
 
-      <div className="section">\n        <h2>{isCustomer ? "Other Assigned Policies" : "Policy List"}</h2>
+      <div className="section">
+        <h2>{isCustomer ? "Other Assigned Policies" : "Policy List"}</h2>
 
         <button className="mini-btn" onClick={loadPolicies}>
           Refresh
