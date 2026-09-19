@@ -49,7 +49,8 @@ router.post("/", auth(), upload.single("file"), async (req, res) => {
 
 router.get("/", auth(), async (req, res) => {
   try {
-    const documents = await Document.find().sort({ createdAt: -1 });
+    const query = req.user.role === "customer" ? { createdBy: req.user.id } : {};
+    const documents = await Document.find(query).sort({ createdAt: -1 });
     res.json(documents);
   } catch (error) {
     console.error("Documents fetch error:", error);
@@ -57,7 +58,7 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(), async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const document = await Document.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -70,7 +71,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     await Document.findByIdAndDelete(req.params.id);
     res.json({ message: "Document deleted" });
