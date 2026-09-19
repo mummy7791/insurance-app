@@ -4,16 +4,22 @@ const router = express.Router();
 const Notification = require("../models/Notification");
 const auth = require("../middleware/auth");
 
-router.post("/", auth(), async (req, res) => {
+const STAFF_ROLES = ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"];
+const isStaff = (user) => STAFF_ROLES.includes(user.role);
+
+router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
+    const { title, message, type, date, recipientId } = req.body;
     const notification = await Notification.create({
-      ...req.body,
+      title,
+      message,
+      type,
+      date,
+      recipientId: recipientId || undefined,
       createdBy: req.user.id,
     });
 
-    const io = req.app.get("io");
-    io.emit("newNotification", notification);
-
+    req.app.get("io").emit("newNotification", notification);
     res.status(201).json(notification);
   } catch (error) {
     console.error("Notification create error:", error);
@@ -23,7 +29,8 @@ router.post("/", auth(), async (req, res) => {
 
 router.get("/", auth(), async (req, res) => {
   try {
-    const notifications = await Notification.find().sort({ createdAt: -1 });
+    const filter = isStaff(req.user) ? {} : { recipientId: req.user.id };
+    const notifications = await Notification.find(filter).sort({ createdAt: -1 });
     res.json(notifications);
   } catch (error) {
     console.error("Notifications fetch error:", error);
@@ -33,15 +40,38 @@ router.get("/", auth(), async (req, res) => {
 
 router.put("/:id", auth(), async (req, res) => {
   try {
-    const notification = await Notification.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const staff = isStaff(req.user);
+    const filter = staff
+      ? { _id: req.params.id }
+      : { _id: req.params.id, recipientId: req.user.id };
 
-    const io = req.app.get("io");
-    io.emit("notificationUpdated", notification);
+    let updates;
+    if (staff) {
+      const { title, message, type, date, status, recipientId } = req.body;
+      updates = {};
+      if (title !== undefined) updates.title = title;
+      if (message !== undefined) updates.message = message;
+      if (type !== undefined) updates.type = type;
+      if (date !== undefined) updates.date = date;
+      if (status !== undefined) updates.status = status;
+      if (recipientId !== undefined) updates.recipientId = recipientId;
+    } else {
+      if (!["Read", "Unread"].includes(req.body.status)) {
+        return res.status(400).json({ message: "Invalid notification status" });
+      }
+      updates = { status: req.body.status };
+    }
 
+    const notification = await Notification.findOneAndUpdate(filter, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    req.app.get("io").emit("notificationUpdated", notification);
     res.json(notification);
   } catch (error) {
     console.error("Notification update error:", error);
@@ -49,13 +79,15 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
-    await Notification.findByIdAndDelete(req.params.id);
+    const notification = await Notification.findByIdAndDelete(req.params.id);
 
-    const io = req.app.get("io");
-    io.emit("notificationDeleted", req.params.id);
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
 
+    req.app.get("io").emit("notificationDeleted", req.params.id);
     res.json({ message: "Notification deleted" });
   } catch (error) {
     console.error("Notification delete error:", error);
