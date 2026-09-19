@@ -110,7 +110,7 @@ router.post("/admin-login", authRateLimit, async (req, res) => {
   }
 });
 
-router.post("/create-staff", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
+router.post("/create-staff", auth(["admin"]), async (req, res) => {
   // Staff creation is handled by protected staff-management routes in production.
   try {
     const { name, email, password, role, branch, phone } = req.body;
@@ -131,31 +131,33 @@ router.post("/create-staff", auth(["admin", "bm", "unit_manager", "agency_manage
     const otp = generateOtp();
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.findOneAndUpdate(
-      { email: email.toLowerCase().trim() },
-      {
-        name,
-        email: email.toLowerCase().trim(),
-        phone: phone || "",
-        password: hashedPassword,
-        role,
-        branch: branch || "",
-        status: "active",
-        otp,
-        otpExpires: new Date(Date.now() + 10 * 60 * 1000),
-        isEmailVerified: false,
-        permissions: getPermissionsByRole(role),
-      },
-      { upsert: true, new: true }
-    );
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ message: "An account with this email already exists" });
+    }
+
+    const user = await User.create({
+      name,
+      email: normalizedEmail,
+      phone: phone || "",
+      password: hashedPassword,
+      role,
+      branch: branch || "",
+      status: "active",
+      otp,
+      otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      isEmailVerified: false,
+      permissions: getPermissionsByRole(role),
+    });
 
     const emailSent = await safeSendOTP(user.email, otp);
+    if (!emailSent) {
+      return res.status(503).json({ message: "Staff created, but verification email could not be sent. Please retry OTP delivery." });
+    }
 
     res.json({
-      message: emailSent
-        ? "Staff created. OTP sent to email."
-        : "Staff created successfully. Email sending failed.",
-      otp: emailSent ? undefined : otp,
+      message: "Staff created. OTP sent to email.",
       user: {
         id: user._id,
         name: user.name,
@@ -200,12 +202,16 @@ router.post("/register", authRateLimit, async (req, res) => {
 
     const emailSent = await safeSendOTP(user.email, otp);
 
+    if (!emailSent) {
+      return res.status(503).json({
+        message: "Customer registered, but verification email could not be sent. Please retry OTP delivery.",
+        email: user.email,
+      });
+    }
+
     res.status(201).json({
-      message: emailSent
-        ? "Customer registered. OTP sent to email."
-        : "Customer registered successfully. Email sending failed.",
+      message: "Customer registered. OTP sent to email.",
       email: user.email,
-      otp: emailSent ? undefined : otp,
     });
   } catch (error) {
     console.error("Customer register error:", error);
@@ -234,11 +240,14 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
 
     const emailSent = await safeSendOTP(user.email, otp);
 
+    if (!emailSent) {
+      return res.status(503).json({ message: "OTP email could not be sent. Please try again later." });
+    }
+
     res.json({
-      message: emailSent ? "OTP sent to email." : "OTP generated. Email sending failed.",
+      message: "OTP sent to email.",
       email: user.email,
       role: user.role,
-      otp: emailSent ? undefined : otp,
     });
   } catch (error) {
     console.error("Send login OTP error:", error);
@@ -323,6 +332,10 @@ router.post("/login", authRateLimit, async (req, res) => {
 
     if (user.role === "admin") {
       return res.status(403).json({ message: "Please use Admin Login" });
+    }
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ message: "Please verify your email with OTP before logging in" });
     }
 
     const ok = await bcrypt.compare(password, user.password || "");
