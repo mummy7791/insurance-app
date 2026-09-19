@@ -38,18 +38,6 @@ export default function InsurancePlans() {
     return Array.isArray(res.data) ? res.data : [];
   }, []);
 
-  const loadPlans = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await fetchPlans();
-      setPlans(data);
-    } catch (error: unknown) {
-      alert(getErrorMessage(error, "Plans load failed"));
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchPlans]);
-
   useEffect(() => {
     let active = true;
 
