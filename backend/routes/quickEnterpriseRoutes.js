@@ -23,7 +23,7 @@ router.get("/test", (req, res) => {
   res.json({ message: "Quick Enterprise Route Working" });
 });
 
-router.get("/churn", auth(), async (req, res) => {
+router.get("/churn", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const customers = await Customer.find().limit(200);
 
@@ -61,6 +61,10 @@ router.get("/policy-pdf/:id", auth(), async (req, res) => {
       return res.status(404).json({ message: "Policy not found" });
     }
 
+    if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+      return res.status(403).json({ message: "Policy access denied" });
+    }
+
     const doc = new PDFDocument({ margin: 50 });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -92,6 +96,11 @@ router.get("/receipt/:id", auth(), async (req, res) => {
       return res.status(404).json({ message: "Premium not found" });
     }
 
+    if (req.user.role === "customer") {
+      const ownsPolicy = await Policy.exists({ policyNumber: premium.policyNumber, customerId: req.user.id });
+      if (!ownsPolicy) return res.status(403).json({ message: "Receipt access denied" });
+    }
+
     const doc = new PDFDocument({ margin: 50 });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -116,6 +125,12 @@ router.get("/receipt/:id", auth(), async (req, res) => {
 
 router.get("/policy-qr/:id", auth(), async (req, res) => {
   try {
+    const policy = await Policy.findById(req.params.id).select("customerId");
+    if (!policy) return res.status(404).json({ message: "Policy not found" });
+    if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+      return res.status(403).json({ message: "Policy access denied" });
+    }
+
     const verifyUrl = `${API_BASE_URL}/api/quick-enterprise/verify-policy/${req.params.id}`;
     const qr = await QRCode.toDataURL(verifyUrl);
 
@@ -146,7 +161,7 @@ router.get("/verify-policy/:id", async (req, res) => {
   }
 });
 
-router.get("/document-expiry", auth(), async (req, res) => {
+router.get("/document-expiry", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const next30 = new Date();
     next30.setDate(next30.getDate() + 30);
@@ -227,7 +242,7 @@ router.get("/pdf-report", auth(["admin", "bm"]), async (req, res) => {
   }
 });
 
-router.get("/permissions", auth(), async (req, res) => {
+router.get("/permissions", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const permissions = {
       admin: ["all"],
