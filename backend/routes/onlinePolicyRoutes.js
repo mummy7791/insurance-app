@@ -50,12 +50,11 @@ router.get("/:id", auth(), async (req, res) => {
   }
 });
 
-router.post("/buy", auth(), async (req, res) => {
+router.post("/buy", auth(["customer"]), async (req, res) => {
   try {
     const {
       policyId,
       customerName,
-      customerEmail,
       customerPhone,
       address,
       dateOfBirth,
@@ -66,7 +65,24 @@ router.post("/buy", auth(), async (req, res) => {
       proposalConsent,
     } = req.body;
 
-    if (!policyId || !customerName || !customerEmail || !customerPhone || !dateOfBirth || !panNumber || !nomineeName || !nomineeRelation || proposalConsent !== true) {
+    const accountEmail = String(req.user?.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (!accountEmail) {
+      return res.status(400).json({ message: "Account email is required" });
+    }
+
+    if (
+      !policyId ||
+      !customerName ||
+      !customerPhone ||
+      !dateOfBirth ||
+      !panNumber ||
+      !nomineeName ||
+      !nomineeRelation ||
+      proposalConsent !== true
+    ) {
       return res.status(400).json({
         message: "Complete personal, PAN, nominee and consent details are required",
       });
@@ -79,18 +95,23 @@ router.post("/buy", auth(), async (req, res) => {
     }
 
     let customer = await Customer.findOne({
-      email: customerEmail.toLowerCase().trim(),
+      email: accountEmail,
     });
 
     if (!customer) {
       customer = await Customer.create({
         name: customerName,
-        email: customerEmail.toLowerCase().trim(),
+        email: accountEmail,
         phone: customerPhone,
         address: address || "",
-        createdBy: req.user?.id,
         kycStatus: "Pending",
       });
+    } else {
+      customer.name = customerName || customer.name || "";
+      customer.email = accountEmail;
+      customer.phone = customerPhone || customer.phone || "";
+      customer.address = address || customer.address || "";
+      await customer.save();
     }
 
     const purchase = await PolicyPurchase.create({
@@ -102,7 +123,7 @@ router.post("/buy", auth(), async (req, res) => {
       premiumAmount:
         Number(policy.premiumAmount || policy.amount || policy.premium || 0),
       customerName,
-      customerEmail: customerEmail.toLowerCase().trim(),
+      customerEmail: accountEmail,
       customerPhone,
       address: address || "",
       dateOfBirth,
