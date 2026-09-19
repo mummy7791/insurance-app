@@ -41,6 +41,17 @@ router.post("/create-order/:planId", auth(), async (req, res) => {
       return res.status(400).json({ message: "Plan premium missing" });
     }
 
+    const staleBefore = new Date(Date.now() - 30 * 60 * 1000);
+    await PlanPurchase.updateMany(
+      {
+        customerId: req.user.id,
+        planId: plan._id,
+        paymentStatus: "Pending",
+        createdAt: { $lt: staleBefore },
+      },
+      { $set: { paymentStatus: "Failed", policyStatus: "Inactive" } }
+    );
+
     const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
@@ -118,6 +129,17 @@ router.post("/verify-payment", auth(), async (req, res) => {
 
     if (!purchase) {
       return res.status(400).json({ message: "Payment order does not match this customer and plan" });
+    }
+
+    if (purchase.paymentStatus === "Failed") {
+      return res.status(400).json({ message: "Payment order expired. Please create a new order." });
+    }
+
+    if (purchase.paymentStatus === "Pending" && Date.now() - purchase.createdAt.getTime() > 30 * 60 * 1000) {
+      purchase.paymentStatus = "Failed";
+      purchase.policyStatus = "Inactive";
+      await purchase.save();
+      return res.status(400).json({ message: "Payment order expired. Please create a new order." });
     }
 
     const plan = await InsurancePlan.findById(planId);
