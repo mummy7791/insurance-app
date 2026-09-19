@@ -313,7 +313,7 @@ router.put("/password", auth(["customer"]), async (req, res) => {
       typeof newPassword === "string" &&
       newPassword.length >= 8 &&
       /[A-Za-z]/.test(newPassword) &&
-      /\\d/.test(newPassword);
+      /\d/.test(newPassword);
 
     if (!strongPassword) {
       return res.status(400).json({
