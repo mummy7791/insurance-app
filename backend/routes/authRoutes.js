@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ const createToken = (user) =>
   );
 
 const generateOtp = () =>
-  Math.floor(100000 + Math.random() * 900000).toString();
+  crypto.randomInt(100000, 1000000).toString();
 
 const isStrongPassword = (password) =>
   typeof password === "string" &&
