@@ -121,7 +121,7 @@ export default function Documents() {
   };
 
   const getFileUrl = (filePath: string) => {
-    return `http://localhost:5000${filePath}`;
+    return `https://insurance-app-7vkn.onrender.com${filePath}`;
   };
 
   return (
