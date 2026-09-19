@@ -80,10 +80,10 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <img src="/ic_launcher.png" alt="ICICI Life" />
+          <img src="/ic_launcher.png" alt="SecureLife Insurance" />
         </div>
 
-        <h1 className="auth-title">ICICI LIFE</h1>
+        <h1 className="auth-title">SecureLife Insurance</h1>
         <h2 className="auth-subtitle">Customer Register</h2>
 
         <div className="auth-form">
