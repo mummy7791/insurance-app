@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 
 const Document = require("../models/Document");
 const auth = require("../middleware/auth");
@@ -21,7 +22,6 @@ const pickDocumentUpdateFields = (body = {}) => {
   const allowedFields = [
     "customerName",
     "documentType",
-    "uploadedDate",
     "status",
     "remarks",
   ];
@@ -51,7 +51,7 @@ const storage = multer.diskStorage({
     };
     const extension = extensionByMime[file.mimetype] || "";
     const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9) + extension;
+      `${crypto.randomBytes(24).toString("hex")}${extension}`;
 
     cb(null, uniqueName);
   },
