@@ -378,7 +378,7 @@ router.post("/verify-otp", authRateLimit, async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user || (user.status && user.status !== "active")) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
