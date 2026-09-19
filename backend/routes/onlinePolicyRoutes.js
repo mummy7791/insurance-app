@@ -58,11 +58,17 @@ router.post("/buy", auth(), async (req, res) => {
       customerEmail,
       customerPhone,
       address,
+      dateOfBirth,
+      panNumber,
+      nomineeName,
+      nomineeRelation,
+      nomineeDateOfBirth,
+      proposalConsent,
     } = req.body;
 
-    if (!policyId || !customerName || !customerEmail || !customerPhone) {
+    if (!policyId || !customerName || !customerEmail || !customerPhone || !dateOfBirth || !panNumber || !nomineeName || !nomineeRelation || proposalConsent !== true) {
       return res.status(400).json({
-        message: "Policy, name, email and phone are required",
+        message: "Complete personal, PAN, nominee and consent details are required",
       });
     }
 
@@ -99,6 +105,12 @@ router.post("/buy", auth(), async (req, res) => {
       customerEmail: customerEmail.toLowerCase().trim(),
       customerPhone,
       address: address || "",
+      dateOfBirth,
+      panNumber: String(panNumber).trim().toUpperCase(),
+      nomineeName,
+      nomineeRelation,
+      nomineeDateOfBirth: nomineeDateOfBirth || "",
+      proposalConsent,
       status: "Pending",
       paymentStatus: "Pending",
     });
