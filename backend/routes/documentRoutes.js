@@ -83,9 +83,14 @@ router.get("/", auth(), async (req, res) => {
 
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    const document = await Document.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const document = await Document.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: "Document not found" });
+
+    const protectedFields = ["_id", "createdBy", "customerId", "policyNumber"];
+    for (const field of protectedFields) delete req.body[field];
+
+    Object.assign(document, req.body);
+    await document.save();
 
     res.json(document);
   } catch (error) {
@@ -96,7 +101,10 @@ router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent
 
 router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
-    await Document.findByIdAndDelete(req.params.id);
+    const document = await Document.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: "Document not found" });
+
+    await document.deleteOne();
     res.json({ message: "Document deleted" });
   } catch (error) {
     console.error("Document delete error:", error);
