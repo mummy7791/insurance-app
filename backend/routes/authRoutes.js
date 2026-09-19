@@ -7,6 +7,8 @@ const router = express.Router();
 const authAttempts = new Map();
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_MAX_ATTEMPTS = 10;
+const DUMMY_PASSWORD_HASH =
+  "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
 const authRateLimit = (req, res, next) => {
   const key = req.ip || req.socket.remoteAddress || "unknown";
@@ -85,14 +87,18 @@ router.post("/admin-login", authRateLimit, async (req, res) => {
       role: "admin",
     });
 
-    if (!user) return res.status(401).json({ message: "Admin not found" });
+    const ok = await bcrypt.compare(
+      typeof password === "string" ? password : "",
+      user?.password || DUMMY_PASSWORD_HASH
+    );
+
+    if (!user || !ok) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     if (user.status && user.status !== "active") {
       return res.status(403).json({ message: "Account is not active" });
     }
-
-    const ok = await bcrypt.compare(password, user.password || "");
-    if (!ok) return res.status(401).json({ message: "Invalid password" });
 
     res.json({
       token: createToken(user),
@@ -221,13 +227,29 @@ router.post("/register", authRateLimit, async (req, res) => {
 
 router.post("/send-login-otp", authRateLimit, async (req, res) => {
   try {
-    const { email } = req.body;
+    const email =
+      typeof req.body?.email === "string"
+        ? req.body.email.toLowerCase().trim()
+        : "";
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email, role: "customer" });
+
+    // Keep the public response generic so this endpoint does not reveal
+    // whether a customer account exists.
+    if (!user || (user.status && user.status !== "active")) {
+      return res.json({
+        message: "If an eligible customer account exists, an OTP will be sent.",
+      });
+    }
 
     if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.status(429).json({ message: "Too many OTP attempts. Please try again later." });
+      return res.status(429).json({
+        message: "Too many OTP attempts. Please try again later.",
+      });
     }
 
     const otp = generateOtp();
@@ -241,17 +263,85 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
     const emailSent = await safeSendOTP(user.email, otp);
 
     if (!emailSent) {
-      return res.status(503).json({ message: "OTP email could not be sent. Please try again later." });
+      return res.status(503).json({
+        message: "OTP email could not be sent. Please try again later.",
+      });
     }
 
-    res.json({
-      message: "OTP sent to email.",
-      email: user.email,
-      role: user.role,
+    return res.json({
+      message: "If an eligible customer account exists, an OTP will be sent.",
     });
   } catch (error) {
     console.error("Send login OTP error:", error);
-    res.status(500).json({ message: "Send login OTP failed" });
+    return res.status(500).json({ message: "Send login OTP failed" });
+  }
+});
+
+router.post("/login-with-otp", authRateLimit, async (req, res) => {
+  try {
+    const email =
+      typeof req.body?.email === "string"
+        ? req.body.email.toLowerCase().trim()
+        : "";
+    const otp =
+      typeof req.body?.otp === "string" || typeof req.body?.otp === "number"
+        ? String(req.body.otp).trim()
+        : "";
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Invalid email or OTP" });
+    }
+
+    const user = await User.findOne({ email, role: "customer" });
+
+    if (!user || (user.status && user.status !== "active")) {
+      return res.status(401).json({ message: "Invalid email or OTP" });
+    }
+
+    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
+      return res.status(429).json({
+        message: "Too many OTP attempts. Please try again later.",
+      });
+    }
+
+    const otpIsValid =
+      user.otp &&
+      user.otp === otp &&
+      user.otpExpires &&
+      user.otpExpires >= new Date();
+
+    if (!otpIsValid) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+
+      if (user.otpAttempts >= 5) {
+        user.otpLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+        user.otpAttempts = 0;
+      }
+
+      await user.save();
+      return res.status(401).json({ message: "Invalid email or OTP" });
+    }
+
+    user.otp = "";
+    user.otpExpires = null;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
+    user.isEmailVerified = true;
+    await user.save();
+
+    return res.json({
+      token: createToken(user),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || getPermissionsByRole(user.role),
+      },
+    });
+  } catch (error) {
+    console.error("Customer OTP login error:", error);
+    return res.status(500).json({ message: "OTP login failed" });
   }
 });
 
@@ -272,27 +362,47 @@ router.get("/test-email", auth(["admin"]), async (req, res) => {
 
 router.post("/verify-otp", authRateLimit, async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const email =
+      typeof req.body?.email === "string"
+        ? req.body.email.toLowerCase().trim()
+        : "";
+    const otp =
+      typeof req.body?.otp === "string" || typeof req.body?.otp === "number"
+        ? String(req.body.otp).trim()
+        : "";
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.status(429).json({ message: "Too many OTP attempts. Please try again later." });
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    if (!otp || user.otp !== String(otp).trim()) {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
+      return res.status(429).json({
+        message: "Too many OTP attempts. Please try again later.",
+      });
+    }
+
+    const otpIsValid =
+      user.otp &&
+      user.otp === otp &&
+      user.otpExpires &&
+      user.otpExpires >= new Date();
+
+    if (!otpIsValid) {
       user.otpAttempts = (user.otpAttempts || 0) + 1;
+
       if (user.otpAttempts >= 5) {
         user.otpLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
         user.otpAttempts = 0;
       }
-      await user.save();
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
 
-    if (!user.otpExpires || user.otpExpires < new Date()) {
-      return res.status(400).json({ message: "OTP expired" });
+      await user.save();
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
     user.otp = "";
@@ -302,7 +412,7 @@ router.post("/verify-otp", authRateLimit, async (req, res) => {
     user.isEmailVerified = true;
     await user.save();
 
-    res.json({
+    return res.json({
       token: createToken(user),
       user: {
         id: user._id,
@@ -315,7 +425,7 @@ router.post("/verify-otp", authRateLimit, async (req, res) => {
     });
   } catch (error) {
     console.error("OTP verify error:", error);
-    res.status(500).json({ message: "OTP verify failed" });
+    return res.status(500).json({ message: "OTP verify failed" });
   }
 });
 
@@ -324,7 +434,15 @@ router.post("/login", authRateLimit, async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(401).json({ message: "User not found" });
+
+    const ok = await bcrypt.compare(
+      typeof password === "string" ? password : "",
+      user?.password || DUMMY_PASSWORD_HASH
+    );
+
+    if (!user || !ok) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     if (user.status && user.status !== "active") {
       return res.status(403).json({ message: "Account is not active" });
@@ -337,9 +455,6 @@ router.post("/login", authRateLimit, async (req, res) => {
     if (!user.isEmailVerified) {
       return res.status(403).json({ message: "Please verify your email with OTP before logging in" });
     }
-
-    const ok = await bcrypt.compare(password, user.password || "");
-    if (!ok) return res.status(401).json({ message: "Invalid password" });
 
     res.json({
       token: createToken(user),
