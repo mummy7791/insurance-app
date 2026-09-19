@@ -52,6 +52,14 @@ const policySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
+    verificationToken: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+      select: false,
+    },
   },
   { timestamps: true }
 );

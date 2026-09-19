@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
 
@@ -125,13 +126,28 @@ router.get("/receipt/:id", auth(), async (req, res) => {
 
 router.get("/policy-qr/:id", auth(), async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id).select("customerId");
-    if (!policy) return res.status(404).json({ message: "Policy not found" });
-    if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+    const policy = await Policy.findById(req.params.id)
+      .select("customerId +verificationToken");
+
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
+
+    if (
+      req.user.role === "customer" &&
+      String(policy.customerId || "") !== String(req.user.id)
+    ) {
       return res.status(403).json({ message: "Policy access denied" });
     }
 
-    const verifyUrl = `${API_BASE_URL}/api/quick-enterprise/verify-policy/${req.params.id}`;
+    if (!policy.verificationToken) {
+      policy.verificationToken = crypto.randomBytes(32).toString("hex");
+      await policy.save();
+    }
+
+    const verifyUrl =
+      `${API_BASE_URL}/api/quick-enterprise/verify-policy/${policy.verificationToken}`;
+
     const qr = await QRCode.toDataURL(verifyUrl);
 
     res.json({ qr, verifyUrl });
@@ -141,18 +157,28 @@ router.get("/policy-qr/:id", auth(), async (req, res) => {
   }
 });
 
-router.get("/verify-policy/:id", async (req, res) => {
+router.get("/verify-policy/:token", async (req, res) => {
   try {
-    const policy = await Policy.findById(req.params.id);
+    const token = String(req.params.token || "");
+
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      return res.status(404).json({ valid: false });
+    }
+
+    const policy = await Policy.findOne({
+      verificationToken: token,
+    }).select("policyName policyNumber status");
 
     if (!policy) {
       return res.status(404).json({ valid: false });
     }
 
+    res.setHeader("Cache-Control", "no-store");
+
     res.json({
       valid: true,
-      policyName: policy.policyName || policy.name || "N/A",
-      policyNumber: policy.policyNumber || policy.number || "N/A",
+      policyName: policy.policyName || "N/A",
+      policyNumber: policy.policyNumber || "N/A",
       status: policy.status || "N/A",
     });
   } catch (error) {
