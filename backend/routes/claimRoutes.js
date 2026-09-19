@@ -18,6 +18,7 @@ router.post("/", auth(), async (req, res) => {
 
     const claim = await Claim.create({
       ...req.body,
+      customerId: req.user.role === "customer" ? req.user.id : req.body.customerId,
       createdBy: req.user.id,
     });
 
@@ -30,7 +31,17 @@ router.post("/", auth(), async (req, res) => {
 
 router.get("/", auth(), async (req, res) => {
   try {
-    const query = req.user.role === "customer" ? { createdBy: req.user.id } : {};
+    let query = {};
+    if (req.user.role === "customer") {
+      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");
+      query = {
+        $or: [
+          { customerId: req.user.id },
+          { createdBy: req.user.id },
+          { policyNumber: { $in: policies.map((policy) => policy.policyNumber) } },
+        ],
+      };
+    }
     const claims = await Claim.find(query).sort({ createdAt: -1 });
     res.json(claims);
   } catch (error) {
