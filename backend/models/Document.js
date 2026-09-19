@@ -43,6 +43,12 @@ const documentSchema = new mongoose.Schema(
       default: "No remarks",
     },
 
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
