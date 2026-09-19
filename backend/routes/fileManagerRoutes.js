@@ -200,11 +200,17 @@ router.get("/", auth(STAFF_ROLES), async (req, res) => {
       query.category = category;
     }
 
-    if (search) {
+    if (typeof search === "string" && search.trim()) {
+      const normalizedSearch = search.trim().slice(0, 100);
+      const escapedSearch = normalizedSearch.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
       query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { originalName: { $regex: search, $options: "i" } },
-        { category: { $regex: search, $options: "i" } },
+        { title: { $regex: escapedSearch, $options: "i" } },
+        { originalName: { $regex: escapedSearch, $options: "i" } },
+        { category: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 
