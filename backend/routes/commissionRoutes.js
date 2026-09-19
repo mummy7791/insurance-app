@@ -4,10 +4,37 @@ const router = express.Router();
 const Commission = require("../models/Commission");
 const auth = require("../middleware/auth");
 
+const pickCommissionFields = (body = {}) => {
+  const allowedFields = [
+    "employeeName",
+    "employeeRole",
+    "customerName",
+    "policyNumber",
+    "premiumAmount",
+    "commissionRate",
+    "commissionAmount",
+    "month",
+    "status",
+    "remarks",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
+    const payload = pickCommissionFields(req.body);
+
     const commission = await Commission.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -56,13 +83,20 @@ router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advis
 
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
+    const payload = pickCommissionFields(req.body);
+
     const commission = await Commission.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      payload,
       {
         new: true,
+        runValidators: true,
       }
     );
+
+    if (!commission) {
+      return res.status(404).json({ message: "Commission not found" });
+    }
 
     res.json(commission);
   } catch (error) {

@@ -2,11 +2,35 @@ const router = require("express").Router();
 const Lead = require("../models/Lead");
 const auth = require("../middleware/auth");
 
+const pickLeadFields = (body = {}) => {
+  const allowedFields = [
+    "name",
+    "phone",
+    "city",
+    "email",
+    "occupation",
+    "income",
+    "status",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 // Add Lead
 router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
+    const payload = pickLeadFields(req.body);
+
     const lead = await Lead.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -36,13 +60,20 @@ router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor"
 // Update Lead
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
+    const payload = pickLeadFields(req.body);
+
     const lead = await Lead.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      payload,
       {
         new: true,
+        runValidators: true,
       }
     );
+
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found" });
+    }
 
     res.json(lead);
   } catch (err) {

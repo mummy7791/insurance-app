@@ -4,6 +4,26 @@ const router = express.Router();
 const Target = require("../models/Target");
 const auth = require("../middleware/auth");
 
+const pickTargetFields = (body = {}) => {
+  const allowedFields = [
+    "employee",
+    "role",
+    "month",
+    "target",
+    "achieved",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 const getStatus = (target, achieved) => {
   if (achieved >= target) return "Achieved";
   if (achieved > 0) return "In Progress";
@@ -15,11 +35,12 @@ router.post(
   auth(["admin", "bm", "unit_manager", "agency_manager"]),
   async (req, res) => {
     try {
-      const targetValue = Number(req.body.target || 0);
-      const achievedValue = Number(req.body.achieved || 0);
+      const payload = pickTargetFields(req.body);
+      const targetValue = Number(payload.target || 0);
+      const achievedValue = Number(payload.achieved || 0);
 
       const target = await Target.create({
-        ...req.body,
+        ...payload,
         target: targetValue,
         achieved: achievedValue,
         status: getStatus(targetValue, achievedValue),
@@ -53,19 +74,30 @@ router.put(
   auth(["admin", "bm", "unit_manager", "agency_manager"]),
   async (req, res) => {
     try {
-      const targetValue = Number(req.body.target || 0);
-      const achievedValue = Number(req.body.achieved || 0);
+      const existingTarget = await Target.findById(req.params.id);
 
-      const updatedTarget = await Target.findByIdAndUpdate(
-        req.params.id,
-        {
-          ...req.body,
-          status: getStatus(targetValue, achievedValue),
-        },
-        { new: true }
-      );
+      if (!existingTarget) {
+        return res.status(404).json({ message: "Target not found" });
+      }
 
-      res.json(updatedTarget);
+      const payload = pickTargetFields(req.body);
+
+      const targetValue = Object.prototype.hasOwnProperty.call(payload, "target")
+        ? Number(payload.target)
+        : existingTarget.target;
+
+      const achievedValue = Object.prototype.hasOwnProperty.call(payload, "achieved")
+        ? Number(payload.achieved)
+        : existingTarget.achieved;
+
+      Object.assign(existingTarget, payload);
+      existingTarget.target = targetValue;
+      existingTarget.achieved = achievedValue;
+      existingTarget.status = getStatus(targetValue, achievedValue);
+
+      await existingTarget.save();
+
+      res.json(existingTarget);
     } catch (error) {
       console.error("Target update error:", error);
       res.status(500).json({ message: "Target update failed" });

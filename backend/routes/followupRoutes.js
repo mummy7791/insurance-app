@@ -4,10 +4,43 @@ const router = express.Router();
 const Followup = require("../models/Followup");
 const auth = require("../middleware/auth");
 
-router.post("/", auth(), async (req, res) => {
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "advisor",
+  "agent",
+];
+
+const pickFollowupFields = (body = {}) => {
+  const allowedFields = [
+    "customerName",
+    "phone",
+    "followType",
+    "date",
+    "time",
+    "status",
+    "remarks",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
+router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
+    const payload = pickFollowupFields(req.body);
+
     const followup = await Followup.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -18,7 +51,7 @@ router.post("/", auth(), async (req, res) => {
   }
 });
 
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const followups = await Followup.find().sort({ createdAt: -1 });
     res.json(followups);
@@ -28,11 +61,18 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.put("/:id", auth(), async (req, res) => {
+router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
-    const followup = await Followup.findByIdAndUpdate(req.params.id, req.body, {
+    const payload = pickFollowupFields(req.body);
+
+    const followup = await Followup.findByIdAndUpdate(req.params.id, payload, {
       new: true,
+      runValidators: true,
     });
+
+    if (!followup) {
+      return res.status(404).json({ message: "Followup not found" });
+    }
 
     res.json(followup);
   } catch (error) {
@@ -41,7 +81,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     await Followup.findByIdAndDelete(req.params.id);
     res.json({ message: "Followup deleted" });

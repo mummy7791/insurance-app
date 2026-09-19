@@ -4,13 +4,39 @@ const router = express.Router();
 const Employee = require("../models/Employee");
 const auth = require("../middleware/auth");
 
+const pickEmployeeFields = (body = {}) => {
+  const allowedFields = [
+    "name",
+    "email",
+    "phone",
+    "role",
+    "branch",
+    "manager",
+    "target",
+    "achievement",
+    "status",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 router.post(
   "/",
   auth(["admin", "bm", "unit_manager", "agency_manager"]),
   async (req, res) => {
     try {
+      const payload = pickEmployeeFields(req.body);
+
       const employee = await Employee.create({
-        ...req.body,
+        ...payload,
         createdBy: req.user.id,
       });
 
@@ -41,11 +67,17 @@ router.put(
   auth(["admin", "bm", "unit_manager", "agency_manager"]),
   async (req, res) => {
     try {
+      const payload = pickEmployeeFields(req.body);
+
       const employee = await Employee.findByIdAndUpdate(
         req.params.id,
-        req.body,
-        { new: true }
+        payload,
+        { new: true, runValidators: true }
       );
+
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
 
       res.json(employee);
     } catch (error) {

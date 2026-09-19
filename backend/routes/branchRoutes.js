@@ -4,10 +4,37 @@ const router = express.Router();
 const Branch = require("../models/Branch");
 const auth = require("../middleware/auth");
 
+const pickBranchFields = (body = {}) => {
+  const allowedFields = [
+    "branchName",
+    "branchCode",
+    "city",
+    "address",
+    "bmName",
+    "phone",
+    "email",
+    "target",
+    "achievement",
+    "status",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 router.post("/", auth(["admin", "bm"]), async (req, res) => {
   try {
+    const payload = pickBranchFields(req.body);
+
     const branch = await Branch.create({
-      ...req.body,
+      ...payload,
       createdBy: req.user.id,
     });
 
@@ -30,9 +57,16 @@ router.get("/", auth(["admin", "bm"]), async (req, res) => {
 
 router.put("/:id", auth(["admin", "bm"]), async (req, res) => {
   try {
-    const branch = await Branch.findByIdAndUpdate(req.params.id, req.body, {
+    const payload = pickBranchFields(req.body);
+
+    const branch = await Branch.findByIdAndUpdate(req.params.id, payload, {
       new: true,
+      runValidators: true,
     });
+
+    if (!branch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
 
     res.json(branch);
   } catch (error) {

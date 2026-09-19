@@ -4,6 +4,28 @@ const router = express.Router();
 const Setting = require("../models/Setting");
 const auth = require("../middleware/auth");
 
+const pickSettingFields = (body = {}) => {
+  const allowedFields = [
+    "companyName",
+    "logoText",
+    "supportPhone",
+    "supportEmail",
+    "defaultCommissionRate",
+    "theme",
+    "currency",
+  ];
+
+  const payload = {};
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      payload[field] = body[field];
+    }
+  }
+
+  return payload;
+};
+
 router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     let setting = await Setting.findOne();
@@ -24,10 +46,11 @@ router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (
 router.put("/", auth(["admin"]), async (req, res) => {
   try {
     let setting = await Setting.findOne();
+    const payload = pickSettingFields(req.body);
 
     if (!setting) {
       setting = await Setting.create({
-        ...req.body,
+        ...payload,
         createdBy: req.user.id,
         updatedBy: req.user.id,
       });
@@ -35,10 +58,10 @@ router.put("/", auth(["admin"]), async (req, res) => {
       setting = await Setting.findByIdAndUpdate(
         setting._id,
         {
-          ...req.body,
+          ...payload,
           updatedBy: req.user.id,
         },
-        { new: true }
+        { new: true, runValidators: true }
       );
     }
 
