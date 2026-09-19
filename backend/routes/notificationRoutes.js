@@ -6,20 +6,31 @@ const auth = require("../middleware/auth");
 
 const STAFF_ROLES = ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"];
 const isStaff = (user) => STAFF_ROLES.includes(user.role);
+const userRoom = (userId) => `user:${String(userId)}`;
+
+const emitToRecipient = (req, event, payload, recipientId) => {
+  if (!recipientId) return;
+  req.app.get("io").to(userRoom(recipientId)).emit(event, payload);
+};
 
 router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const { title, message, type, date, recipientId } = req.body;
+
+    if (!recipientId) {
+      return res.status(400).json({ message: "Notification recipient required" });
+    }
+
     const notification = await Notification.create({
       title,
       message,
       type,
       date,
-      recipientId: recipientId || undefined,
+      recipientId,
       createdBy: req.user.id,
     });
 
-    req.app.get("io").emit("newNotification", notification);
+    emitToRecipient(req, "newNotification", notification, notification.recipientId);
     res.status(201).json(notification);
   } catch (error) {
     console.error("Notification create error:", error);
@@ -45,6 +56,13 @@ router.put("/:id", auth(), async (req, res) => {
       ? { _id: req.params.id }
       : { _id: req.params.id, recipientId: req.user.id };
 
+    const existing = await Notification.findOne(filter);
+    if (!existing) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    const previousRecipientId = existing.recipientId;
+
     let updates;
     if (staff) {
       const { title, message, type, date, status, recipientId } = req.body;
@@ -62,16 +80,23 @@ router.put("/:id", auth(), async (req, res) => {
       updates = { status: req.body.status };
     }
 
-    const notification = await Notification.findOneAndUpdate(filter, updates, {
-      new: true,
-      runValidators: true,
-    });
+    Object.assign(existing, updates);
+    const notification = await existing.save();
 
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
+    if (
+      previousRecipientId &&
+      String(previousRecipientId) !== String(notification.recipientId)
+    ) {
+      emitToRecipient(req, "notificationDeleted", notification._id, previousRecipientId);
     }
 
-    req.app.get("io").emit("notificationUpdated", notification);
+    emitToRecipient(
+      req,
+      "notificationUpdated",
+      notification,
+      notification.recipientId
+    );
+
     res.json(notification);
   } catch (error) {
     console.error("Notification update error:", error);
@@ -87,7 +112,13 @@ router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
       return res.status(404).json({ message: "Notification not found" });
     }
 
-    req.app.get("io").emit("notificationDeleted", req.params.id);
+    emitToRecipient(
+      req,
+      "notificationDeleted",
+      notification._id,
+      notification.recipientId
+    );
+
     res.json({ message: "Notification deleted" });
   } catch (error) {
     console.error("Notification delete error:", error);
