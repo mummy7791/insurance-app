@@ -14,7 +14,7 @@ router.get("/", auth(["admin", "bm"]), async (req, res) => {
   }
 });
 
-router.post("/", auth(), async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const log = await AuditLog.create({
       userId: req.user.id,
