@@ -4,6 +4,29 @@ const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
+const authAttempts = new Map();
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_MAX_ATTEMPTS = 10;
+
+const authRateLimit = (req, res, next) => {
+  const key = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const current = authAttempts.get(key);
+
+  if (!current || current.resetAt <= now) {
+    authAttempts.set(key, { count: 1, resetAt: now + AUTH_WINDOW_MS });
+    return next();
+  }
+
+  if (current.count >= AUTH_MAX_ATTEMPTS) {
+    res.set("Retry-After", String(Math.ceil((current.resetAt - now) / 1000)));
+    return res.status(429).json({ message: "Too many authentication attempts. Please try again later." });
+  }
+
+  current.count += 1;
+  return next();
+};
+
 const User = require("../models/User");
 const sendOTP = require("../services/mailService");
 const sendEmail = require("../utils/sendEmail");
@@ -53,7 +76,7 @@ router.get("/test", (req, res) => {
   res.json({ message: "Auth route working" });
 });
 
-router.post("/admin-login", async (req, res) => {
+router.post("/admin-login", authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -148,7 +171,7 @@ router.post("/create-staff", auth(["admin", "bm", "unit_manager", "agency_manage
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", authRateLimit, async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -190,7 +213,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/send-login-otp", async (req, res) => {
+router.post("/send-login-otp", authRateLimit, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -238,7 +261,7 @@ router.get("/test-email", auth(["admin"]), async (req, res) => {
   }
 });
 
-router.post("/verify-otp", async (req, res) => {
+router.post("/verify-otp", authRateLimit, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -287,7 +310,7 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
 
