@@ -241,7 +241,7 @@ router.get("/:id/download", auth(STAFF_ROLES), async (req, res) => {
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${path.basename(record.originalName || record.fileName)
-        .replace(/[\\"]/g, "_")}"`
+        .replace(/[\r\n"\\]/g, "_")}"`
     );
 
     return res.sendFile(fullPath);
