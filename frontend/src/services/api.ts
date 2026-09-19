@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://insurance-app-7vkn.onrender.com/api";
+const API_ORIGIN =
+  import.meta.env.VITE_API_URL || "https://insurance-app-7vkn.onrender.com";
+
+const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, "")}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
