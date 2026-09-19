@@ -1,14 +1,21 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000,
+});
 
 const sendOTP = async (email, otp) => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not configured");
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { data, error } = await resend.emails.send({
-    from: process.env.RESEND_FROM || "onboarding@resend.dev",
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
     to: email,
     subject: "Your Insurance App Verification OTP",
     html: `
@@ -23,12 +30,6 @@ const sendOTP = async (email, otp) => {
       </div>
     `,
   });
-
-  if (error) {
-    throw new Error(error.message || "Failed to send OTP email");
-  }
-
-  return data;
 };
 
 module.exports = sendOTP;
