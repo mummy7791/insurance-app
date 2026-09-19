@@ -27,8 +27,6 @@ type OCRDocument = {
   createdAt?: string;
 };
 
-const API_BASE_URL = "http://localhost:5000";
-
 export default function OCRVerification() {
   const [documentType, setDocumentType] = useState<DocumentType>("Aadhaar");
   const [file, setFile] = useState<File | null>(null);
@@ -82,6 +80,28 @@ export default function OCRVerification() {
       window.clearTimeout(timer);
     };
   }, [fetchDocs]);
+
+  const downloadDocument = async (doc: OCRDocument) => {
+    try {
+      const res = await api.get(`/ocr/${doc._id}/download`, {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = doc.fileName || "document";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("OCR document download error:", error);
+      alert("Document download failed");
+    }
+  };
 
   const uploadDocument = async () => {
     if (!file) {
@@ -257,16 +277,16 @@ export default function OCRVerification() {
                   <td>{doc.documentType}</td>
 
                   <td>
-                    {doc.filePath ? (
-                      <a
-                        href={`${API_BASE_URL}${doc.filePath}`}
-                        target="_blank"
-                        rel="noreferrer"
+                    {doc.fileName ? (
+                      <button
+                        type="button"
+                        className="mini-btn"
+                        onClick={() => void downloadDocument(doc)}
                       >
                         View File
-                      </a>
+                      </button>
                     ) : (
-                      doc.fileName || "N/A"
+                      "N/A"
                     )}
                   </td>
 
