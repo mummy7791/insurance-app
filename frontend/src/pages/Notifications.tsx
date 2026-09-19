@@ -20,6 +20,21 @@ type NotificationItem = {
   type: NotificationType;
   date: string;
   status: NotificationStatus;
+  recipientId?: string;
+};
+
+type Recipient = {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+};
+
+type StoredUser = {
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: string;
 };
 
 type NotificationForm = {
@@ -27,46 +42,74 @@ type NotificationForm = {
   message: string;
   type: NotificationType;
   date: string;
+  recipientId: string;
 };
+
+const STAFF_ROLES = [
+  "admin",
+  "bm",
+  "unit_manager",
+  "agency_manager",
+  "advisor",
+  "agent",
+];
 
 const initialForm: NotificationForm = {
   title: "",
   message: "",
   type: "Premium Due",
   date: "",
+  recipientId: "",
 };
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [form, setForm] = useState<NotificationForm>(initialForm);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | NotificationType>("All");
 
+  const user = useMemo<StoredUser>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const isStaff = Boolean(user.role && STAFF_ROLES.includes(user.role));
+
   const loadNotifications = useCallback(async () => {
     try {
-      setTimeout(() => setLoading(true), 0);
-
+      setLoading(true);
       const res = await api.get<NotificationItem[]>("/notifications");
-
-      setTimeout(() => {
-        setNotifications(res.data);
-        setLoading(false);
-      }, 0);
+      setNotifications(res.data);
     } catch (error) {
       console.error("Notifications load error:", error);
-      setTimeout(() => setLoading(false), 0);
       alert("Notifications load failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadRecipients = useCallback(async () => {
+    try {
+      const res = await api.get<Recipient[]>("/notifications/recipients");
+      setRecipients(res.data);
+    } catch (error) {
+      console.error("Notification recipients load error:", error);
+      alert("Customer recipients load failed");
     }
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void loadNotifications();
-    }, 0);
+    void loadNotifications();
 
-    return () => clearTimeout(timer);
-  }, [loadNotifications]);
+    if (isStaff) {
+      void loadRecipients();
+    }
+  }, [isStaff, loadNotifications, loadRecipients]);
 
   useEffect(() => {
     connectSocket();
@@ -81,7 +124,9 @@ export default function Notifications() {
 
     const handleNotificationUpdated = (notification: NotificationItem) => {
       setNotifications((prev) =>
-        prev.map((item) => (item._id === notification._id ? notification : item))
+        prev.map((item) =>
+          item._id === notification._id ? notification : item
+        )
       );
     };
 
@@ -101,18 +146,31 @@ export default function Notifications() {
   }, []);
 
   const addNotification = async () => {
-    if (!form.title || !form.message) {
+    if (!isStaff) return;
+
+    if (!form.recipientId) {
+      alert("Please select a customer");
+      return;
+    }
+
+    if (!form.title.trim() || !form.message.trim()) {
       alert("Title and Message required");
       return;
     }
 
     try {
-      await api.post<NotificationItem>("/notifications", {
-        title: form.title,
-        message: form.message,
+      const res = await api.post<NotificationItem>("/notifications", {
+        recipientId: form.recipientId,
+        title: form.title.trim(),
+        message: form.message.trim(),
         type: form.type,
         date: form.date || new Date().toISOString().split("T")[0],
         status: "Unread",
+      });
+
+      setNotifications((prev) => {
+        const exists = prev.some((item) => item._id === res.data._id);
+        return exists ? prev : [res.data, ...prev];
       });
 
       setForm(initialForm);
@@ -124,9 +182,13 @@ export default function Notifications() {
 
   const markAsRead = async (id: string) => {
     try {
-      await api.put<NotificationItem>(`/notifications/${id}`, {
+      const res = await api.put<NotificationItem>(`/notifications/${id}`, {
         status: "Read",
       });
+
+      setNotifications((prev) =>
+        prev.map((item) => (item._id === id ? res.data : item))
+      );
     } catch (error) {
       console.error("Notification update error:", error);
       alert("Mark read failed");
@@ -134,11 +196,14 @@ export default function Notifications() {
   };
 
   const deleteNotification = async (id: string) => {
+    if (!isStaff) return;
+
     const ok = window.confirm("Delete this notification?");
     if (!ok) return;
 
     try {
       await api.delete(`/notifications/${id}`);
+      setNotifications((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.error("Notification delete error:", error);
       alert("Notification delete failed");
@@ -188,57 +253,76 @@ export default function Notifications() {
         </div>
       </div>
 
-      <div className="section">
-        <h2>Create Notification</h2>
+      {isStaff && (
+        <div className="section">
+          <h2>Create Notification</h2>
 
-        <div className="form-grid">
-          <input
-            placeholder="Title"
-            value={form.title}
+          <div className="form-grid">
+            <select
+              value={form.recipientId}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  recipientId: e.target.value,
+                }))
+              }
+            >
+              <option value="">Select Customer</option>
+              {recipients.map((recipient) => (
+                <option key={recipient._id} value={recipient._id}>
+                  {recipient.name} — {recipient.email}
+                </option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Title"
+              value={form.title}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, title: e.target.value }))
+              }
+            />
+
+            <select
+              value={form.type}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  type: e.target.value as NotificationType,
+                }))
+              }
+            >
+              <option value="Premium Due">Premium Due</option>
+              <option value="Follow-up">Follow-up</option>
+              <option value="Policy Expiry">Policy Expiry</option>
+              <option value="Claim Update">Claim Update</option>
+              <option value="KYC Pending">KYC Pending</option>
+              <option value="Target Alert">Target Alert</option>
+            </select>
+
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, date: e.target.value }))
+              }
+            />
+          </div>
+
+          <textarea
+            className="text-area"
+            placeholder="Message"
+            value={form.message}
             onChange={(e) =>
-              setForm((prev) => ({ ...prev, title: e.target.value }))
+              setForm((prev) => ({ ...prev, message: e.target.value }))
             }
           />
 
-          <select
-            value={form.type}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                type: e.target.value as NotificationType,
-              }))
-            }
-          >
-            <option value="Premium Due">Premium Due</option>
-            <option value="Follow-up">Follow-up</option>
-            <option value="Policy Expiry">Policy Expiry</option>
-            <option value="Claim Update">Claim Update</option>
-            <option value="KYC Pending">KYC Pending</option>
-            <option value="Target Alert">Target Alert</option>
-          </select>
-
-          <input
-            type="date"
-            value={form.date}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, date: e.target.value }))
-            }
-          />
+          <button className="btn small-btn" onClick={() => void addNotification()}>
+            Add Notification
+          </button>
         </div>
-
-        <textarea
-          className="text-area"
-          placeholder="Message"
-          value={form.message}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, message: e.target.value }))
-          }
-        />
-
-        <button className="btn small-btn" onClick={addNotification}>
-          Add Notification
-        </button>
-      </div>
+      )}
 
       <div className="section">
         <h2>Search & Filter</h2>
@@ -265,7 +349,7 @@ export default function Notifications() {
             <option value="Target Alert">Target Alert</option>
           </select>
 
-          <button className="mini-btn" onClick={loadNotifications}>
+          <button className="mini-btn" onClick={() => void loadNotifications()}>
             Refresh
           </button>
         </div>
@@ -293,18 +377,20 @@ export default function Notifications() {
                   {item.status === "Unread" && (
                     <button
                       className="mini-btn"
-                      onClick={() => markAsRead(item._id)}
+                      onClick={() => void markAsRead(item._id)}
                     >
                       Mark Read
                     </button>
                   )}
 
-                  <button
-                    className="mini-btn danger-btn"
-                    onClick={() => deleteNotification(item._id)}
-                  >
-                    Delete
-                  </button>
+                  {isStaff && (
+                    <button
+                      className="mini-btn danger-btn"
+                      onClick={() => void deleteNotification(item._id)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

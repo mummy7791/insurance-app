@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Notification = require("../models/Notification");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 
 const STAFF_ROLES = ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"];
@@ -13,12 +14,39 @@ const emitToRecipient = (req, event, payload, recipientId) => {
   req.app.get("io").to(userRoom(recipientId)).emit(event, payload);
 };
 
+router.get("/recipients", auth(STAFF_ROLES), async (req, res) => {
+  try {
+    const recipients = await User.find({
+      role: "customer",
+      status: "active",
+    })
+      .select("_id name email phone")
+      .sort({ name: 1, email: 1 })
+      .lean();
+
+    res.json(recipients);
+  } catch (error) {
+    console.error("Notification recipients fetch error:", error);
+    res.status(500).json({ message: "Notification recipients fetch failed" });
+  }
+});
+
 router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const { title, message, type, date, recipientId } = req.body;
 
     if (!recipientId) {
       return res.status(400).json({ message: "Notification recipient required" });
+    }
+
+    const recipient = await User.findOne({
+      _id: recipientId,
+      role: "customer",
+      status: "active",
+    }).select("_id");
+
+    if (!recipient) {
+      return res.status(400).json({ message: "Invalid notification recipient" });
     }
 
     const notification = await Notification.create({
