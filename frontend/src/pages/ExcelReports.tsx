@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import * as XLSX from "xlsx";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
@@ -44,6 +43,9 @@ type ReportsResponse = {
   commissionByRole: RoleReport[];
   premiumByMonth: MonthReport[];
 };
+
+type CsvValue = string | number | boolean | null | undefined;
+type CsvRow = Record<string, CsvValue>;
 
 const emptyReports: ReportsResponse = {
   cards: {
@@ -96,169 +98,170 @@ export default function ExcelReports() {
     return () => clearTimeout(timer);
   }, [loadReports]);
 
-  const downloadExcel = (
-    fileName: string,
-    sheets: { sheetName: string; rows: Record<string, string | number>[] }[]
-  ) => {
-    const workbook = XLSX.utils.book_new();
+  const downloadCsv = (fileName: string, rows: CsvRow[]) => {
+    if (rows.length === 0) {
+      rows = [{ Status: "No Data" }];
+    }
 
-    sheets.forEach((sheet) => {
-      const worksheet = XLSX.utils.json_to_sheet(sheet.rows);
-      XLSX.utils.book_append_sheet(workbook, worksheet, sheet.sheetName);
+    const headers = Array.from(
+      new Set(rows.flatMap((row) => Object.keys(row)))
+    );
+
+    const escapeCsv = (value: CsvValue) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const csv = [
+      headers.map((header) => escapeCsv(header)).join(","),
+      ...rows.map((row) =>
+        headers.map((header) => escapeCsv(row[header])).join(",")
+      ),
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF", csv], {
+      type: "text/csv;charset=utf-8;",
     });
 
-    XLSX.writeFile(workbook, fileName);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
   };
 
+  const getSummaryRows = (): CsvRow[] => [
+    { Metric: "Total Customers", Value: reports.cards.totalCustomers },
+    { Metric: "Total Policies", Value: reports.cards.totalPolicies },
+    { Metric: "Total Premium Records", Value: reports.cards.totalPremiums },
+    { Metric: "Total Claims", Value: reports.cards.totalClaims },
+    { Metric: "Total Employees", Value: reports.cards.totalEmployees },
+    { Metric: "Total Commissions", Value: reports.cards.totalCommissions },
+    { Metric: "Paid Premium Amount", Value: reports.cards.paidPremiumAmount },
+    { Metric: "Due Premium Amount", Value: reports.cards.duePremiumAmount },
+    { Metric: "Active Policies", Value: reports.cards.activePolicies },
+    { Metric: "Pending Claims", Value: reports.cards.pendingClaims },
+    {
+      Metric: "Paid Commission Amount",
+      Value: reports.cards.paidCommissionAmount,
+    },
+    {
+      Metric: "Pending Commission Amount",
+      Value: reports.cards.pendingCommissionAmount,
+    },
+  ];
+
   const exportSummary = () => {
-    downloadExcel("summary-report.xlsx", [
-      {
-        sheetName: "Summary",
-        rows: [
-          { Metric: "Total Customers", Value: reports.cards.totalCustomers },
-          { Metric: "Total Policies", Value: reports.cards.totalPolicies },
-          { Metric: "Total Premium Records", Value: reports.cards.totalPremiums },
-          { Metric: "Total Claims", Value: reports.cards.totalClaims },
-          { Metric: "Total Employees", Value: reports.cards.totalEmployees },
-          { Metric: "Total Commissions", Value: reports.cards.totalCommissions },
-          { Metric: "Paid Premium Amount", Value: reports.cards.paidPremiumAmount },
-          { Metric: "Due Premium Amount", Value: reports.cards.duePremiumAmount },
-          { Metric: "Active Policies", Value: reports.cards.activePolicies },
-          { Metric: "Pending Claims", Value: reports.cards.pendingClaims },
-          {
-            Metric: "Paid Commission Amount",
-            Value: reports.cards.paidCommissionAmount,
-          },
-          {
-            Metric: "Pending Commission Amount",
-            Value: reports.cards.pendingCommissionAmount,
-          },
-        ],
-      },
-    ]);
+    downloadCsv("summary-report.csv", getSummaryRows());
   };
 
   const exportPremium = () => {
-    downloadExcel("premium-report.xlsx", [
-      {
-        sheetName: "Premium Status",
-        rows:
-          reports.premiumByStatus.length > 0
-            ? reports.premiumByStatus.map((item) => ({
-                Status: item._id,
-                Records: item.count,
-                TotalAmount: item.total || 0,
-              }))
-            : [{ Status: "No Data", Records: 0, TotalAmount: 0 }],
-      },
-      {
-        sheetName: "Premium Month",
-        rows:
-          reports.premiumByMonth.length > 0
-            ? reports.premiumByMonth.map((item) => ({
-                Month: item._id,
-                Records: item.count,
-                TotalPremium: item.total,
-              }))
-            : [{ Month: "No Data", Records: 0, TotalPremium: 0 }],
-      },
-    ]);
+    const statusRows: CsvRow[] =
+      reports.premiumByStatus.length > 0
+        ? reports.premiumByStatus.map((item) => ({
+            Section: "Premium Status",
+            Status: item._id,
+            Records: item.count,
+            TotalAmount: item.total || 0,
+          }))
+        : [
+            {
+              Section: "Premium Status",
+              Status: "No Data",
+              Records: 0,
+              TotalAmount: 0,
+            },
+          ];
+
+    const monthRows: CsvRow[] =
+      reports.premiumByMonth.length > 0
+        ? reports.premiumByMonth.map((item) => ({
+            Section: "Premium Month",
+            Month: item._id,
+            Records: item.count,
+            TotalPremium: item.total,
+          }))
+        : [
+            {
+              Section: "Premium Month",
+              Month: "No Data",
+              Records: 0,
+              TotalPremium: 0,
+            },
+          ];
+
+    downloadCsv("premium-report.csv", [...statusRows, ...monthRows]);
   };
 
   const exportClaims = () => {
-    downloadExcel("claims-report.xlsx", [
-      {
-        sheetName: "Claims",
-        rows:
-          reports.claimsByStatus.length > 0
-            ? reports.claimsByStatus.map((item) => ({
-                Status: item._id,
-                Claims: item.count,
-                ClaimAmount: item.total || 0,
-              }))
-            : [{ Status: "No Data", Claims: 0, ClaimAmount: 0 }],
-      },
-    ]);
+    const rows: CsvRow[] =
+      reports.claimsByStatus.length > 0
+        ? reports.claimsByStatus.map((item) => ({
+            Status: item._id,
+            Claims: item.count,
+            ClaimAmount: item.total || 0,
+          }))
+        : [{ Status: "No Data", Claims: 0, ClaimAmount: 0 }];
+
+    downloadCsv("claims-report.csv", rows);
   };
 
   const exportCommission = () => {
-    downloadExcel("commission-report.xlsx", [
-      {
-        sheetName: "Commission",
-        rows:
-          reports.commissionByRole.length > 0
-            ? reports.commissionByRole.map((item) => ({
-                Role: item._id,
-                Records: item.count,
-                TotalCommission: item.total,
-              }))
-            : [{ Role: "No Data", Records: 0, TotalCommission: 0 }],
-      },
-    ]);
+    const rows: CsvRow[] =
+      reports.commissionByRole.length > 0
+        ? reports.commissionByRole.map((item) => ({
+            Role: item._id,
+            Records: item.count,
+            TotalCommission: item.total,
+          }))
+        : [{ Role: "No Data", Records: 0, TotalCommission: 0 }];
+
+    downloadCsv("commission-report.csv", rows);
   };
 
   const exportAll = () => {
-    downloadExcel("all-reports.xlsx", [
-      {
-        sheetName: "Summary",
-        rows: [
-          { Metric: "Total Customers", Value: reports.cards.totalCustomers },
-          { Metric: "Total Policies", Value: reports.cards.totalPolicies },
-          { Metric: "Total Premium Records", Value: reports.cards.totalPremiums },
-          { Metric: "Total Claims", Value: reports.cards.totalClaims },
-          { Metric: "Total Employees", Value: reports.cards.totalEmployees },
-          { Metric: "Total Commissions", Value: reports.cards.totalCommissions },
-          { Metric: "Paid Premium Amount", Value: reports.cards.paidPremiumAmount },
-          { Metric: "Due Premium Amount", Value: reports.cards.duePremiumAmount },
-          {
-            Metric: "Paid Commission Amount",
-            Value: reports.cards.paidCommissionAmount,
-          },
-          {
-            Metric: "Pending Commission Amount",
-            Value: reports.cards.pendingCommissionAmount,
-          },
-        ],
-      },
-      {
-        sheetName: "Premium Status",
-        rows: reports.premiumByStatus.map((item) => ({
-          Status: item._id,
-          Records: item.count,
-          TotalAmount: item.total || 0,
-        })),
-      },
-      {
-        sheetName: "Claims Status",
-        rows: reports.claimsByStatus.map((item) => ({
-          Status: item._id,
-          Claims: item.count,
-          ClaimAmount: item.total || 0,
-        })),
-      },
-      {
-        sheetName: "Commission Role",
-        rows: reports.commissionByRole.map((item) => ({
-          Role: item._id,
-          Records: item.count,
-          TotalCommission: item.total,
-        })),
-      },
-      {
-        sheetName: "Premium Month",
-        rows: reports.premiumByMonth.map((item) => ({
-          Month: item._id,
-          Records: item.count,
-          TotalPremium: item.total,
-        })),
-      },
-    ]);
+    const rows: CsvRow[] = [
+      ...getSummaryRows().map((row) => ({
+        Section: "Summary",
+        ...row,
+      })),
+      ...reports.premiumByStatus.map((item) => ({
+        Section: "Premium Status",
+        Status: item._id,
+        Records: item.count,
+        TotalAmount: item.total || 0,
+      })),
+      ...reports.claimsByStatus.map((item) => ({
+        Section: "Claims Status",
+        Status: item._id,
+        Records: item.count,
+        TotalAmount: item.total || 0,
+      })),
+      ...reports.commissionByRole.map((item) => ({
+        Section: "Commission Role",
+        Role: item._id,
+        Records: item.count,
+        TotalAmount: item.total,
+      })),
+      ...reports.premiumByMonth.map((item) => ({
+        Section: "Premium Month",
+        Month: item._id,
+        Records: item.count,
+        TotalAmount: item.total,
+      })),
+    ];
+
+    downloadCsv("all-reports.csv", rows);
   };
 
   return (
     <MainLayout
-      title="Excel Reports"
-      subtitle="Export MongoDB reports as Excel files"
+      title="Reports"
+      subtitle="Export insurance reports as CSV files compatible with Excel"
     >
       <button className="mini-btn" onClick={loadReports}>
         Refresh Reports
@@ -268,34 +271,34 @@ export default function ExcelReports() {
 
       <div className="cards">
         <div className="card">
-          <h3>Summary Excel</h3>
+          <h3>Summary Report</h3>
           <h1>{reports.cards.totalCustomers}</h1>
           <button className="mini-btn" onClick={exportSummary}>
-            Download
+            Download CSV
           </button>
         </div>
 
         <div className="card">
-          <h3>Premium Excel</h3>
+          <h3>Premium Report</h3>
           <h1>₹{reports.cards.paidPremiumAmount}</h1>
           <button className="mini-btn" onClick={exportPremium}>
-            Download
+            Download CSV
           </button>
         </div>
 
         <div className="card">
-          <h3>Claims Excel</h3>
+          <h3>Claims Report</h3>
           <h1>{reports.cards.totalClaims}</h1>
           <button className="mini-btn" onClick={exportClaims}>
-            Download
+            Download CSV
           </button>
         </div>
 
         <div className="card">
-          <h3>Commission Excel</h3>
+          <h3>Commission Report</h3>
           <h1>₹{reports.cards.paidCommissionAmount}</h1>
           <button className="mini-btn" onClick={exportCommission}>
-            Download
+            Download CSV
           </button>
         </div>
       </div>
@@ -304,8 +307,8 @@ export default function ExcelReports() {
         <h2>Export All Reports</h2>
 
         <p>
-          Download summary, premium, claims, commission and monthly reports in
-          one Excel workbook.
+          Download summary, premium, claims, commission and monthly report
+          data in one CSV file.
         </p>
 
         <button className="btn small-btn" onClick={exportAll}>
@@ -314,7 +317,7 @@ export default function ExcelReports() {
       </div>
 
       <div className="section">
-        <h2>Available Excel Reports</h2>
+        <h2>Available Reports</h2>
 
         <table className="table">
           <thead>
@@ -330,7 +333,7 @@ export default function ExcelReports() {
             <tr>
               <td>Summary</td>
               <td>Overall CRM summary</td>
-              <td>summary-report.xlsx</td>
+              <td>summary-report.csv</td>
               <td>
                 <button className="mini-btn" onClick={exportSummary}>
                   Download
@@ -341,7 +344,7 @@ export default function ExcelReports() {
             <tr>
               <td>Premium</td>
               <td>Premium status and monthly report</td>
-              <td>premium-report.xlsx</td>
+              <td>premium-report.csv</td>
               <td>
                 <button className="mini-btn" onClick={exportPremium}>
                   Download
@@ -352,7 +355,7 @@ export default function ExcelReports() {
             <tr>
               <td>Claims</td>
               <td>Claims status report</td>
-              <td>claims-report.xlsx</td>
+              <td>claims-report.csv</td>
               <td>
                 <button className="mini-btn" onClick={exportClaims}>
                   Download
@@ -363,7 +366,7 @@ export default function ExcelReports() {
             <tr>
               <td>Commission</td>
               <td>Role-wise commission report</td>
-              <td>commission-report.xlsx</td>
+              <td>commission-report.csv</td>
               <td>
                 <button className="mini-btn" onClick={exportCommission}>
                   Download

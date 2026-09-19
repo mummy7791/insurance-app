@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "../services/api";
@@ -78,11 +77,34 @@ export default function AuditLogs() {
       IP: log.ipAddress || "N/A",
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
+    const headers = Object.keys(rows[0] || {});
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Logs");
-    XLSX.writeFile(workbook, "audit-logs.xlsx");
+    const escapeCsv = (value: unknown) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const csv = [
+      headers.map(escapeCsv).join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => escapeCsv(row[header as keyof typeof row]))
+          .join(",")
+      ),
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF", csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "audit-logs.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
   };
 
   const exportPDF = () => {
@@ -185,7 +207,7 @@ export default function AuditLogs() {
           </button>
 
           <button className="mini-btn" onClick={exportExcel}>
-            Export Excel
+            Export CSV
           </button>
 
           <button className="mini-btn" onClick={exportPDF}>
