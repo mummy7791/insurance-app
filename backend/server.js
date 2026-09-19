@@ -48,7 +48,6 @@ const insurancePlanRoutes = require("./routes/insurancePlanRoutes");
 const planPurchaseRoutes = require("./routes/planPurchaseRoutes");
 const policyPurchaseRoutes = require("./routes/policyPurchaseRoutes");
 const customerRoutes = require("./routes/customer");
-const seedAdmin = require("./seedAdmin");
 
 const app = express();
 const server = http.createServer(app);
@@ -198,8 +197,6 @@ mongoose
   .connect(MONGO_URL)
   .then(async () => {
     console.log("✅ MongoDB Connected");
-
-    await seedAdmin();
 
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
