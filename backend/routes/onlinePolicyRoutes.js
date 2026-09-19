@@ -8,6 +8,35 @@ const Policy = require("../models/Policy");
 const Customer = require("../models/Customer");
 const PolicyPurchase = require("../models/PolicyPurchase");
 
+const toCustomerPurchaseResponse = (purchase) => {
+  if (!purchase) return null;
+
+  const data =
+    typeof purchase.toObject === "function"
+      ? purchase.toObject()
+      : purchase;
+
+  return {
+    _id: data._id,
+    policyId: data.policyId,
+    policyName: data.policyName || "",
+    policyNumber: data.policyNumber || "",
+    premiumAmount: Number(data.premiumAmount || 0),
+    sumAssured: Number(data.sumAssured || 0),
+    paymentMode: data.paymentMode || "",
+    paidAmount: Number(data.paidAmount || 0),
+    customerName: data.customerName || "",
+    customerEmail: data.customerEmail || "",
+    customerPhone: data.customerPhone || "",
+    nomineeName: data.nomineeName || "",
+    nomineeRelation: data.nomineeRelation || "",
+    status: data.status || "Pending",
+    paymentStatus: data.paymentStatus || "Pending",
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+};
+
 router.get("/", auth(), async (req, res) => {
   try {
     const policies = await Policy.find().sort({ createdAt: -1 }).limit(300);
@@ -18,7 +47,7 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-router.get("/my-purchases", auth(), async (req, res) => {
+router.get("/my-purchases", auth(["customer"]), async (req, res) => {
   try {
     const userId = req.user?.id;
 
@@ -28,7 +57,7 @@ router.get("/my-purchases", auth(), async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(200);
 
-    res.json(purchases);
+    res.json(purchases.map(toCustomerPurchaseResponse));
   } catch (error) {
     console.error("My policy purchases error:", error);
     res.status(500).json({ message: "My purchases fetch failed" });
@@ -138,7 +167,7 @@ router.post("/buy", auth(["customer"]), async (req, res) => {
 
     res.status(201).json({
       message: "Policy purchase request submitted",
-      purchase,
+      purchase: toCustomerPurchaseResponse(purchase),
     });
   } catch (error) {
     console.error("Policy purchase error:", error);
