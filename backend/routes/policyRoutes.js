@@ -3,7 +3,7 @@ const Policy = require("../models/Policy");
 const auth = require("../middleware/auth");
 
 /* CREATE POLICY */
-router.post("/", auth(), async (req, res) => {
+router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const policy = await Policy.create({
       ...req.body,
@@ -20,7 +20,8 @@ router.post("/", auth(), async (req, res) => {
 /* GET ALL POLICIES - customer ki kanipinchadaniki */
 router.get("/", auth(), async (req, res) => {
   try {
-    const policies = await Policy.find().sort({ createdAt: -1 });
+    const query = req.user.role === "customer" ? { customerId: req.user.id } : {};
+    const policies = await Policy.find(query).sort({ createdAt: -1 });
     res.json(policies);
   } catch (error) {
     console.error("Policies fetch error:", error);
@@ -52,7 +53,7 @@ router.post("/:id/buy", auth(), async (req, res) => {
 });
 
 /* UPDATE POLICY */
-router.put("/:id", auth(), async (req, res) => {
+router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     const policy = await Policy.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -66,7 +67,7 @@ router.put("/:id", auth(), async (req, res) => {
 });
 
 /* DELETE POLICY */
-router.delete("/:id", auth(), async (req, res) => {
+router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
   try {
     await Policy.findByIdAndDelete(req.params.id);
     res.json({ message: "Policy deleted" });
