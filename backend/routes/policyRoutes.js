@@ -29,28 +29,9 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
-/* BUY POLICY */
-router.post("/:id/buy", auth(), async (req, res) => {
-  try {
-    const policy = await Policy.findByIdAndUpdate(
-      req.params.id,
-      {
-        status: "active",
-        customerId: req.user.id,
-      },
-      { new: true }
-    );
-
-    if (!policy) {
-      return res.status(404).json({ message: "Policy not found" });
-    }
-
-    res.json(policy);
-  } catch (error) {
-    console.error("Policy buy error:", error);
-    res.status(500).json({ message: "Policy buy failed" });
-  }
-});
+/* POLICY PURCHASES
+   Customer purchases are created only through the verified plan-payment flow.
+   Do not expose a generic endpoint that can assign an existing policy to a customer. */
 
 /* UPDATE POLICY */
 router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
