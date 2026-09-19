@@ -54,15 +54,17 @@ router.post("/", auth(), (req, res, next) => {
       return res.status(400).json({ message: "File required" });
     }
 
-    if (req.user.role === "customer") {
-      const policy = await Policy.findOne({
-        policyNumber: req.body.policyNumber,
-        customerId: req.user.id,
-      });
+    const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
+    if (!policy) {
+      return res.status(404).json({ message: "Policy not found" });
+    }
 
-      if (!policy) {
-        return res.status(403).json({ message: "Policy does not belong to this customer" });
-      }
+    if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
+      return res.status(403).json({ message: "Policy does not belong to this customer" });
+    }
+
+    if (!policy.customerId) {
+      return res.status(400).json({ message: "Policy is not linked to a customer account" });
     }
 
     const document = await Document.create({
@@ -74,7 +76,7 @@ router.post("/", auth(), (req, res, next) => {
       uploadedDate: new Date().toISOString().split("T")[0],
       status: "Pending",
       remarks: req.body.remarks || "No remarks",
-      customerId: req.user.role === "customer" ? req.user.id : req.body.customerId,
+      customerId: policy.customerId,
       createdBy: req.user.id,
     });
 
