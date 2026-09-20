@@ -95,17 +95,22 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
-      <div className="customer-welcome">
+      <div className="customer-welcome customer-welcome-pro">
         <div>
           <span className="eyebrow">SECURELIFE CUSTOMER PORTAL</span>
-          <h1>Insurance made simple.</h1>
-          <p>View your cover, pay premiums, manage documents and track claims without switching between multiple screens.</p>
+          <h1>Your protection. One simple dashboard.</h1>
+          <p>Manage policies, upcoming premiums, claims and KYC securely from anywhere.</p>
+          <div className="customer-hero-actions">
+            <Link className="customer-primary-action" to="/insurance-plans">Explore protection plans →</Link>
+            <Link className="customer-secondary-action" to="/ai-policy-recommendation">Find the right cover</Link>
+          </div>
         </div>
-        <Link className="customer-primary-action" to="/insurance-plans">Explore Plans →</Link>
+        <div className="protection-shield" aria-hidden="true"><span>✓</span><strong>Protected</strong><small>Secure digital access</small></div>
       </div>
 
       {loading ? <div className="section"><p>Loading your insurance summary...</p></div> : (
         <>
+          <div className="customer-section-title"><div><span className="eyebrow">AT A GLANCE</span><h2>Your insurance summary</h2></div><span className="secure-chip">● Secure session</span></div>
           <div className="customer-summary-grid">
             <div className="customer-summary-card">
               <span>Active Policies</span>
@@ -135,9 +140,10 @@ export default function CustomerDashboard() {
                 <div><span className="eyebrow">YOUR COVER</span><h2>My Policies</h2></div>
                 <Link to="/policies">View all</Link>
               </div>
-              {activePolicies.length === 0 ? (
+              {activePolicies.length === 0 && activePurchased.length === 0 ? (
                 <div className="empty-state"><h3>No active policy yet</h3><p>Explore available protection plans and choose one that suits your needs.</p><Link to="/insurance-plans">Browse plans</Link></div>
-              ) : activePolicies.slice(0, 3).map((policy) => (
+              ) : <>
+                {activePolicies.slice(0, 3).map((policy) => (
                 <div className="policy-row" key={policy._id}>
                   <div><strong>{policy.policyName}</strong><small>{policy.policyNumber}</small></div>
                   <div><span>Cover</span><strong>{money(policy.sumAssured)}</strong></div>
@@ -145,6 +151,15 @@ export default function CustomerDashboard() {
                   <span className="status-pill active">Active</span>
                 </div>
               ))}
+                {activePolicies.length === 0 && activePurchased.slice(0, 3).map((policy) => (
+                  <div className="policy-row" key={policy._id}>
+                    <div><strong>{policy.planName}</strong><small>{policy.policyNumber || "Policy processing"}</small></div>
+                    <div><span>Cover</span><strong>{money(policy.coverageAmount)}</strong></div>
+                    <div><span>Premium</span><strong>{money(policy.yearlyPremium)}</strong></div>
+                    <span className="status-pill active">{policy.policyStatus}</span>
+                  </div>
+                ))}
+              </>}
             </section>
 
             <section className="section">
