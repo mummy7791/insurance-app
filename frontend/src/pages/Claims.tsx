@@ -230,6 +230,7 @@ export default function Claims() {
         ) : claims.length === 0 ? (
           <p>No claims found.</p>
         ) : (
+          <>
           {isCustomer && <div className="claim-mobile-list">{claims.map((claim) => { const current = claim.status === "Rejected" ? 1 : claimStages.indexOf(claim.status); return <article className="claim-track-card" key={`track-${claim._id}`}><div className="claim-track-head"><div><span className="eyebrow">{claim.claimType}</span><h3>{claim.policyNumber}</h3></div><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></div><div className="claim-timeline">{claimStages.map((stage, index) => <div className={`${index <= current && claim.status !== "Rejected" ? "complete" : ""} ${stage === claim.status ? "current" : ""}`} key={stage}><i>{index < current ? "✓" : index + 1}</i><span>{stage}</span></div>)}</div>{claim.status === "Rejected" && <div className="claim-rejected">Claim requires attention: {claim.remarks || "Please contact support."}</div>}<p className="claim-note">{claim.remarks || "We will show service updates here."}</p></article>; })}</div>}
           <table className={`table ${isCustomer ? "customer-claim-table" : ""}`}>
             <thead>
@@ -264,6 +265,7 @@ export default function Claims() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </div>
     </MainLayout>
