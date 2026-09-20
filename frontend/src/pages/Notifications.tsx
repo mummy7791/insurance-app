@@ -356,7 +356,7 @@ export default function Notifications() {
       </div>
 
       <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">INBOX</span><h2>${isStaff ? "Notifications" : "My Updates"}</h2></div><span className="secure-chip">${notifications.filter((item) => item.status === "Unread").length} unread</span></div>
+        <div className="section-heading-row"><div><span className="eyebrow">INBOX</span><h2>{isStaff ? "Notifications" : "My Updates"}</h2></div><span className="secure-chip">{notifications.filter((item) => item.status === "Unread").length} unread</span></div>
 
         {loading ? (
           <p>Loading...</p>
