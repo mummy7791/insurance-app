@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -198,9 +199,11 @@ export default function Dashboard() {
       title={`Welcome, ${user.name || user.email || "User"}`}
       subtitle={`Role: ${user.role || "agent"}`}
     >
-      {loading && <p>Loading dashboard...</p>}
+      <div className="admin-command-hero"><div><span className="eyebrow">SECURELIFE OPERATIONS</span><h2>Business control center</h2><p>Monitor protection business, collections, claims and team activity from one workspace.</p></div><div className="admin-command-actions"><Link className="btn small-btn" to="/admin-insurance-plans">Manage plans</Link><Link className="mini-btn" to="/policy-purchases">Policy purchases</Link><Link className="mini-btn" to="/user-management">Team access</Link></div></div>
 
-      <div className="cards">
+      {loading && <div className="dashboard-loading"><span className="checkout-spinner" />Refreshing live operations...</div>}
+
+      <div className="admin-kpi-grid">
         <div className="card">
           <h3>Total Leads</h3>
           <h1>{stats.totalLeads}</h1>
@@ -257,8 +260,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="section">
-        <h2>Dashboard Charts</h2>
+      <div className="section admin-insight-section">
+        <div className="section-heading-row"><div><span className="eyebrow">BUSINESS INSIGHTS</span><h2>Performance overview</h2></div><span className="secure-chip">Live workspace</span></div>
 
         <div className="chart-grid">
           <div className="chart-card">
@@ -307,8 +310,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="section">
-        <h2>Recent Audit Activity</h2>
+      <div className="section admin-audit-section">
+        <div className="section-heading-row"><div><span className="eyebrow">SECURITY & ACTIVITY</span><h2>Recent audit activity</h2></div><Link className="mini-btn" to="/audit-logs">View audit logs</Link></div>
 
         {auditLogs.length === 0 ? (
           <p>No recent activity found.</p>
