@@ -4,7 +4,7 @@ const PolicyPurchase = require("../models/PolicyPurchase");
 const auth = require("../middleware/auth");
 
 /* CUSTOMER BUY POLICY */
-router.post("/buy/:policyId", auth(), async (req, res) => {
+router.post("/buy/:policyId", auth(["customer"]), async (req, res) => {
   try {
     const policy = await Policy.findById(req.params.policyId);
 
@@ -43,7 +43,7 @@ router.post("/buy/:policyId", auth(), async (req, res) => {
 });
 
 /* CUSTOMER MY ACTIVE POLICIES */
-router.get("/my-policies", auth(), async (req, res) => {
+router.get("/my-policies", auth(["customer"]), async (req, res) => {
   try {
     const purchases = await PolicyPurchase.find({
       customerId: req.user.id,
@@ -57,7 +57,7 @@ router.get("/my-policies", auth(), async (req, res) => {
 });
 
 /* ADMIN ALL CUSTOMER PURCHASED POLICIES */
-router.get("/", auth(), async (req, res) => {
+router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
   try {
     const purchases = await PolicyPurchase.find()
       .populate("customerId", "name email phone")
