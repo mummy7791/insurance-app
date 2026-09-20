@@ -27,6 +27,35 @@ const createTransporter = () => {
   });
 };
 
+
+router.get("/smtp-check", auth(["admin"]), async (req, res) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        ok: false,
+        code: "MISSING_EMAIL_CONFIG",
+        message: "Email credentials are not configured",
+      });
+    }
+
+    const transporter = createTransporter();
+    await transporter.verify();
+
+    return res.json({
+      ok: true,
+      message: "Gmail SMTP connection and authentication successful",
+    });
+  } catch (error) {
+    console.error("SMTP diagnostic failed:", error.code, error.message);
+
+    return res.status(500).json({
+      ok: false,
+      code: error.code || "SMTP_ERROR",
+      message: error.message || "SMTP verification failed",
+    });
+  }
+});
+
 router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const { to, subject, message } = req.body;
