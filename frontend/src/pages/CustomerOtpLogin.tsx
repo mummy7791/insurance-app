@@ -25,7 +25,7 @@ export default function CustomerOtpLogin() {
   const pendingEmail = sessionStorage.getItem("pendingVerificationEmail") || "";
   const [email, setEmail] = useState(state.email || pendingEmail);
   const [otp, setOtp] = useState("");
-  const [mode, setMode] = useState<"verify" | "login">(state.mode || (pendingEmail ? "verify" : "login"));
+  const mode: "verify" | "login" = state.mode || (pendingEmail ? "verify" : "login");
   const [sent, setSent] = useState(Boolean((state.mode === "verify" && state.email) || pendingEmail));
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState(sent ? "Verification code sent. Check your inbox and spam folder." : "");
