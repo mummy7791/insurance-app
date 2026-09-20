@@ -215,6 +215,41 @@ mongoose
   .then(async () => {
     console.log("✅ MongoDB Connected");
 
+    // Migrate legacy PlanPurchase unique indexes that indexed empty strings.
+    // No records are deleted; only index definitions are corrected.
+    const planPurchases = mongoose.connection.collection("planpurchases");
+    for (const field of ["transactionId", "orderId", "policyNumber", "receiptNumber"]) {
+      const indexName = `${field}_1`;
+      try {
+        const indexes = await planPurchases.indexes();
+        const current = indexes.find((index) => index.name === indexName);
+        const hasSafePartialIndex =
+          current?.unique === true &&
+          current?.partialFilterExpression?.[field]?.$type === "string";
+
+        if (current && !hasSafePartialIndex) {
+          await planPurchases.dropIndex(indexName);
+          console.log(`♻️ Rebuilding legacy index: ${indexName}`);
+        }
+
+        if (!hasSafePartialIndex) {
+          await planPurchases.createIndex(
+            { [field]: 1 },
+            {
+              name: indexName,
+              unique: true,
+              partialFilterExpression: {
+                [field]: { $type: "string", $gt: "" },
+              },
+            }
+          );
+        }
+      } catch (indexError) {
+        console.error(`PlanPurchase index migration failed for ${indexName}:`, indexError.message);
+        throw indexError;
+      }
+    }
+
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
