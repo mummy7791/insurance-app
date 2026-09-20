@@ -52,15 +52,34 @@ const planPurchaseSchema = new mongoose.Schema(
       default: "Online",
     },
 
-    transactionId: { type: String, default: undefined, unique: true, sparse: true },
-    orderId: { type: String, default: undefined, unique: true, sparse: true },
-    policyNumber: { type: String, default: undefined, unique: true, sparse: true },
-    receiptNumber: { type: String, default: undefined, unique: true, sparse: true },
+    // Unique payment references are assigned only after the corresponding event.
+    // Partial indexes below ignore legacy empty-string values from older records.
+    transactionId: { type: String, default: undefined },
+    orderId: { type: String, default: undefined },
+    policyNumber: { type: String, default: undefined },
+    receiptNumber: { type: String, default: undefined },
 
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
   },
   { timestamps: true }
+);
+
+planPurchaseSchema.index(
+  { transactionId: 1 },
+  { unique: true, partialFilterExpression: { transactionId: { $type: "string", $gt: "" } } }
+);
+planPurchaseSchema.index(
+  { orderId: 1 },
+  { unique: true, partialFilterExpression: { orderId: { $type: "string", $gt: "" } } }
+);
+planPurchaseSchema.index(
+  { policyNumber: 1 },
+  { unique: true, partialFilterExpression: { policyNumber: { $type: "string", $gt: "" } } }
+);
+planPurchaseSchema.index(
+  { receiptNumber: 1 },
+  { unique: true, partialFilterExpression: { receiptNumber: { $type: "string", $gt: "" } } }
 );
 
 module.exports =
