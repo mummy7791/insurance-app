@@ -45,52 +45,23 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { name: "Role Dashboard", path: "/role-dashboard", icon: "🔐", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Dashboard", path: "/dashboard", icon: "🏠", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Profile", path: "/profile", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Create Staff", path: "/admin-create-staff", icon: "👥", roles: ["admin"] },
-  { name: "Admin Plans", path: "/admin-insurance-plans", icon: "🛡️", roles: ["admin"] },
-  { name: "Assign Policy", path: "/assign-policy", icon: "📝", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Policy Purchases", path: "/policy-purchases", icon: "🛒", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Branches", path: "/branch", icon: "🏢", roles: ["admin", "bm"] },
-  { name: "Employees", path: "/employees", icon: "👨‍💼", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Targets", path: "/targets", icon: "🎯", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Leads", path: "/leads", icon: "📋", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Customers", path: "/customers", icon: "👥", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Policies", path: "/policies", icon: "📑", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Premiums", path: "/premiums", icon: "💰", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Payment", path: "/payment", icon: "💳", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Commission", path: "/commission", icon: "💸", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Claims", path: "/claims", icon: "🧾", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Documents", path: "/documents", icon: "📂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Calendar", path: "/calendar", icon: "📅", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "GPS Tracking", path: "/gps-tracking", icon: "📍", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Notifications", path: "/notifications", icon: "🔔", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Communication", path: "/communication", icon: "📧", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Analytics", path: "/analytics", icon: "📈", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "PDF Reports", path: "/pdf-reports", icon: "📄", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Excel Reports", path: "/excel-reports", icon: "📊", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Reports", path: "/reports", icon: "📊", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "User Management", path: "/user-management", icon: "👥", roles: ["admin"] },
-  { name: "Audit Logs", path: "/audit-logs", icon: "📝", roles: ["admin", "bm"] },
-  { name: "AI Assistant", path: "/ai-assistant", icon: "🤖", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "AI Follow-ups", path: "/ai-followups", icon: "🤖", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "AI Performance", path: "/ai-performance", icon: "🏆", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "AI Lead Scoring", path: "/ai-lead-scoring", icon: "🔥", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "AI Sales Prediction", path: "/ai-sales-prediction", icon: "📈", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Customer Portal", path: "/customer-portal", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Email Marketing", path: "/email-marketing", icon: "📧", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Policy AI", path: "/policy-recommendation-ai", icon: "🧠", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "CEO Dashboard", path: "/ceo-dashboard", icon: "📊", roles: ["admin", "bm"] },
-  { name: "OCR Verification", path: "/ocr-verification", icon: "📄", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Enterprise Tools", path: "/enterprise-tools", icon: "🚀", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "File Manager", path: "/file-manager", icon: "📂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Customer Dashboard", path: "/customer-dashboard", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Customer Profile", path: "/customer-profile", icon: "👤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Insurance Plans", path: "/insurance-plans", icon: "🛡️", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "AI Policy", path: "/ai-policy-recommendation", icon: "🤖", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Settings", path: "/settings", icon: "⚙️", roles: ["admin"] },
+  { name: "Overview", path: "/dashboard", icon: "⌂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Customers & Leads", path: "/customers", icon: "◉", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Policies", path: "/policies", icon: "▣", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Policy Purchases", path: "/policy-purchases", icon: "◇", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
+  { name: "Premiums", path: "/premiums", icon: "₹", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Claims", path: "/claims", icon: "◎", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Documents", path: "/documents", icon: "▤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Team", path: "/employees", icon: "◌", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
+  { name: "Targets", path: "/targets", icon: "↗", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
+  { name: "Commission", path: "/commission", icon: "%", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Reports", path: "/reports", icon: "▥", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
+  { name: "Notifications", path: "/notifications", icon: "○", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Profile", path: "/profile", icon: "●", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Plan Management", path: "/admin-insurance-plans", icon: "◆", roles: ["admin"] },
+  { name: "User Access", path: "/user-management", icon: "⌘", roles: ["admin"] },
+  { name: "Audit Logs", path: "/audit-logs", icon: "≡", roles: ["admin", "bm"] },
+  { name: "Settings", path: "/settings", icon: "⚙", roles: ["admin"] },
 ];
 
 export default function Sidebar() {
@@ -238,7 +209,7 @@ export default function Sidebar() {
         />
 
         <button className="logout" onClick={logout} style={{ width: "100%" }}>
-          🚪 Logout
+          Sign out
         </button>
       </aside>
     </>
