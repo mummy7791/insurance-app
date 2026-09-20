@@ -41,6 +41,9 @@ type RazorpayOptions = {
   theme?: {
     color?: string;
   };
+  modal?: {
+    ondismiss?: () => void;
+  };
 };
 
 declare global {
@@ -105,6 +108,7 @@ export default function Payment() {
             parsedProposal = JSON.parse(proposalRaw) as Record<string, unknown>;
           } catch {
             sessionStorage.removeItem(`proposal:${planId}`);
+      sessionStorage.removeItem("premiumEstimate");
       sessionStorage.removeItem("premiumEstimate");
             alert("Proposal data is invalid. Please complete it again.");
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
@@ -176,6 +180,9 @@ export default function Payment() {
       theme: {
         color: "#7b1730",
       },
+      modal: {
+        ondismiss: () => setPaying(false),
+      },
       handler: (response) => {
         void verifyPayment(response);
       },
@@ -183,7 +190,6 @@ export default function Payment() {
 
     const razorpay = new window.Razorpay(options);
     razorpay.open();
-    setPaying(false);
   };
 
   const verifyPayment = async (response: RazorpayResponse) => {
