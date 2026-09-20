@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
+import jsPDF from "jspdf";
 
 type PaymentMode = "UPI" | "Cash" | "Card" | "Net Banking";
 type PremiumStatus = "Due" | "Paid" | "Overdue";
@@ -126,6 +127,26 @@ export default function Premiums() {
     }
   };
 
+  const downloadReceipt = (premium: Premium) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
+    doc.setFontSize(13); doc.text("Premium Payment Receipt", 20, 36);
+    doc.setFontSize(11);
+    const rows = [
+      `Receipt Number: ${premium.receiptNumber || "N/A"}`,
+      `Policy Number: ${premium.policyNumber}`,
+      `Policyholder: ${premium.customerName}`,
+      `Amount Paid: INR ${Number(premium.amount || 0).toLocaleString("en-IN")}`,
+      `Payment Mode: ${premium.paymentMode}`,
+      `Paid Date: ${premium.paidDate || "N/A"}`,
+      `Status: ${premium.status}`,
+    ];
+    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
+    doc.setFontSize(9);
+    doc.text("Digitally generated receipt from your SecureLife customer account.", 20, 126);
+    doc.save(`${premium.receiptNumber || premium.policyNumber}-receipt.pdf`);
+  };
+
   const totalCollected = premiums
     .filter((premium) => premium.status === "Paid")
     .reduce((sum, premium) => sum + premium.amount, 0);
@@ -201,6 +222,7 @@ export default function Premiums() {
                 <th>Mode</th>
                 <th>Receipt</th>
                 <th>Status</th>
+                {isCustomer && <th>Receipt PDF</th>}
                 {!isCustomer && <th>Action</th>}
               </tr>
             </thead>
@@ -220,6 +242,7 @@ export default function Premiums() {
                       <option value="Due">Due</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option>
                     </select>
                   )}</td>
+                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download</button> : "-"}</td>}
                   {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deletePremium(premium._id)}>Delete</button></td>}
                 </tr>
               ))}
