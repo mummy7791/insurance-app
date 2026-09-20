@@ -17,7 +17,14 @@ export default function ProtectedRoute({
   allowedRoles,
 }: ProtectedRouteProps) {
   const token = localStorage.getItem("insuranceToken");
-  const user: User = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  let user: User = {};
+  try {
+    user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as User;
+  } catch {
+    localStorage.removeItem("insuranceToken");
+    localStorage.removeItem("insuranceUser");
+    return <Navigate to="/login" replace />;
+  }
 
   if (!token) {
     return <Navigate to="/login" replace />;
