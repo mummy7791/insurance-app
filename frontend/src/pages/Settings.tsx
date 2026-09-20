@@ -26,10 +26,10 @@ type SettingForm = {
 };
 
 const initialForm: SettingForm = {
-  companyName: "LifeSecure CRM",
-  logoText: "🛡️ LifeSecure CRM",
-  supportPhone: "9999999999",
-  supportEmail: "support@lifesecure.com",
+  companyName: "SecureLife Insurance",
+  logoText: "SecureLife",
+  supportPhone: "",
+  supportEmail: "",
   defaultCommissionRate: "10",
   theme: "light",
   currency: "INR",
@@ -107,7 +107,8 @@ export default function Settings() {
       title="Settings"
       subtitle="Manage company profile, support details, commission and theme"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">SYSTEM CONFIGURATION</span><h2>SecureLife workspace settings</h2><p>Manage company display details, support channels and operational defaults.</p></div><span className="secure-chip">Admin only</span></div>
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Company</h3>
           <h1>{form.companyName || "N/A"}</h1>
@@ -130,7 +131,7 @@ export default function Settings() {
       </div>
 
       <div className="section">
-        <h2>Company Settings</h2>
+        <span className="eyebrow">COMPANY CONFIGURATION</span><h2>Company settings</h2><p className="section-copy">Changes here affect shared application settings. Staff login credentials are managed separately and are not modified here.</p>
 
         {loading ? (
           <p>Loading settings...</p>
