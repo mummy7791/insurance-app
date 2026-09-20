@@ -88,8 +88,11 @@ export default function CustomerDashboard() {
 
   const activePolicies = policies.filter((p) => p.status === "active");
   const activePurchased = purchasedPlans.filter((p) => p.policyStatus === "Active");
-  const activePolicyCount = activePolicies.length + activePurchased.length;
-  const totalCoverage = activePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0) + activePurchased.reduce((sum, p) => sum + Number(p.coverageAmount || 0), 0);
+  const purchasedPolicyNumbers = new Set(activePurchased.map((p) => p.policyNumber).filter(Boolean));
+  const standaloneActivePolicies = activePolicies.filter((p) => !p.policyNumber || !purchasedPolicyNumbers.has(p.policyNumber));
+  const activePolicyCount = standaloneActivePolicies.length + activePurchased.length;
+  const totalPolicyCount = policies.filter((p) => !p.policyNumber || !new Set(purchasedPlans.map((item) => item.policyNumber).filter(Boolean)).has(p.policyNumber)).length + purchasedPlans.length;
+  const totalCoverage = standaloneActivePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0) + activePurchased.reduce((sum, p) => sum + Number(p.coverageAmount || 0), 0);
   const duePremiums = premiums.filter((p) => p.status === "Due" || p.status === "Overdue");
   const dueAmount = duePremiums.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const openClaims = claims.filter((c) => !["Settled", "Rejected"].includes(c.status));
@@ -124,7 +127,7 @@ export default function CustomerDashboard() {
             <div className="customer-summary-card">
               <span>Active Policies</span>
               <strong>{activePolicyCount}</strong>
-              <small>{policies.length + purchasedPlans.length} total policies</small>
+              <small>{totalPolicyCount} total policies</small>
             </div>
             <div className="customer-summary-card">
               <span>Total Protection</span>
@@ -170,10 +173,10 @@ export default function CustomerDashboard() {
                 <div><span className="eyebrow">YOUR COVER</span><h2>My Policies</h2></div>
                 <Link to="/policies">View all</Link>
               </div>
-              {activePolicies.length === 0 && activePurchased.length === 0 ? (
+              {standaloneActivePolicies.length === 0 && activePurchased.length === 0 ? (
                 <div className="empty-state"><h3>No active policy yet</h3><p>Explore available protection plans and choose one that suits your needs.</p><Link to="/insurance-plans">Browse plans</Link></div>
               ) : <>
-                {activePolicies.slice(0, 3).map((policy) => (
+                {standaloneActivePolicies.slice(0, 3).map((policy) => (
                 <div className="policy-row" key={policy._id}>
                   <div><strong>{policy.policyName}</strong><small>{policy.policyNumber}</small></div>
                   <div><span>Cover</span><strong>{money(policy.sumAssured)}</strong></div>
@@ -181,7 +184,7 @@ export default function CustomerDashboard() {
                   <span className="status-pill active">Active</span>
                 </div>
               ))}
-                {activePolicies.length === 0 && activePurchased.slice(0, 3).map((policy) => (
+                {standaloneActivePolicies.length === 0 && activePurchased.slice(0, 3).map((policy) => (
                   <div className="policy-row" key={policy._id}>
                     <div><strong>{policy.planName}</strong><small>{policy.policyNumber || "Policy processing"}</small></div>
                     <div><span>Cover</span><strong>{money(policy.coverageAmount)}</strong></div>
@@ -196,12 +199,12 @@ export default function CustomerDashboard() {
               <span className="eyebrow">QUICK SERVICES</span>
               <h2>What would you like to do?</h2>
               <div className="quick-service-grid">
-                <Link to="/insurance-plans"><b>🛡️</b><span>Buy a Policy</span></Link>
-                <Link to="/premiums"><b>💳</b><span>Pay Premium</span></Link>
-                <Link to="/claims"><b>🧾</b><span>File / Track Claim</span></Link>
-                <Link to="/documents"><b>📂</b><span>Documents & KYC</span></Link>
-                <Link to="/customer-profile"><b>👤</b><span>Update Profile</span></Link>
-                <Link to="/notifications"><b>🔔</b><span>Notifications</span></Link>
+                <Link to="/insurance-plans"><b>◇</b><span>Buy a Policy</span></Link>
+                <Link to="/premiums"><b>₹</b><span>Pay Premium</span></Link>
+                <Link to="/claims"><b>◎</b><span>File / Track Claim</span></Link>
+                <Link to="/documents"><b>▤</b><span>Documents & KYC</span></Link>
+                <Link to="/customer-profile"><b>◉</b><span>Update Profile</span></Link>
+                <Link to="/notifications"><b>○</b><span>Notifications</span></Link>
               </div>
             </section>
           </div>
