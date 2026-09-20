@@ -1,224 +1,83 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import "../styles/Auth.css";
 
 type LoginResponse = {
   token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
+  user: { id: string; name: string; email: string; role: string };
+};
+
+const getMessage = (error: unknown) => {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const e = error as { response?: { data?: { message?: string } } };
+    return e.response?.data?.message || "Sign in failed";
+  }
+  return "Sign in failed";
 };
 
 export default function Login() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const login = async () => {
-    setError("");
-
-    if (!email || !password) {
-      setError("Please enter email and password");
-      return;
-    }
-
+    if (!email.trim() || !password) return setError("Enter your email and password.");
     try {
-      setLoading(true);
-
-      const res = await api.post<LoginResponse>("/auth/login", {
-        email,
-        password,
-      });
-
+      setLoading(true); setError("");
+      const res = await api.post<LoginResponse>("/auth/login", { email: email.trim().toLowerCase(), password });
       localStorage.setItem("insuranceToken", res.data.token);
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
-
-      if (res.data.user.role === "customer") {
-        navigate("/customer-dashboard");
-      } else {
-        navigate("/dashboard");
+      navigate(res.data.user.role === "customer" ? "/customer-dashboard" : "/dashboard");
+    } catch (error: unknown) {
+      const message = getMessage(error);
+      setError(message);
+      if (message.toLowerCase().includes("verify")) {
+        sessionStorage.setItem("pendingVerificationEmail", email.trim().toLowerCase());
       }
-    } catch (err: unknown) {
-      if (typeof err === "object" && err !== null && "response" in err) {
-        const error = err as {
-          response?: {
-            data?: {
-              message?: string;
-            };
-          };
-        };
-
-        setError(error.response?.data?.message || "Login failed");
-      } else {
-        setError("Server error");
-      }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #fff7ed 0%, #fee2e2 45%, #ffffff 100%)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 18,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 430,
-          background: "#fff",
-          borderRadius: 24,
-          padding: 35,
-          boxShadow: "0 20px 50px rgba(220, 38, 38, 0.18)",
-          borderTop: "6px solid #dc2626",
-        }}
-      >
-        <img
-          src="/ic_launcher.png"
-          alt="SecureLife Insurance Logo"
-          style={{
-            width: 95,
-            height: 95,
-            display: "block",
-            margin: "0 auto 18px",
-            objectFit: "contain",
-            borderRadius: 18,
-          }}
-        />
+    <div className="auth-page">
+      <div className="auth-shell">
+        <section className="auth-hero">
+          <span className="auth-badge">YOUR PROTECTION HUB</span>
+          <h1>Insurance in your pocket.</h1>
+          <p>Access policies, premium reminders, claims, KYC documents and protection plans with one secure account.</p>
+          <div className="auth-stat-strip"><div><strong>24×7</strong><span>Policy access</span></div><div><strong>100%</strong><span>Digital journey</span></div><div><strong>Secure</strong><span>OTP verification</span></div></div>
+        </section>
 
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: 6,
-            fontSize: 34,
-            fontWeight: 900,
-            background: "linear-gradient(90deg, #dc2626, #f97316)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          SecureLife Insurance
-        </h1>
+        <section className="auth-card modern-auth-card">
+          <div className="brand-mark">S</div>
+          <h1 className="auth-title">SecureLife</h1>
+          <p className="auth-kicker">Welcome back, policyholder</p>
 
-        <h3
-          style={{
-            textAlign: "center",
-            marginBottom: 28,
-            color: "#555",
-            fontWeight: 600,
-          }}
-        >
-          Sign in to your insurance account
-        </h3>
+          {error && <div className="auth-error">{error}</div>}
 
-        {error && (
-          <div
-            style={{
-              background: "#fee2e2",
-              color: "#b91c1c",
-              padding: 12,
-              borderRadius: 12,
-              marginBottom: 16,
-              fontWeight: 600,
-            }}
-          >
-            {error}
+          <label>Email address</label>
+          <input className="auth-input" type="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label>Password</label>
+          <div className="password-field">
+            <input className="auth-input" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button type="button" onClick={() => setShowPassword((v) => !v)}>{showPassword ? "Hide" : "Show"}</button>
           </div>
-        )}
 
-        <input
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 14,
-            marginBottom: 16,
-            borderRadius: 12,
-            border: "1px solid #fecaca",
-            outline: "none",
-            fontSize: 15,
-          }}
-        />
+          <button className="auth-btn" onClick={() => void login()} disabled={loading}>{loading ? "Signing in securely..." : "Sign in"}</button>
 
-        <input
-          type="password"
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 14,
-            marginBottom: 22,
-            borderRadius: 12,
-            border: "1px solid #fecaca",
-            outline: "none",
-            fontSize: 15,
-          }}
-        />
+          {error.toLowerCase().includes("verify") && (
+            <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { email: email.trim().toLowerCase(), mode: "verify" } })}>Verify email with OTP</button>
+          )}
 
-        <button
-          onClick={() => void login()}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: 15,
-            background: "linear-gradient(90deg, #dc2626, #f97316)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 12,
-            fontSize: 17,
-            fontWeight: 800,
-            cursor: loading ? "not-allowed" : "pointer",
-            boxShadow: "0 10px 24px rgba(220, 38, 38, 0.32)",
-            opacity: loading ? 0.75 : 1,
-          }}
-        >
-          {loading ? "Logging in..." : "Customer Login"}
-        </button>
+          <div className="auth-divider"><span>or</span></div>
+          <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { email: email.trim().toLowerCase(), mode: "login" } })}>Login with email OTP</button>
 
-        <div style={{ marginTop: 22, textAlign: "center", color: "#555" }}>
-          Don't have an account?
-          <Link
-            to="/register"
-            style={{
-              marginLeft: 6,
-              color: "#dc2626",
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            Register
-          </Link>
-        </div>
-
-        <div style={{ marginTop: 12, textAlign: "center" }}>
-          <Link
-            to="/admin-login"
-            style={{
-              color: "#f97316",
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            Admin Login
-          </Link>
-        </div>
+          <p className="auth-link">New to SecureLife? <Link to="/register">Create account</Link></p>
+          <p className="auth-link small"><Link to="/admin-login">Staff / Admin login</Link></p>
+        </section>
       </div>
     </div>
   );
