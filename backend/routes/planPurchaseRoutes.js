@@ -352,7 +352,7 @@ router.get("/my-plans", auth(["customer"]), async (req, res) => {
 
     const customerPlans = await PlanPurchase.find({ customerId: req.user.id })
       .select(
-        "_id planId planName category coverageAmount yearlyPremium paymentYears paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate createdAt"
+        "_id planId planName category coverageAmount yearlyPremium paymentYears paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate proposal createdAt"
       )
       .sort({ createdAt: -1 })
       .lean();
