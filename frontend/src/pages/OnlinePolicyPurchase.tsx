@@ -68,6 +68,7 @@ export default function OnlinePolicyPurchase() {
         const raw = sessionStorage.getItem(`proposal:${planId}`);
         if (raw) {
           saved = JSON.parse(raw) as Partial<BuyForm>;
+          delete saved.panNumber;
           setRestored(true);
         }
       } catch {
