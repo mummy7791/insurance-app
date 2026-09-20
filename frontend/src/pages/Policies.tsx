@@ -15,7 +15,7 @@ type Policy = {
   status: "pending" | "active" | "rejected" | "closed" | "expired";
 };
 
-type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; customerEmail?:string; customerPhone?:string; address?:string; dateOfBirth?:string; panNumber?:string; nomineeName?:string; nomineeRelation?:string; nomineeDateOfBirth?:string; consentedAt?:string; }; };
+type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
 
 type PolicyForm = {
   customerName: string;
@@ -66,6 +66,28 @@ export default function Policies() {
   useEffect(() => {
     void loadPolicies();
   }, [loadPolicies]);
+
+  const downloadReceipt = (plan: PurchasedPlan) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
+    doc.setFontSize(13); doc.text("Premium Payment Receipt", 20, 36);
+    doc.setFontSize(11);
+    const rows = [
+      `Receipt Number: ${plan.receiptNumber || "N/A"}`,
+      `Policy Number: ${plan.policyNumber || "N/A"}`,
+      `Policyholder: ${plan.proposal?.customerName || user.name || "Customer"}`,
+      `Plan: ${plan.planName}`,
+      `Amount Paid: INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`,
+      `Transaction ID: ${plan.transactionId || "N/A"}`,
+      `Payment Status: ${plan.paymentStatus}`,
+      `Policy Status: ${plan.policyStatus}`,
+      `Payment Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"}`,
+    ];
+    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
+    doc.setFontSize(9);
+    doc.text("This is a digitally generated SecureLife payment receipt.", 20, 145);
+    doc.save(`${plan.receiptNumber || "SecureLife-Receipt"}.pdf`);
+  };
 
   const downloadCertificate = (plan: PurchasedPlan) => {
     const doc = new jsPDF();
@@ -155,7 +177,7 @@ export default function Policies() {
       </div>
       )}
 
-      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions"><button className="btn small-btn" onClick={() => downloadCertificate(plan)}>Download policy certificate</button>{plan.receiptNumber && <button className="mini-btn" onClick={() => downloadCertificate(plan)}>Download receipt</button>}</div></div>)}</div></div>}
+      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions"><button className="btn small-btn" onClick={() => downloadCertificate(plan)}>Download policy certificate</button>{plan.receiptNumber && <button className="mini-btn" onClick={() => downloadReceipt(plan)}>Download receipt</button>}</div></div>)}</div></div>}
 
       <div className="section">
         <h2>{isCustomer ? "Other Assigned Policies" : "Policy List"}</h2>
