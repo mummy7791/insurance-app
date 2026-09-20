@@ -49,6 +49,7 @@ export default function OnlinePolicyPurchase() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [form, setForm] = useState<BuyForm>(initialForm);
   const [loading, setLoading] = useState(true);
+  const [restored, setRestored] = useState(false);
 
   const loadProposal = useCallback(async () => {
     if (!planId) {
@@ -62,12 +63,23 @@ export default function OnlinePolicyPurchase() {
         api.get<{ name?: string; email?: string; phone?: string; address?: string }>("/customer-profile"),
       ]);
       setPlan(planRes.data);
+      let saved: Partial<BuyForm> = {};
+      try {
+        const raw = sessionStorage.getItem(`proposal:${planId}`);
+        if (raw) {
+          saved = JSON.parse(raw) as Partial<BuyForm>;
+          setRestored(true);
+        }
+      } catch {
+        sessionStorage.removeItem(`proposal:${planId}`);
+      }
       setForm((prev) => ({
         ...prev,
-        customerName: profileRes.data?.name || "",
+        ...saved,
+        customerName: saved.customerName || profileRes.data?.name || "",
         customerEmail: profileRes.data?.email || "",
-        customerPhone: profileRes.data?.phone || "",
-        address: profileRes.data?.address || "",
+        customerPhone: saved.customerPhone || profileRes.data?.phone || "",
+        address: saved.address || profileRes.data?.address || "",
       }));
     } catch (error) {
       alert(errorMessage(error, "Unable to open this insurance plan"));
@@ -88,6 +100,14 @@ export default function OnlinePolicyPurchase() {
         !form.nomineeName.trim() || !form.nomineeRelation || !form.nomineeDateOfBirth ||
         !form.proposalConsent) {
       alert("Please complete all personal, KYC, nominee and consent details");
+      return;
+    }
+    const phoneDigits = form.customerPhone.replace(/\D/g, "");
+    const customerDob = new Date(form.dateOfBirth);
+    const nomineeDob = new Date(form.nomineeDateOfBirth);
+    const today = new Date();
+    if (phoneDigits.length < 10 || phoneDigits.length > 15 || Number.isNaN(customerDob.getTime()) || Number.isNaN(nomineeDob.getTime()) || customerDob > today || nomineeDob > today) {
+      alert("Enter a valid mobile number and date of birth details");
       return;
     }
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(form.panNumber.trim().toUpperCase())) {
@@ -113,6 +133,8 @@ export default function OnlinePolicyPurchase() {
     <MainLayout title="Insurance Proposal" subtitle="Review your plan and complete proposal details before payment">
       <div className="payment-progress"><span className="done">1 Plan</span><span className="active">2 Proposal</span><span>3 Payment</span><span>4 Policy active</span></div>
 
+      {restored && <div className="proposal-restored"><strong>Saved proposal restored</strong><span>You can review your details and continue securely.</span></div>}
+
       <div className="proposal-layout">
         <div>
           <div className="section">
@@ -121,7 +143,7 @@ export default function OnlinePolicyPurchase() {
               <input placeholder="Full Name" value={form.customerName} onChange={(e) => update("customerName", e.target.value)} />
               <input placeholder="Verified Email" value={form.customerEmail} readOnly aria-readonly="true" />
               <input placeholder="Mobile Number" inputMode="tel" value={form.customerPhone} onChange={(e) => update("customerPhone", e.target.value)} />
-              <input type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} />
+              <input type="date" max={new Date().toISOString().split("T")[0]} aria-label="Date of Birth" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} />
               <input className="proposal-full" placeholder="Residential Address" value={form.address} onChange={(e) => update("address", e.target.value)} />
             </div>
           </div>
@@ -134,7 +156,7 @@ export default function OnlinePolicyPurchase() {
               <select value={form.nomineeRelation} onChange={(e) => update("nomineeRelation", e.target.value)}>
                 <option value="">Nominee Relationship</option><option>Spouse</option><option>Father</option><option>Mother</option><option>Son</option><option>Daughter</option><option>Other</option>
               </select>
-              <input type="date" aria-label="Nominee Date of Birth" value={form.nomineeDateOfBirth} onChange={(e) => update("nomineeDateOfBirth", e.target.value)} />
+              <input type="date" max={new Date().toISOString().split("T")[0]} aria-label="Nominee Date of Birth" value={form.nomineeDateOfBirth} onChange={(e) => update("nomineeDateOfBirth", e.target.value)} />
             </div>
             <label className="proposal-consent"><input type="checkbox" checked={form.proposalConsent} onChange={(e) => update("proposalConsent", e.target.checked)} /><span>I confirm these details are correct and consent to KYC and proposal processing.</span></label>
           </div>
