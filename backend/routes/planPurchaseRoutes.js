@@ -26,6 +26,29 @@ router.get("/test", (req, res) => {
 });
 router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
+    const proposal = req.body?.proposal;
+    if (!proposal || proposal.proposalConsent !== true) {
+      return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
+    }
+
+    const clean = {
+      customerName: String(proposal.customerName || "").trim().slice(0, 120),
+      customerEmail: String(req.user.email || "").trim().toLowerCase(),
+      customerPhone: String(proposal.customerPhone || "").trim().slice(0, 20),
+      address: String(proposal.address || "").trim().slice(0, 500),
+      dateOfBirth: String(proposal.dateOfBirth || "").trim(),
+      panNumber: String(proposal.panNumber || "").trim().toUpperCase(),
+      nomineeName: String(proposal.nomineeName || "").trim().slice(0, 120),
+      nomineeRelation: String(proposal.nomineeRelation || "").trim().slice(0, 40),
+      nomineeDateOfBirth: String(proposal.nomineeDateOfBirth || "").trim(),
+    };
+
+    if (!clean.customerName || !clean.customerEmail || !clean.customerPhone || !clean.address ||
+        !clean.dateOfBirth || !clean.nomineeName || !clean.nomineeRelation || !clean.nomineeDateOfBirth ||
+        !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(clean.panNumber)) {
+      return res.status(400).json({ message: "Proposal details are incomplete or invalid" });
+    }
+
     const plan = await InsurancePlan.findById(req.params.planId);
 
     if (!plan) {
@@ -77,6 +100,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       policyStatus: "Inactive",
       paymentMethod: "Online",
       orderId: order.id,
+      proposal: { ...clean, consentedAt: new Date() },
     });
 
     res.json({
@@ -195,7 +219,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
 
     const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
     const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
-    const customer = await User.findById(req.user.id).select("name");
+    const customer = await User.findById(req.user.id).select("name email phone");
 
     purchase.paymentStatus = "Paid";
     purchase.policyStatus = "Active";
@@ -213,7 +237,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     await Policy.findOneAndUpdate(
       { policyNumber },
       {
-        customerName: customer?.name || "Customer",
+        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
         policyName: plan.planName,
         policyNumber,
         premiumAmount: amount,
@@ -232,7 +256,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     await Premium.findOneAndUpdate(
       { policyNumber, receiptNumber },
       {
-        customerName: customer?.name || "Customer",
+        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
         policyNumber,
         amount,
         dueDate: nextDueDate.toISOString().split("T")[0],
