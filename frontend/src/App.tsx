@@ -339,12 +339,12 @@ function App() {
         <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
         <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
         <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
-        <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminCreateStaff /></ProtectedRoute>} />
-        <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminInsurancePlans /></ProtectedRoute>} />
+        <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreateStaff /></ProtectedRoute>} />
+        <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInsurancePlans /></ProtectedRoute>} />
         <Route path="/ai-policy-recommendation" element={<ProtectedRoute allowedRoles={["customer"]}><AiPolicyRecommendation /></ProtectedRoute>} />
         <Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
-        <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><PolicyPurchases /></ProtectedRoute>} />
-        <Route path="/assign-policy" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AssignPolicy /></ProtectedRoute>} />
+        <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><PolicyPurchases /></ProtectedRoute>} />
+        <Route path="/assign-policy" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><AssignPolicy /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
