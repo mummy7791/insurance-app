@@ -177,7 +177,7 @@ export default function CustomerProfile() {
     >
       {loading && <p>Loading profile...</p>}
 
-      <div className="profile-hero"><div className="profile-avatar-large">${profile.photo && photoUrl ? "" : ""}</div><div><span className="eyebrow">POLICYHOLDER ACCOUNT</span><h2>${profile.name || "Customer"}</h2><p>${profile.email || "Verified customer account"}</p></div><span className="secure-chip">✓ Secure account</span></div>
+      <div className="profile-hero"><div className="profile-avatar-large">{profile.photo && photoUrl ? <img src={photoUrl} alt="" /> : <span>👤</span>}</div><div><span className="eyebrow">POLICYHOLDER ACCOUNT</span><h2>{profile.name || "Customer"}</h2><p>{profile.email || "Verified customer account"}</p></div><span className="secure-chip">✓ Secure account</span></div>
 
       <div className="cards">
         <div className="card">
