@@ -173,9 +173,11 @@ export default function CustomerProfile() {
   return (
     <MainLayout
       title="Customer Profile"
-      subtitle="View and update customer profile details"
+      subtitle="Manage your personal details, KYC identity and account security"
     >
       {loading && <p>Loading profile...</p>}
+
+      <div className="profile-hero"><div className="profile-avatar-large">${profile.photo && photoUrl ? "" : ""}</div><div><span className="eyebrow">POLICYHOLDER ACCOUNT</span><h2>${profile.name || "Customer"}</h2><p>${profile.email || "Verified customer account"}</p></div><span className="secure-chip">✓ Secure account</span></div>
 
       <div className="cards">
         <div className="card">
@@ -220,13 +222,7 @@ export default function CustomerProfile() {
             }
           />
 
-          <input
-            placeholder="Email"
-            value={profile.email || ""}
-            onChange={(e) =>
-              setProfile((prev) => ({ ...prev, email: e.target.value }))
-            }
-          />
+          <input placeholder="Email (verified)" value={profile.email || ""} readOnly aria-readonly="true" title="Verified email cannot be changed here" />
 
           <input
             placeholder="Phone"
@@ -272,7 +268,7 @@ export default function CustomerProfile() {
       </div>
 
       <div className="section">
-        <h2>Change Password</h2>
+        <span className="eyebrow">ACCOUNT SECURITY</span><h2>Change Password</h2><p className="section-copy">Use a strong password with at least 8 characters, including a letter and number.</p>
 
         <div className="form-grid">
           <input
