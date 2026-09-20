@@ -4,6 +4,11 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
+const maskPan = (value = "") => {
+  const pan = String(value).trim().toUpperCase();
+  return pan.length === 10 ? `${pan.slice(0, 2)}******${pan.slice(-2)}` : "";
+};
+
 const makeReference = (prefix) =>
   `${prefix}-${Date.now()}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
@@ -281,6 +286,9 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     const customer = await User.findById(req.user.id).select("name email phone");
 
     purchase.paymentStatus = "Paid";
+    if (purchase.proposal?.panNumber) {
+      purchase.proposal.panNumber = maskPan(purchase.proposal.panNumber);
+    }
     purchase.policyStatus = "Active";
     purchase.transactionId = razorpay_payment_id;
     purchase.policyNumber = policyNumber;
