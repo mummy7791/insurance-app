@@ -1,5 +1,5 @@
 const express = require("express");
-const nodemailer = require("nodemailer");
+const { sendEmail } = require("../services/gmailService");
 const auth = require("../middleware/auth");
 
 const router = express.Router();
@@ -14,26 +14,8 @@ const escapeHtml = (value) =>
 
 const isValidEmail = (value) =>
   typeof value === "string" &&
-  /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value.trim()) &&
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) &&
   value.trim().length <= 254;
-
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    family: 4,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000,
-  });
-};
-
 
 router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
@@ -60,6 +42,10 @@ router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "adv
       return res.status(400).json({ message: "Invalid recipient email" });
     }
 
+    if (/\r|\n/.test(safeSubject)) {
+      return res.status(400).json({ message: "Invalid subject" });
+    }
+
     if (safeSubject.length > 200) {
       return res.status(400).json({ message: "Subject is too long" });
     }
@@ -70,10 +56,7 @@ router.post("/send", auth(["admin", "bm", "unit_manager", "agency_manager", "adv
 
     const safeMessageHtml = escapeHtml(plainMessage).replace(/\r?\n/g, "<br />");
 
-    const transporter = createTransporter();
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    await sendEmail({
       to: safeTo,
       subject: safeSubject,
       text: plainMessage,
