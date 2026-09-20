@@ -48,7 +48,8 @@ export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ClaimForm>(initialForm);
-  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  let user: { role?: string } = {};
+  try { user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { role?: string }; } catch { user = {}; }
   const claimStages: ClaimStatus[] = ["Submitted", "Under Review", "Approved", "Settled"];
   const isCustomer = user.role === "customer" || !user.role;
 
@@ -131,7 +132,8 @@ export default function Claims() {
       title={isCustomer ? "Claims" : "Claims Management"}
       subtitle={isCustomer ? "Submit a claim and track its progress" : "Track claim requests, approval status and settlement details"}
     >
-      <div className="cards">
+      {!isCustomer && <div className="admin-page-summary"><div><span className="eyebrow">CLAIMS OPERATIONS</span><h2>Claims control desk</h2><p>Review claim requests, progress decisions and monitor settlements from one operational queue.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{claims.length}</strong></div><div><span>Review</span><strong>{claims.filter((c) => c.status === "Under Review").length}</strong></div><div><span>Settled</span><strong>{claims.filter((c) => c.status === "Settled").length}</strong></div></div></div>}
+      <div className={`cards ${!isCustomer ? "admin-kpi-grid" : ""}`}>
         <div className="card">
           <h3>Total Claims</h3>
           <h1>{claims.length}</h1>
@@ -213,13 +215,11 @@ export default function Claims() {
           />
         </div>
 
-        <button className="btn small-btn" onClick={addClaim}>
-          Add Claim
-        </button>
+        <button className="btn small-btn" onClick={addClaim}>{isCustomer ? "Submit claim" : "Add claim"}</button>
       </div>
 
       <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">CLAIM TRACKER</span><h2>Claim History</h2></div>{isCustomer && <span className="secure-chip">Live status</span>}</div>
+        <div className="section-heading-row"><div><span className="eyebrow">{isCustomer ? "CLAIM TRACKER" : "CLAIMS QUEUE"}</span><h2>{isCustomer ? "Claim History" : "Claim operations"}</h2></div>{isCustomer ? <span className="secure-chip">Live status</span> : <span className="secure-chip">{claims.length} records</span>}</div>
 
         <button className="mini-btn" onClick={loadClaims}>
           Refresh
