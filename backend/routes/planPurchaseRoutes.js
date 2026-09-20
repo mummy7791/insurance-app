@@ -210,11 +210,13 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       return res.status(400).json({ message: "Payment verification failed" });
     }
 
+    // PAN is excluded from normal queries. Select it only inside this
+    // server-side verification flow so it can be masked immediately after payment.
     const purchase = await PlanPurchase.findOne({
       orderId: razorpay_order_id,
       customerId: req.user.id,
       planId,
-    });
+    }).select("+proposal.panNumber");
 
     if (!purchase) {
       return res.status(400).json({ message: "Payment order does not match this customer and plan" });
