@@ -371,21 +371,6 @@ router.post("/login-with-otp", authRateLimit, async (req, res) => {
   }
 });
 
-router.get("/test-email", auth(["admin"]), async (req, res) => {
-  try {
-    await sendEmail(
-      process.env.EMAIL_USER,
-      "LifeSecure CRM Test Email",
-      "<h2>Email Working Successfully ✅</h2>"
-    );
-
-    res.json({ message: "Email Sent Successfully" });
-  } catch (error) {
-    console.error("Test email error:", error);
-    res.status(500).json({ message: "Email Failed" });
-  }
-});
-
 router.post("/verify-otp", authRateLimit, async (req, res) => {
   try {
     const email =
