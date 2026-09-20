@@ -89,8 +89,17 @@ export default function Payment() {
         try {
           setLoading(true);
 
+          const proposalRaw = sessionStorage.getItem(`proposal:${planId}`);
+          if (!proposalRaw) {
+            alert("Please complete your proposal before payment");
+            navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
+            return;
+          }
+
+          const proposal = JSON.parse(proposalRaw) as Record<string, unknown>;
           const res = await api.post<OrderResponse>(
-            `/plan-purchases/create-order/${planId}`
+            `/plan-purchases/create-order/${planId}`,
+            { proposal }
           );
 
           if (active) {
@@ -170,6 +179,7 @@ export default function Payment() {
       });
 
       setConfirmation(verified.data.confirmation);
+      sessionStorage.removeItem(`proposal:${planId}`);
     } catch (error: unknown) {
       alert(getErrorMessage(error, "Payment verification failed"));
     } finally {
