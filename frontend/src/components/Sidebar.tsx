@@ -35,6 +35,7 @@ const customerMenu = [
   { name: "Documents / KYC", path: "/documents", icon: "📂" },
   { name: "Notifications", path: "/notifications", icon: "🔔" },
   { name: "AI Policy Help", path: "/ai-policy-recommendation", icon: "✨" },
+  { name: "Help & Support", path: "/help", icon: "💬" },
 ];
 
 type MenuItem = {
