@@ -37,28 +37,59 @@ const createTransporter = () => {
 
 router.get("/smtp-check", auth(["admin"]), async (req, res) => {
   try {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const required = [
+      "GMAIL_CLIENT_ID",
+      "GMAIL_CLIENT_SECRET",
+      "GMAIL_REFRESH_TOKEN",
+      "GMAIL_USER",
+    ];
+
+    const missing = required.filter((key) => !process.env[key]);
+
+    if (missing.length) {
       return res.status(500).json({
         ok: false,
-        code: "MISSING_EMAIL_CONFIG",
-        message: "Email credentials are not configured",
+        code: "MISSING_GMAIL_CONFIG",
+        message: `Missing Gmail configuration: ${missing.join(", ")}`,
       });
     }
 
-    const transporter = createTransporter();
-    await transporter.verify();
+    const { google } = require("googleapis");
+
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+    });
+
+    const gmail = google.gmail({
+      version: "v1",
+      auth: oauth2Client,
+    });
+
+    const profile = await gmail.users.getProfile({
+      userId: "me",
+    });
 
     return res.json({
       ok: true,
-      message: "Gmail SMTP connection and authentication successful",
+      message: "Gmail API authentication successful",
+      email: profile.data.emailAddress,
     });
   } catch (error) {
-    console.error("SMTP diagnostic failed:", error.code, error.message);
+    console.error(
+      "Gmail API diagnostic failed:",
+      error?.response?.data?.error || error.message
+    );
 
     return res.status(500).json({
       ok: false,
-      code: error.code || "SMTP_ERROR",
-      message: error.message || "SMTP verification failed",
+      code: "GMAIL_API_ERROR",
+      message: "Gmail API authentication failed",
     });
   }
 });
