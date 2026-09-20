@@ -292,10 +292,16 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await safeSendOTP(user.email, otp);
+    const emailSent = await safeSendOTP(user.email, otp);
+
+    if (!emailSent) {
+      return res.status(503).json({
+        message: "OTP email could not be sent right now. Please try again shortly.",
+      });
+    }
 
     return res.json({
-      message: "If an eligible customer account exists, an OTP will be sent.",
+      message: "OTP sent to your registered email.",
     });
   } catch (error) {
     console.error("Send login OTP error:", error);
