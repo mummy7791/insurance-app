@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import "./styles/app.css";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -29,63 +30,46 @@ const CustomerOtpLogin = lazy(() => import("./pages/CustomerOtpLogin"));
 const AdminInsurancePlans = lazy(() => import("./pages/AdminInsurancePlans"));
 const PremiumCalculator = lazy(() => import("./pages/PremiumCalculator"));
 const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
-
-import "./styles/app.css";
+const Payment = lazy(() => import("./pages/Payment"));
 
 function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<div className="app-route-loading">Loading SecureLife...</div>}>
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-</ProtectedRoute>
-          }
-        />
-<Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
-        <Route path="/online-policy-purchase" element={<ProtectedRoute allowedRoles={["customer"]}><OnlinePolicyPurchase /></ProtectedRoute>} />
-        <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
-        <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
-        <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
-        <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreateStaff /></ProtectedRoute>} />
-        <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInsurancePlans /></ProtectedRoute>} />
-<Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
-        <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><PolicyPurchases /></ProtectedRoute>} />
-<Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/customer-otp-login" element={<CustomerOtpLogin />} />
+          <Route path="/premium-calculator" element={<PremiumCalculator />} />
+
+          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Dashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Profile /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Customers /></ProtectedRoute>} />
+          <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>} />
+          <Route path="/premiums" element={<ProtectedRoute><Premiums /></ProtectedRoute>} />
+          <Route path="/commission" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Commission /></ProtectedRoute>} />
+          <Route path="/claims" element={<ProtectedRoute><Claims /></ProtectedRoute>} />
+          <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+          <Route path="/employees" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Employees /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Reports /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute allowedRoles={["admin"]}><Settings /></ProtectedRoute>} />
+          <Route path="/user-management" element={<ProtectedRoute allowedRoles={["admin"]}><UserManagement /></ProtectedRoute>} />
+          <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreateStaff /></ProtectedRoute>} />
+          <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInsurancePlans /></ProtectedRoute>} />
+          <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><PolicyPurchases /></ProtectedRoute>} />
+
+          <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
+          <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
+          <Route path="/online-policy-purchase" element={<ProtectedRoute allowedRoles={["customer"]}><OnlinePolicyPurchase /></ProtectedRoute>} />
+          <Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
+          <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       </Suspense>
     </BrowserRouter>
   );
