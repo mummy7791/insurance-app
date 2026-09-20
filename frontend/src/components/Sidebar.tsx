@@ -25,17 +25,16 @@ type NotificationItem = {
 };
 
 const customerMenu = [
-  { name: "My Dashboard", path: "/customer-dashboard", icon: "🏠" },
-  { name: "My Profile", path: "/customer-profile", icon: "👤" },
-  { name: "Insurance Plans", path: "/insurance-plans", icon: "🛡️" },
-  { name: "Buy Policy", path: "/online-policy-purchase", icon: "🛒" },
-  { name: "My Policies", path: "/policies", icon: "📑" },
-  { name: "Premium Payment", path: "/premiums", icon: "💳" },
-  { name: "Claims", path: "/claims", icon: "🧾" },
-  { name: "Documents / KYC", path: "/documents", icon: "📂" },
-  { name: "Notifications", path: "/notifications", icon: "🔔" },
-  { name: "AI Policy Help", path: "/ai-policy-recommendation", icon: "✨" },
-  { name: "Help & Support", path: "/help", icon: "💬" },
+  { name: "Overview", path: "/customer-dashboard", icon: "⌂" },
+  { name: "Explore Plans", path: "/insurance-plans", icon: "◇" },
+  { name: "My Policies", path: "/policies", icon: "▣" },
+  { name: "Premiums", path: "/premiums", icon: "₹" },
+  { name: "Claims", path: "/claims", icon: "◎" },
+  { name: "KYC & Documents", path: "/documents", icon: "▤" },
+  { name: "Notifications", path: "/notifications", icon: "○" },
+  { name: "My Profile", path: "/customer-profile", icon: "◉" },
+  { name: "Policy Assistant", path: "/ai-policy-recommendation", icon: "✦" },
+  { name: "Help & Support", path: "/help", icon: "?" },
 ];
 
 type MenuItem = {
