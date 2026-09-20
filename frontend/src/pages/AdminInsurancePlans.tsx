@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
 
@@ -80,6 +80,8 @@ function AdminInsurancePlans() {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const filteredPlans = useMemo(() => plans.filter((plan) => `${plan.planName} ${plan.category} ${plan.planType || ""} ${plan.status}`.toLowerCase().includes(search.toLowerCase())), [plans, search]);
 
   const fetchPlans = useCallback(async (): Promise<Plan[]> => {
     const res = await api.get<Plan[]>("/insurance-plans/admin/all");
@@ -230,7 +232,9 @@ function AdminInsurancePlans() {
       title="Admin Insurance Plans"
       subtitle="Create, approve, calculate and manage insurance plans"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">PRODUCT CONTROL</span><h2>Insurance product workspace</h2><p>Create customer-facing products, calculate premiums and control plan availability.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{plans.length}</strong></div><div><span>Approved</span><strong>{plans.filter((p) => p.status === "Approved").length}</strong></div><div><span>Pending</span><strong>{plans.filter((p) => p.status === "Pending").length}</strong></div></div></div>
+
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Plans</h3>
           <h1>{plans.length}</h1>
@@ -253,7 +257,7 @@ function AdminInsurancePlans() {
       </div>
 
       <div className="section">
-        <h2>Create Insurance Plan</h2>
+        <span className="eyebrow">NEW INSURANCE PRODUCT</span><h2>Create insurance plan</h2><p className="section-copy">Configure cover, eligibility, benefits and premium before publishing the product.</p>
 
         <div className="form-grid">
           <input
@@ -398,16 +402,13 @@ function AdminInsurancePlans() {
         </div>
       </div>
 
-      <div className="section">
-        <h2>All Plans</h2>
-
-        <button className="mini-btn" onClick={() => void loadPlans()}>
-          Refresh
-        </button>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">PRODUCT CATALOGUE</span><h2>All plans</h2></div><button className="mini-btn" onClick={() => void loadPlans()}>Refresh</button></div>
+        <div className="admin-search-bar"><input placeholder="Search plan, category, type or status" value={search} onChange={(e) => setSearch(e.target.value)} /><span>{filteredPlans.length} plans</span></div>
 
         {loading ? (
           <p>Loading plans...</p>
-        ) : plans.length === 0 ? (
+        ) : filteredPlans.length === 0 ? (
           <p>No plans found.</p>
         ) : (
           <table className="table">
@@ -425,7 +426,7 @@ function AdminInsurancePlans() {
             </thead>
 
             <tbody>
-              {plans.map((plan) => (
+              {filteredPlans.map((plan) => (
                 <tr key={plan._id}>
                   <td>
                     <strong>{plan.planName}</strong>
@@ -434,8 +435,8 @@ function AdminInsurancePlans() {
                   </td>
 
                   <td>{plan.category}</td>
-                  <td>₹{plan.coverageAmount || 0}</td>
-                  <td>₹{plan.yearlyPremium || plan.yearlyAmount || 0}</td>
+                  <td>₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</td>
+                  <td>₹{Number(plan.yearlyPremium || plan.yearlyAmount || 0).toLocaleString("en-IN")}</td>
                   <td>{plan.paymentYears || 1}</td>
 
                   <td>
