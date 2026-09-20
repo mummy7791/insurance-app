@@ -133,9 +133,11 @@ export default function InsurancePlans() {
                     <b>Benefits:</b> {getBenefits(plan.benefits)}
                   </p>
 
-                  <p>
-                    <b>Coverage Details:</b> {plan.coverage || "N/A"}
-                  </p>
+                  <div className="plan-benefit-box">
+                    <span>Key benefits</span>
+                    <p>{getBenefits(plan.benefits)}</p>
+                  </div>
+                  <div className="plan-card-footer"><div><small>Annual premium</small><strong>₹{premium.toLocaleString("en-IN")}</strong></div><div><small>Life cover</small><strong>₹{(plan.coverageAmount || 0).toLocaleString("en-IN")}</strong></div></div>
 
                   <button
                     className="btn small-btn"
@@ -143,7 +145,7 @@ export default function InsurancePlans() {
                     disabled={buyingId === plan._id}
                     style={{ marginTop: 12 }}
                   >
-                    {buyingId === plan._id ? "Opening..." : "View & Apply"}
+                    {buyingId === plan._id ? "Opening..." : "Continue to secure payment →"}
                   </button>
                 </div>
               );
