@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
@@ -42,8 +42,10 @@ export default function Policies() {
   const [loading, setLoading] = useState(false);
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
-  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
+  const purchasedPolicyNumbers = new Set(purchasedPlans.map((plan) => plan.policyNumber).filter(Boolean));
+  const visiblePolicies = isCustomer ? policies.filter((policy) => !policy.policyNumber || !purchasedPolicyNumbers.has(policy.policyNumber)) : policies;
 
   const loadPolicies = useCallback(async () => {
     try {
@@ -61,7 +63,7 @@ export default function Policies() {
       setTimeout(() => setLoading(false), 0);
       alert("Policies load failed");
     }
-  }, []);
+  }, [isCustomer]);
 
   useEffect(() => {
     void loadPolicies();
@@ -188,19 +190,14 @@ export default function Policies() {
 
         {loading ? (
           <p>Loading...</p>
-        ) : policies.length === 0 ? (
-          <p>No policies found.</p>
+        ) : visiblePolicies.length === 0 ? (
+          <p>{isCustomer && purchasedPlans.length > 0 ? "All your current policies are shown in Digital Policies above." : "No policies found."}</p>
         ) : (
           <div className="lead-grid">
-            {policies.map((policy) => (
+            {visiblePolicies.map((policy) => (
               <div className="lead-card" key={policy._id}>
                 <h3>{policy.policyName}</h3>
-                <p>👤 Customer: {policy.customerName || "N/A"}</p>
-                <p>📞 Phone: {policy.customerPhone || "N/A"}</p>
-                <p>📄 Policy No: {policy.policyNumber}</p>
-                <p>💰 Premium: ₹{policy.premiumAmount}</p>
-                <p>🛡️ Sum Assured: ₹{policy.sumAssured}</p>
-                <p>📆 Mode: {policy.paymentMode}</p>
+                <div className="admin-detail-list"><p><span>Customer</span><strong>{policy.customerName || "N/A"}</strong></p>{!isCustomer && <p><span>Phone</span><strong>{policy.customerPhone || "N/A"}</strong></p>}<p><span>Policy No</span><strong>{policy.policyNumber}</strong></p><p><span>Premium</span><strong>₹{Number(policy.premiumAmount || 0).toLocaleString("en-IN")}</strong></p><p><span>Sum Assured</span><strong>₹{Number(policy.sumAssured || 0).toLocaleString("en-IN")}</strong></p><p><span>Mode</span><strong>{policy.paymentMode}</strong></p></div>
 
                 <span className="badge">{policy.status}</span>
 
