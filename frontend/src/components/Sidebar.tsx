@@ -204,17 +204,13 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <strong>{user.name || user.email || "User"}</strong>
+        <div className="sidebar-user-card">
+          <div className="sidebar-avatar">{(user.name || user.email || "U").charAt(0).toUpperCase()}</div>
+          <div><strong>{user.name || user.email || "User"}</strong>
           <br />
-          <small>{role}</small>
+          <small>{role === "customer" ? "Policyholder" : role}</small></div>
 
-          {user.branch && (
-            <>
-              <br />
-              <small>Branch: {user.branch}</small>
-            </>
-          )}
+          {user.branch && <small className="sidebar-branch">Branch: {user.branch}</small>}
         </div>
 
         {filteredMenu.map((item) => (
