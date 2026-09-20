@@ -3,74 +3,48 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Auth.css";
 
-type AuthResponse = {
-  token?: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
-  email?: string;
-  message?: string;
-};
+type AuthResponse = { email?: string; message?: string };
 
-const getErrorMessage = (error: unknown) => {
+const errorMessage = (error: unknown) => {
   if (typeof error === "object" && error !== null && "response" in error) {
-    const err = error as { response?: { data?: { message?: string } } };
-    return err.response?.data?.message || "Register failed";
+    const e = error as { response?: { data?: { message?: string } } };
+    return e.response?.data?.message || "Unable to create account";
   }
-
-  return "Register failed";
+  return "Unable to create account";
 };
 
 export default function Register() {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const register = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
-      alert("Name, email and password required");
+    setError("");
+    const name = form.name.trim();
+    const email = form.email.trim().toLowerCase();
+    const phone = form.phone.trim();
+
+    if (!name || !email || !form.password) {
+      setError("Please enter your name, email and password.");
+      return;
+    }
+    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
+      setError("Password must be at least 8 characters with a letter and number.");
       return;
     }
 
     try {
       setLoading(true);
-
       const res = await api.post<AuthResponse>("/auth/register", {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        password: form.password,
-        role: "customer",
+        name, email, phone, password: form.password,
       });
-
-      if (res.data.token && res.data.user) {
-        const user = {
-          ...res.data.user,
-          role: "customer",
-        };
-
-        localStorage.setItem("insuranceToken", res.data.token);
-        localStorage.setItem("insuranceUser", JSON.stringify(user));
-
-        alert("Customer registered successfully");
-        navigate("/customer-dashboard");
-        return;
-      }
-
-      alert(res.data.message || "Customer registered successfully");
-      navigate("/login");
+      sessionStorage.setItem("pendingVerificationEmail", res.data.email || email);
+      navigate("/customer-otp-login", {
+        state: { email: res.data.email || email, mode: "verify" },
+      });
     } catch (error: unknown) {
-      alert(getErrorMessage(error));
+      setError(errorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -78,62 +52,40 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <img src="/ic_launcher.png" alt="SecureLife Insurance" />
-        </div>
+      <div className="auth-shell">
+        <section className="auth-hero">
+          <span className="auth-badge">SECURE • SIMPLE • DIGITAL</span>
+          <h1>Protect what matters most.</h1>
+          <p>Create your policyholder account to manage cover, premiums, claims and documents from one secure place.</p>
+          <div className="auth-trust-row"><span>✓ Email verified access</span><span>✓ Secure policy dashboard</span><span>✓ Digital claims support</span></div>
+        </section>
 
-        <h1 className="auth-title">SecureLife Insurance</h1>
-        <h2 className="auth-subtitle">Customer Register</h2>
+        <section className="auth-card modern-auth-card">
+          <div className="brand-mark">S</div>
+          <h1 className="auth-title">SecureLife</h1>
+          <p className="auth-kicker">Create your customer account</p>
 
-        <div className="auth-form">
-          <input
-            className="auth-input"
-            placeholder="Full Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+          {error && <div className="auth-error">{error}</div>}
 
-          <input
-            className="auth-input"
-            type="email"
-            placeholder="Email Address"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
+          <div className="auth-form">
+            <label>Full name</label>
+            <input className="auth-input" autoComplete="name" placeholder="Your full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <label>Email address</label>
+            <input className="auth-input" type="email" autoComplete="email" placeholder="name@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <label>Mobile number</label>
+            <input className="auth-input" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })} />
+            <label>Password</label>
+            <input className="auth-input" type="password" autoComplete="new-password" placeholder="Minimum 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
 
-          <input
-            className="auth-input"
-            placeholder="Phone Number"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
+            <button type="button" className="auth-btn" onClick={() => void register()} disabled={loading}>
+              {loading ? "Creating secure account..." : "Create account & verify email"}
+            </button>
+          </div>
 
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-
-          <button
-            type="button"
-            className="auth-btn"
-            onClick={() => void register()}
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Register"}
-          </button>
-        </div>
-
-        <p className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-
-        <p className="auth-link small">
-          <Link to="/admin-login">Admin Login</Link>
-        </p>
+          <p className="auth-note">We will send a 6-digit verification code to your email.</p>
+          <p className="auth-link">Already registered? <Link to="/login">Sign in</Link></p>
+          <p className="auth-link small"><Link to="/admin-login">Staff / Admin login</Link></p>
+        </section>
       </div>
     </div>
   );
