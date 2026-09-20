@@ -10,7 +10,7 @@ type Customer = {
   city?: string;
   occupation?: string;
   income?: number;
-  leadStatus: "new" | "followup" | "converted" | "rejected";
+  status: "new" | "followup" | "converted" | "rejected";
 };
 
 type CustomerForm = {
@@ -37,23 +37,23 @@ export default function Customers() {
   const [form, setForm] = useState<CustomerForm>(initialForm);
   const [search, setSearch] = useState("");
 
-  const filteredCustomers = useMemo(() => customers.filter((customer) => `${customer.name} ${customer.phone} ${customer.email || ""} ${customer.city || ""} ${customer.leadStatus}`.toLowerCase().includes(search.toLowerCase())), [customers, search]);
+  const filteredCustomers = useMemo(() => customers.filter((customer) => `${customer.name} ${customer.phone} ${customer.email || ""} ${customer.city || ""} ${customer.status}`.toLowerCase().includes(search.toLowerCase())), [customers, search]);
 
   const loadCustomers = useCallback(async () => {
     try {
       setTimeout(() => setLoading(true), 0);
 
-      const res = await api.get<Customer[]>("/customers");
+      const res = await api.get<Customer[]>("/leads");
 
       setTimeout(() => {
-        setCustomers(res.data);
+        setCustomers(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       }, 0);
     } catch (error) {
       console.error("Customers load error:", error);
 
       setTimeout(() => setLoading(false), 0);
-      alert("Customers load failed");
+      // Keep the page usable even if the request fails; the directory shows a clear inline state.
     }
   }, []);
 
@@ -68,7 +68,7 @@ export default function Customers() {
     }
 
     try {
-      const res = await api.post<Customer>("/customers", {
+      const res = await api.post<Customer>("/leads", {
         name: form.name,
         phone: form.phone,
         email: form.email,
@@ -87,11 +87,11 @@ export default function Customers() {
 
   const updateStatus = async (
     id: string,
-    leadStatus: Customer["leadStatus"]
+    status: Customer["status"]
   ) => {
     try {
-      const res = await api.put<Customer>(`/customers/${id}`, {
-        leadStatus,
+      const res = await api.put<Customer>(`/leads/${id}`, {
+        status,
       });
 
       setCustomers((prev) =>
@@ -108,7 +108,7 @@ export default function Customers() {
     if (!ok) return;
 
     try {
-      await api.delete(`/customers/${id}`);
+      await api.delete(`/leads/${id}`);
 
       setCustomers((prev) =>
         prev.filter((customer) => customer._id !== id)
@@ -124,7 +124,7 @@ export default function Customers() {
       title="Customers / Leads"
       subtitle="Add leads and manage customer follow-ups"
     >
-      <div className="admin-page-summary"><div><span className="eyebrow">CUSTOMER OPERATIONS</span><h2>Customer & lead workspace</h2><p>Capture prospects, follow up and monitor conversion status from one view.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{customers.length}</strong></div><div><span>Follow ups</span><strong>{customers.filter((item) => item.leadStatus === "followup").length}</strong></div><div><span>Converted</span><strong>{customers.filter((item) => item.leadStatus === "converted").length}</strong></div></div></div>
+      <div className="admin-page-summary"><div><span className="eyebrow">CUSTOMER OPERATIONS</span><h2>Customer & lead workspace</h2><p>Capture prospects, follow up and monitor conversion status from one view.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{customers.length}</strong></div><div><span>Follow ups</span><strong>{customers.filter((item) => item.status === "followup").length}</strong></div><div><span>Converted</span><strong>{customers.filter((item) => item.status === "converted").length}</strong></div></div></div>
 
       <div className="section">
         <h2>Add New Customer</h2>
@@ -202,15 +202,15 @@ export default function Customers() {
                 <h3>{customer.name}</h3>
                 <div className="admin-detail-list"><p><span>Phone</span><strong>{customer.phone}</strong></p><p><span>Email</span><strong>{customer.email || "N/A"}</strong></p><p><span>City</span><strong>{customer.city || "N/A"}</strong></p><p><span>Occupation</span><strong>{customer.occupation || "N/A"}</strong></p><p><span>Income</span><strong>₹{Number(customer.income || 0).toLocaleString("en-IN")}</strong></p></div>
 
-                <span className="badge">{customer.leadStatus}</span>
+                <span className="badge">{customer.status}</span>
 
                 <select
                   className="status-select"
-                  value={customer.leadStatus}
+                  value={customer.status}
                   onChange={(e) =>
                     updateStatus(
                       customer._id,
-                      e.target.value as Customer["leadStatus"]
+                      e.target.value as Customer["status"]
                     )
                   }
                 >
