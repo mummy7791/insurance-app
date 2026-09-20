@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
@@ -105,7 +105,13 @@ const chartOptions = {
 };
 
 export default function Dashboard() {
-  const user: User = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const user: User = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
 
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [charts, setCharts] = useState<DashboardCharts>(initialCharts);
@@ -114,17 +120,23 @@ export default function Dashboard() {
 
   const loadDashboard = useCallback(async () => {
     try {
-      const [statsRes, chartsRes, auditRes] = await Promise.all([
+      const [statsRes, chartsRes, auditRes] = await Promise.allSettled([
         api.get<DashboardStats>("/dashboard/stats"),
         api.get<DashboardCharts>("/dashboard/charts"),
         api.get<AuditLog[]>("/audit-logs"),
       ]);
 
-      setStats(statsRes.data || initialStats);
-      setCharts(chartsRes.data || initialCharts);
-      setAuditLogs(
-        Array.isArray(auditRes.data) ? auditRes.data.slice(0, 5) : []
-      );
+      if (statsRes.status === "fulfilled") {
+        setStats(statsRes.value.data || initialStats);
+      }
+      if (chartsRes.status === "fulfilled") {
+        setCharts(chartsRes.value.data || initialCharts);
+      }
+      if (auditRes.status === "fulfilled") {
+        setAuditLogs(
+          Array.isArray(auditRes.value.data) ? auditRes.value.data.slice(0, 5) : []
+        );
+      }
     } catch (error) {
       console.error("Dashboard load error:", error);
     }
@@ -199,7 +211,7 @@ export default function Dashboard() {
       title={`Welcome, ${user.name || user.email || "User"}`}
       subtitle={`Role: ${user.role || "agent"}`}
     >
-      <div className="admin-command-hero"><div><span className="eyebrow">SECURELIFE OPERATIONS</span><h2>Business control center</h2><p>Monitor protection business, collections, claims and team activity from one workspace.</p></div><div className="admin-command-actions"><Link className="btn small-btn" to="/admin-insurance-plans">Manage plans</Link><Link className="mini-btn" to="/policy-purchases">Policy purchases</Link><Link className="mini-btn" to="/user-management">Team access</Link></div></div>
+      <div className="admin-command-hero"><div><span className="eyebrow">SECURELIFE OPERATIONS</span><h2>Business control center</h2><p>Monitor protection business, collections, claims and team activity from one workspace.</p></div><div className="admin-command-actions">{user.role === "admin" && <Link className="btn small-btn" to="/admin-insurance-plans">Manage plans</Link>}<Link className="mini-btn" to="/policy-purchases">Policy purchases</Link>{user.role === "admin" && <Link className="mini-btn" to="/user-management">Team access</Link>}</div></div>
 
       {loading && <div className="dashboard-loading"><span className="checkout-spinner" />Refreshing live operations...</div>}
 
