@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
@@ -35,6 +35,9 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<CustomerForm>(initialForm);
+  const [search, setSearch] = useState("");
+
+  const filteredCustomers = useMemo(() => customers.filter((customer) => `${customer.name} ${customer.phone} ${customer.email || ""} ${customer.city || ""} ${customer.leadStatus}`.toLowerCase().includes(search.toLowerCase())), [customers, search]);
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -121,6 +124,8 @@ export default function Customers() {
       title="Customers / Leads"
       subtitle="Add leads and manage customer follow-ups"
     >
+      <div className="admin-page-summary"><div><span className="eyebrow">CUSTOMER OPERATIONS</span><h2>Customer & lead workspace</h2><p>Capture prospects, follow up and monitor conversion status from one view.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{customers.length}</strong></div><div><span>Follow ups</span><strong>{customers.filter((item) => item.leadStatus === "followup").length}</strong></div><div><span>Converted</span><strong>{customers.filter((item) => item.leadStatus === "converted").length}</strong></div></div></div>
+
       <div className="section">
         <h2>Add New Customer</h2>
 
@@ -183,26 +188,19 @@ export default function Customers() {
       </div>
 
       <div className="section">
-        <h2>Customer List</h2>
-
-        <button className="mini-btn" onClick={loadCustomers}>
-          Refresh
-        </button>
+        <div className="section-heading-row"><div><span className="eyebrow">CUSTOMER DIRECTORY</span><h2>Customer List</h2></div><button className="mini-btn" onClick={loadCustomers}>Refresh</button></div>
+        <div className="admin-search-bar"><input placeholder="Search name, phone, email, city or status" value={search} onChange={(e) => setSearch(e.target.value)} /><span>{filteredCustomers.length} records</span></div>
 
         {loading ? (
           <p>Loading...</p>
-        ) : customers.length === 0 ? (
+        ) : filteredCustomers.length === 0 ? (
           <p>No customers found.</p>
         ) : (
           <div className="lead-grid">
-            {customers.map((customer) => (
+            {filteredCustomers.map((customer) => (
               <div className="lead-card" key={customer._id}>
                 <h3>{customer.name}</h3>
-                <p>📞 {customer.phone}</p>
-                <p>📧 {customer.email || "N/A"}</p>
-                <p>📍 {customer.city || "N/A"}</p>
-                <p>💼 {customer.occupation || "N/A"}</p>
-                <p>💰 ₹{customer.income || 0}</p>
+                <div className="admin-detail-list"><p><span>Phone</span><strong>{customer.phone}</strong></p><p><span>Email</span><strong>{customer.email || "N/A"}</strong></p><p><span>City</span><strong>{customer.city || "N/A"}</strong></p><p><span>Occupation</span><strong>{customer.occupation || "N/A"}</strong></p><p><span>Income</span><strong>₹{Number(customer.income || 0).toLocaleString("en-IN")}</strong></p></div>
 
                 <span className="badge">{customer.leadStatus}</span>
 
