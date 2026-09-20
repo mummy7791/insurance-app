@@ -145,7 +145,7 @@ export default function InsurancePlans() {
                     disabled={buyingId === plan._id}
                     style={{ marginTop: 12 }}
                   >
-                    {buyingId === plan._id ? "Opening..." : "Continue to secure payment →"}
+                    {buyingId === plan._id ? "Opening..." : "Start proposal →"}
                   </button>
                 </div>
               );
