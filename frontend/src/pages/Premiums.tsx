@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
@@ -40,7 +40,7 @@ export default function Premiums() {
   const [premiums, setPremiums] = useState<Premium[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PremiumForm>(initialForm);
-  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
 
   const loadPremiums = useCallback(async () => {
@@ -160,15 +160,16 @@ export default function Premiums() {
       title={isCustomer ? "Premiums & Payments" : "Premium Collection"}
       subtitle={isCustomer ? "View upcoming premiums and your payment history" : "Track due, paid and overdue premium payments"}
     >
-      <div className="cards">
+      {!isCustomer && <div className="admin-page-summary"><div><span className="eyebrow">COLLECTION OPERATIONS</span><h2>Premium collection workspace</h2><p>Track upcoming dues, paid premiums and overdue collections across active policies.</p></div><div className="admin-summary-metrics"><div><span>Records</span><strong>{premiums.length}</strong></div><div><span>Paid</span><strong>{premiums.filter((p) => p.status === "Paid").length}</strong></div><div><span>Overdue</span><strong>{premiums.filter((p) => p.status === "Overdue").length}</strong></div></div></div>}
+      <div className={`cards ${!isCustomer ? "admin-kpi-grid" : ""}`}>
         <div className="card">
           <h3>Total Collected</h3>
-          <h1>₹{totalCollected}</h1>
+          <h1>₹{Number(totalCollected || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Due Amount</h3>
-          <h1>₹{dueAmount}</h1>
+          <h1>₹{Number(dueAmount || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
@@ -184,7 +185,7 @@ export default function Premiums() {
 
 {!isCustomer && (
       <div className="section">
-        <h2>Add Premium Due</h2>
+        <span className="eyebrow">NEW COLLECTION</span><h2>Add premium due</h2><p className="section-copy">Create a premium schedule entry for an existing customer policy.</p>
         <div className="form-grid">
           <input placeholder="Customer Name" value={form.customerName} onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))} />
           <input placeholder="Policy Number" value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))} />
@@ -200,7 +201,7 @@ export default function Premiums() {
       )}
 
       <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">PAYMENT HISTORY</span><h2>{isCustomer ? "My Premiums" : "Premium List"}</h2></div>{isCustomer && <span className="secure-chip">Receipts verified</span>}</div>
+        <div className="section-heading-row"><div><span className="eyebrow">PAYMENT HISTORY</span><h2>{isCustomer ? "My Premiums" : "Premium register"}</h2></div>{isCustomer ? <span className="secure-chip">Receipts verified</span> : <span className="secure-chip">{premiums.length} records</span>}</div>
 
         <button className="mini-btn" onClick={loadPremiums}>
           Refresh
