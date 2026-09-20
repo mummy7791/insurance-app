@@ -21,6 +21,19 @@ const planPurchaseSchema = new mongoose.Schema(
     yearlyPremium: { type: Number, default: 0 },
     paymentYears: { type: Number, default: 1 },
 
+    proposal: {
+      customerName: { type: String, default: "" },
+      customerEmail: { type: String, default: "" },
+      customerPhone: { type: String, default: "" },
+      address: { type: String, default: "" },
+      dateOfBirth: { type: String, default: "" },
+      panNumber: { type: String, default: "" },
+      nomineeName: { type: String, default: "" },
+      nomineeRelation: { type: String, default: "" },
+      nomineeDateOfBirth: { type: String, default: "" },
+      consentedAt: { type: Date, default: null },
+    },
+
     paymentStatus: {
       type: String,
       enum: ["Pending", "Paid", "Failed"],
