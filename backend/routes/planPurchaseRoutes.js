@@ -31,9 +31,14 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
     }
 
+    const account = await User.findById(req.user.id).select("name email phone");
+    if (!account?.email) {
+      return res.status(400).json({ message: "Verified customer account not found" });
+    }
+
     const clean = {
-      customerName: String(proposal.customerName || "").trim().slice(0, 120),
-      customerEmail: String(req.user.email || "").trim().toLowerCase(),
+      customerName: String(proposal.customerName || account.name || "").trim().slice(0, 120),
+      customerEmail: String(account.email).trim().toLowerCase(),
       customerPhone: String(proposal.customerPhone || "").trim().slice(0, 20),
       address: String(proposal.address || "").trim().slice(0, 500),
       dateOfBirth: String(proposal.dateOfBirth || "").trim(),
@@ -43,8 +48,16 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       nomineeDateOfBirth: String(proposal.nomineeDateOfBirth || "").trim(),
     };
 
+    const phoneDigits = clean.customerPhone.replace(/\D/g, "");
+    const customerDob = new Date(clean.dateOfBirth);
+    const nomineeDob = new Date(clean.nomineeDateOfBirth);
+    const today = new Date();
+
     if (!clean.customerName || !clean.customerEmail || !clean.customerPhone || !clean.address ||
         !clean.dateOfBirth || !clean.nomineeName || !clean.nomineeRelation || !clean.nomineeDateOfBirth ||
+        phoneDigits.length < 10 || phoneDigits.length > 15 ||
+        Number.isNaN(customerDob.getTime()) || Number.isNaN(nomineeDob.getTime()) ||
+        customerDob > today || nomineeDob > today ||
         !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(clean.panNumber)) {
       return res.status(400).json({ message: "Proposal details are incomplete or invalid" });
     }
@@ -306,7 +319,7 @@ const syncPaidPurchase = async (purchase, customerId) => {
   await Policy.findOneAndUpdate(
     { policyNumber },
     {
-      customerName: customer?.name || "Customer",
+      customerName: purchase.proposal?.customerName || customer?.name || "Customer",
       policyName: purchase.planName || "Insurance Plan",
       policyNumber,
       premiumAmount: Number(purchase.yearlyPremium || 0),
@@ -325,7 +338,7 @@ const syncPaidPurchase = async (purchase, customerId) => {
     await Premium.findOneAndUpdate(
       { policyNumber, receiptNumber },
       {
-        customerName: customer?.name || "Customer",
+        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
         policyNumber,
         amount: Number(purchase.yearlyPremium || 0),
         dueDate: nextDueDate.toISOString().split("T")[0],
