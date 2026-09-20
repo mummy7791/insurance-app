@@ -68,6 +68,7 @@ export default function Payment() {
   const [paying, setPaying] = useState(false);
   const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
   const [proposal, setProposal] = useState<{ customerName?: string; customerEmail?: string; customerPhone?: string } | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -89,6 +90,7 @@ export default function Payment() {
 
         try {
           setLoading(true);
+          setCheckoutError("");
 
           const proposalRaw = sessionStorage.getItem(`proposal:${planId}`);
           if (!proposalRaw) {
@@ -120,8 +122,7 @@ export default function Payment() {
             setOrder(res.data);
           }
         } catch (error: unknown) {
-          alert(getErrorMessage(error, "Payment order create failed"));
-          navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans");
+          setCheckoutError(getErrorMessage(error, "Unable to prepare secure checkout. Please review your proposal and try again."));
         } finally {
           if (active) {
             setLoading(false);
@@ -149,8 +150,12 @@ export default function Payment() {
       return;
     }
 
-    const userRaw = localStorage.getItem("insuranceUser");
-    const user = userRaw ? JSON.parse(userRaw) : {};
+    let user: { name?: string; email?: string; phone?: string } = {};
+    try {
+      user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { name?: string; email?: string; phone?: string };
+    } catch {
+      user = {};
+    }
 
     setPaying(true);
 
@@ -167,7 +172,7 @@ export default function Payment() {
         contact: proposal?.customerPhone || user.phone || "",
       },
       theme: {
-        color: "#d71920",
+        color: "#7b1730",
       },
       handler: (response) => {
         void verifyPayment(response);
@@ -224,9 +229,9 @@ export default function Payment() {
         <div className="payment-progress"><span className="done">1 Plan</span><span className="done">2 Proposal</span><span className="active">3 Payment</span><span>4 Policy active</span></div>
         <div className="section payment-checkout">
         {loading ? (
-          <p>Creating payment order...</p>
+          <div className="checkout-loading"><span className="checkout-spinner" /><div><strong>Preparing secure checkout</strong><p>Creating a protected payment order for your selected plan.</p></div></div>
         ) : !order ? (
-          <p>No payment order found.</p>
+          <div className="checkout-recovery"><strong>Checkout needs your attention</strong><p>{checkoutError || "No payment order found."}</p><button className="btn small-btn" onClick={() => navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans")}>Review proposal</button></div>
         ) : (
           <>
             <div className="checkout-heading"><div><span className="eyebrow">SECURE CHECKOUT</span><h2>{order.plan.planName}</h2><p>Review your cover before continuing to the payment gateway.</p></div><div className="secure-payment-badge">🔒 Secure payment</div></div>
