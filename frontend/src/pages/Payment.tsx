@@ -67,6 +67,7 @@ export default function Payment() {
   const [loading, setLoading] = useState(false);
   const [paying, setPaying] = useState(false);
   const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
+  const [proposal, setProposal] = useState<{ customerName?: string; customerEmail?: string; customerPhone?: string } | null>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -96,10 +97,23 @@ export default function Payment() {
             return;
           }
 
-          const proposal = JSON.parse(proposalRaw) as Record<string, unknown>;
+          let parsedProposal: Record<string, unknown>;
+          try {
+            parsedProposal = JSON.parse(proposalRaw) as Record<string, unknown>;
+          } catch {
+            sessionStorage.removeItem(`proposal:${planId}`);
+            alert("Proposal data is invalid. Please complete it again.");
+            navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
+            return;
+          }
+          setProposal({
+            customerName: String(parsedProposal.customerName || ""),
+            customerEmail: String(parsedProposal.customerEmail || ""),
+            customerPhone: String(parsedProposal.customerPhone || ""),
+          });
           const res = await api.post<OrderResponse>(
             `/plan-purchases/create-order/${planId}`,
-            { proposal }
+            { proposal: parsedProposal }
           );
 
           if (active) {
@@ -107,7 +121,7 @@ export default function Payment() {
           }
         } catch (error: unknown) {
           alert(getErrorMessage(error, "Payment order create failed"));
-          navigate("/insurance-plans");
+          navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans");
         } finally {
           if (active) {
             setLoading(false);
@@ -148,9 +162,9 @@ export default function Payment() {
       description: order.plan.planName,
       order_id: order.orderId,
       prefill: {
-        name: user.name || "",
-        email: user.email || "",
-        contact: user.phone || "",
+        name: proposal?.customerName || user.name || "",
+        email: proposal?.customerEmail || user.email || "",
+        contact: proposal?.customerPhone || user.phone || "",
       },
       theme: {
         color: "#d71920",
@@ -207,7 +221,7 @@ export default function Payment() {
         </div>
       ) : (
       <div className="payment-shell">
-        <div className="payment-progress"><span className="done">1 Plan</span><span className="done">2 Review</span><span className="active">3 Payment</span><span>4 Policy active</span></div>
+        <div className="payment-progress"><span className="done">1 Plan</span><span className="done">2 Proposal</span><span className="active">3 Payment</span><span>4 Policy active</span></div>
         <div className="section payment-checkout">
         {loading ? (
           <p>Creating payment order...</p>
