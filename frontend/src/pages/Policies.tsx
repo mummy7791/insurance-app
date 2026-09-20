@@ -69,37 +69,115 @@ export default function Policies() {
     void loadPolicies();
   }, [loadPolicies]);
 
-  const downloadReceipt = (plan: PurchasedPlan) => {
-    const doc = new jsPDF();
-    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
-    doc.setFontSize(13); doc.text("Premium Payment Receipt", 20, 36);
-    doc.setFontSize(11);
-    const rows = [
-      `Receipt Number: ${plan.receiptNumber || "N/A"}`,
-      `Policy Number: ${plan.policyNumber || "N/A"}`,
-      `Policyholder: ${plan.proposal?.customerName || user.name || "Customer"}`,
-      `Plan: ${plan.planName}`,
-      `Amount Paid: INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`,
-      `Transaction ID: ${plan.transactionId || "N/A"}`,
-      `Payment Status: ${plan.paymentStatus}`,
-      `Policy Status: ${plan.policyStatus}`,
-      `Payment Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"}`,
-    ];
-    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
+  const addPdfHeader = (doc: jsPDF, documentTitle: string, reference: string) => {
+    doc.setFillColor(127, 29, 29);
+    doc.rect(0, 0, 210, 34, "F");
+    doc.setFillColor(249, 115, 22);
+    doc.rect(0, 34, 210, 3, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("SecureLife Insurance", 18, 18);
     doc.setFontSize(9);
-    doc.text("This is a digitally generated SecureLife payment receipt.", 20, 145);
+    doc.setFont("helvetica", "normal");
+    doc.text("Digital Policy Services", 18, 26);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(documentTitle, 18, 51);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text(reference, 18, 58);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(18, 63, 192, 63);
+  };
+
+  const addPdfDetails = (doc: jsPDF, rows: Array<[string, string]>, startY = 74) => {
+    let y = startY;
+    rows.forEach(([label, value], index) => {
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(18, y - 6, 174, 10, 2, 2, "F");
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 41, 59);
+      doc.text(String(value || "N/A"), 78, y, { maxWidth: 108 });
+      y += 11;
+    });
+    return y;
+  };
+
+  const addPdfFooter = (doc: jsPDF, note: string) => {
+    doc.setDrawColor(226, 232, 240);
+    doc.line(18, 270, 192, 270);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(note, 18, 278, { maxWidth: 174 });
+    doc.text("Generated securely from the authenticated SecureLife customer portal.", 18, 287);
+  };
+
+  const downloadReceipt = (plan: PurchasedPlan) => {
+    if (plan.paymentStatus !== "Paid" || !plan.receiptNumber) {
+      alert("Payment receipt will be available after successful payment.");
+      return;
+    }
+    const doc = new jsPDF();
+    addPdfHeader(doc, "Premium Payment Receipt", `Receipt: ${plan.receiptNumber}`);
+    addPdfDetails(doc, [
+      ["Receipt Number", plan.receiptNumber || "N/A"],
+      ["Policy Number", plan.policyNumber || "Processing"],
+      ["Policyholder", plan.proposal?.customerName || user.name || "Customer"],
+      ["Insurance Plan", plan.planName],
+      ["Premium Paid", `INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`],
+      ["Transaction ID", plan.transactionId || "N/A"],
+      ["Payment Status", plan.paymentStatus],
+      ["Payment Date", plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"],
+    ]);
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(18, 174, 174, 22, 3, 3, "F");
+    doc.setTextColor(22, 101, 52);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("PAYMENT VERIFIED", 24, 187);
+    addPdfFooter(doc, "This computer-generated receipt confirms the payment recorded against the policy shown above.");
     doc.save(`${plan.receiptNumber || "SecureLife-Receipt"}.pdf`);
   };
 
   const downloadCertificate = (plan: PurchasedPlan) => {
+    if (plan.paymentStatus !== "Paid" || !plan.policyNumber) {
+      alert("Policy certificate will be available after payment is verified and the policy number is issued.");
+      return;
+    }
     const doc = new jsPDF();
-    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
-    doc.setFontSize(13); doc.text("Policy Certificate & Payment Receipt", 20, 36);
+    addPdfHeader(doc, "Policy Certificate", `Policy: ${plan.policyNumber}`);
+    const y = addPdfDetails(doc, [
+      ["Policy Number", plan.policyNumber],
+      ["Policyholder", plan.proposal?.customerName || user.name || "Customer"],
+      ["Insurance Plan", plan.planName],
+      ["Category", plan.category],
+      ["Life / Benefit Cover", `INR ${Number(plan.coverageAmount || 0).toLocaleString("en-IN")}`],
+      ["Annual Premium", `INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`],
+      ["Payment Term", `${plan.paymentYears || 1} year(s)`],
+      ["Policy Status", plan.policyStatus],
+      ["Payment Status", plan.paymentStatus],
+      ["Nominee", `${plan.proposal?.nomineeName || "N/A"}${plan.proposal?.nomineeRelation ? ` (${plan.proposal.nomineeRelation})` : ""}`],
+      ["Start Date", plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"],
+      ["Valid Until", plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"],
+    ]);
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(18, y + 2, 174, 24, 3, 3, "F");
+    doc.setTextColor(22, 101, 52);
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    const rows = [`Policy Number: ${plan.policyNumber || "Pending"}`, `Policyholder: ${plan.proposal?.customerName || user.name || "Customer"}`, `Plan: ${plan.planName}`, `Category: ${plan.category}`, `Coverage: INR ${Number(plan.coverageAmount || 0).toLocaleString("en-IN")}`, `Yearly Premium: INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`, `Policy Status: ${plan.policyStatus}`, `Payment Status: ${plan.paymentStatus}`, `Receipt Number: ${plan.receiptNumber || "N/A"}`, `Transaction ID: ${plan.transactionId || "N/A"}`, `Nominee: ${plan.proposal?.nomineeName || "N/A"}${plan.proposal?.nomineeRelation ? ` (${plan.proposal.nomineeRelation})` : ""}`, `Start Date: ${plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"}`, `Valid Until: ${plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}`];
-    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
-    doc.setFontSize(9); doc.text("This digitally generated document records the policy, nominee and verified payment details available in your SecureLife account.", 20, 180, { maxWidth: 170 });
-    doc.save(`${plan.policyNumber || "SecureLife-Policy"}.pdf`);
+    doc.text("POLICY ISSUED & PAYMENT VERIFIED", 24, y + 16);
+    addPdfFooter(doc, "This digitally generated certificate summarizes the policy and verified payment information available in your SecureLife account.");
+    doc.save(`${plan.policyNumber}-Policy-Certificate.pdf`);
   };
 
   const addPolicy = async () => {
