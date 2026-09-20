@@ -1014,3 +1014,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 .public-cta{max-width:1124px;margin:20px auto 80px;padding:42px 44px;border-radius:24px;background:#321019;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:28px}.public-cta h2{margin-bottom:8px}.public-cta p{color:#decbd0;margin:0}.public-footer{max-width:1180px;margin:auto;padding:28px;display:flex;gap:20px;justify-content:space-between;border-top:1px solid #eadde0;color:#725d62}.public-footer a{color:#7b1730;text-decoration:none}
 @media(max-width:800px){.public-nav{height:auto;padding:18px 20px}.public-nav nav{gap:10px}.public-nav nav>a:first-child{display:none}.public-hero{grid-template-columns:1fr;padding:58px 20px 44px;gap:34px}.public-hero h1{font-size:43px;letter-spacing:-1.5px}.public-services{padding:48px 20px}.public-service-grid{grid-template-columns:1fr}.public-cta{margin:10px 20px 50px;padding:32px 26px;flex-direction:column;align-items:flex-start}.public-footer{margin:0 20px;padding:24px 0;flex-wrap:wrap}}
 @media(max-width:480px){.public-brand{font-size:18px}.public-nav nav a{font-size:13px}.public-nav .public-nav-cta{padding:9px 11px}.public-hero h1{font-size:37px}.public-hero-copy>p{font-size:16px}.public-cover-card{padding:25px}.public-trust-row{gap:12px;flex-direction:column}}
+
+
+/* ===== CUSTOMER PROPOSAL JOURNEY ===== */
+.proposal-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+.proposal-summary{position:sticky;top:22px;background:#fff;border:1px solid #eadde0;border-radius:20px;padding:26px;box-shadow:0 16px 44px rgba(70,20,32,.08)}
+.proposal-summary h2{margin:8px 0 3px;font-size:25px}.proposal-summary>p{margin-top:0;color:#765f64}
+.proposal-summary>div{display:flex;justify-content:space-between;gap:18px;padding:14px 0;border-top:1px solid #f0e5e7}.proposal-summary>div span{color:#766166;font-size:13px}.proposal-summary>div strong{text-align:right}
+.proposal-summary>small{display:block;color:#766166;line-height:1.6;margin:14px 0 20px}.proposal-summary .btn,.proposal-summary .mini-btn{width:100%;margin-top:9px}
+.proposal-consent{display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding:15px;border-radius:12px;background:#fff8f5;color:#5f484d;line-height:1.5}.proposal-consent input{width:auto;margin-top:4px}.proposal-full{grid-column:1/-1}
+@media(max-width:900px){.proposal-layout{grid-template-columns:1fr}.proposal-summary{position:static;order:-1}}
+@media(max-width:600px){.proposal-full{grid-column:auto}.proposal-summary{padding:21px}}
