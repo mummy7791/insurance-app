@@ -174,20 +174,21 @@ export default function Commission() {
       title="Commission Management"
       subtitle="Track employee commission by policy, premium and month"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">PAYOUT OPERATIONS</span><h2>Commission settlement workspace</h2><p>Track earned, pending and paid commission by employee, policy and settlement month.</p></div><div className="admin-summary-metrics"><div><span>Records</span><strong>{filteredCommissions.length}</strong></div><div><span>Paid</span><strong>₹{Number(paidCommission || 0).toLocaleString("en-IN")}</strong></div><div><span>Pending</span><strong>₹{Number(pendingCommission || 0).toLocaleString("en-IN")}</strong></div></div></div>
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Commission</h3>
-          <h1>₹{totalCommission}</h1>
+          <h1>₹{Number(totalCommission || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Paid</h3>
-          <h1>₹{paidCommission}</h1>
+          <h1>₹{Number(paidCommission || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Pending</h3>
-          <h1>₹{pendingCommission}</h1>
+          <h1>₹{Number(pendingCommission || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
@@ -197,7 +198,7 @@ export default function Commission() {
       </div>
 
       <div className="section">
-        <h2>Add Commission</h2>
+        <span className="eyebrow">NEW PAYOUT</span><h2>Add commission</h2><p className="section-copy">Record a policy-linked commission and keep it pending until settlement is confirmed.</p>
 
         <div className="form-grid">
           <input
@@ -278,12 +279,8 @@ export default function Commission() {
         </button>
       </div>
 
-      <div className="section">
-        <h2>Commission List</h2>
-
-        <button className="mini-btn" onClick={loadCommissions}>
-          Refresh
-        </button>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">SETTLEMENT REGISTER</span><h2>Commission list</h2></div><button className="mini-btn" onClick={loadCommissions}>Refresh</button></div>
 
         <div className="form-grid">
           <input
@@ -347,9 +344,9 @@ export default function Commission() {
                   </td>
                   <td>{item.customerName}</td>
                   <td>{item.policyNumber}</td>
-                  <td>₹{item.premiumAmount}</td>
+                  <td>₹{Number(item.premiumAmount || 0).toLocaleString("en-IN")}</td>
                   <td>{item.commissionRate}%</td>
-                  <td>₹{item.commissionAmount}</td>
+                  <td><strong>₹{Number(item.commissionAmount || 0).toLocaleString("en-IN")}</strong></td>
                   <td>{item.month}</td>
                   <td>
                     <select
