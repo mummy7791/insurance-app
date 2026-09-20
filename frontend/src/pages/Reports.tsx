@@ -97,13 +97,11 @@ export default function Reports() {
       title="Reports & Analytics"
       subtitle="Live MongoDB reports for customers, policies, premiums, claims and commission"
     >
-      <button className="mini-btn" onClick={loadReports}>
-        Refresh Reports
-      </button>
+      <div className="admin-page-summary"><div><span className="eyebrow">BUSINESS INTELLIGENCE</span><h2>Insurance performance reports</h2><p>Track policy, premium, claims and commission performance from live operational data.</p></div><button className="mini-btn" onClick={loadReports}>Refresh reports</button></div>
 
-      {loading && <p>Loading reports...</p>}
+      {loading && <div className="dashboard-loading"><span className="checkout-spinner" />Refreshing business reports...</div>}
 
-      <div className="cards">
+      <div className="cards admin-report-grid">
         <div className="card">
           <h3>Total Customers</h3>
           <h1>{data.cards.totalCustomers}</h1>
@@ -136,12 +134,12 @@ export default function Reports() {
 
         <div className="card">
           <h3>Paid Premium</h3>
-          <h1>₹{data.cards.paidPremiumAmount}</h1>
+          <h1>₹{Number(data.cards.paidPremiumAmount || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Due Premium</h3>
-          <h1>₹{data.cards.duePremiumAmount}</h1>
+          <h1>₹{Number(data.cards.duePremiumAmount || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
@@ -156,12 +154,12 @@ export default function Reports() {
 
         <div className="card">
           <h3>Paid Commission</h3>
-          <h1>₹{data.cards.paidCommissionAmount}</h1>
+          <h1>₹{Number(data.cards.paidCommissionAmount || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Pending Commission</h3>
-          <h1>₹{data.cards.pendingCommissionAmount}</h1>
+          <h1>₹{Number(data.cards.pendingCommissionAmount || 0).toLocaleString("en-IN")}</h1>
         </div>
       </div>
 
@@ -185,7 +183,7 @@ export default function Reports() {
                 <tr key={item._id}>
                   <td>{item._id}</td>
                   <td>{item.count}</td>
-                  <td>₹{item.total || 0}</td>
+                  <td>₹{Number(item.total || 0).toLocaleString("en-IN")}</td>
                 </tr>
               ))}
             </tbody>
@@ -213,7 +211,7 @@ export default function Reports() {
                 <tr key={item._id}>
                   <td>{item._id}</td>
                   <td>{item.count}</td>
-                  <td>₹{item.total || 0}</td>
+                  <td>₹{Number(item.total || 0).toLocaleString("en-IN")}</td>
                 </tr>
               ))}
             </tbody>
@@ -267,7 +265,7 @@ export default function Reports() {
                 <tr key={item._id}>
                   <td>{item._id}</td>
                   <td>{item.count}</td>
-                  <td>₹{item.total}</td>
+                  <td>₹{Number(item.total || 0).toLocaleString("en-IN")}</td>
                 </tr>
               ))}
             </tbody>
@@ -295,7 +293,7 @@ export default function Reports() {
                 <tr key={item._id}>
                   <td>{item._id}</td>
                   <td>{item.count}</td>
-                  <td>₹{item.total}</td>
+                  <td>₹{Number(item.total || 0).toLocaleString("en-IN")}</td>
                 </tr>
               ))}
             </tbody>
