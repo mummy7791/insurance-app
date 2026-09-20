@@ -45,22 +45,19 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { name: "Overview", path: "/dashboard", icon: "⌂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Customers & Leads", path: "/customers", icon: "◉", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Dashboard", path: "/dashboard", icon: "⌂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Customers", path: "/customers", icon: "◉", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Policies", path: "/policies", icon: "▣", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Policy Purchases", path: "/policy-purchases", icon: "◇", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Premiums", path: "/premiums", icon: "₹", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Claims", path: "/claims", icon: "◎", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Documents", path: "/documents", icon: "▤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "KYC & Documents", path: "/documents", icon: "▤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Team", path: "/employees", icon: "◌", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Targets", path: "/targets", icon: "↗", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Commission", path: "/commission", icon: "%", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Reports", path: "/reports", icon: "▥", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Notifications", path: "/notifications", icon: "○", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
-  { name: "Profile", path: "/profile", icon: "●", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Plan Management", path: "/admin-insurance-plans", icon: "◆", roles: ["admin"] },
   { name: "User Access", path: "/user-management", icon: "⌘", roles: ["admin"] },
-  { name: "Audit Logs", path: "/audit-logs", icon: "≡", roles: ["admin", "bm"] },
   { name: "Settings", path: "/settings", icon: "⚙", roles: ["admin"] },
 ];
 
