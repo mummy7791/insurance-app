@@ -153,7 +153,7 @@ export default function Claims() {
       </div>
 
       <div className="section">
-        <h2>{isCustomer ? "File a Claim" : "Add Claim"}</h2>
+        <span className="eyebrow">CLAIM ASSISTANCE</span><h2>{isCustomer ? "Submit Claim Request" : "Add Claim"}</h2>{isCustomer && <p className="section-copy">Submit your policy details and claim request. You can track every status update from this page.</p>}
 
         <div className="form-grid">
           <input
@@ -218,7 +218,7 @@ export default function Claims() {
       </div>
 
       <div className="section">
-        <h2>Claim List</h2>
+        <div className="section-heading-row"><div><span className="eyebrow">CLAIM TRACKER</span><h2>Claim History</h2></div>{isCustomer && <span className="secure-chip">Live status</span>}</div>
 
         <button className="mini-btn" onClick={loadClaims}>
           Refresh
@@ -249,7 +249,7 @@ export default function Claims() {
                   <td>{claim.customerName}</td>
                   <td>{claim.policyNumber}</td>
                   <td>{claim.claimType}</td>
-                  <td>₹{claim.claimAmount}</td>
+                  <td><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></td>
                   <td>{claim.submittedDate}</td>
                   <td>{isCustomer ? <span className="status-pill due">{claim.status}</span> : (
                     <select className="status-select" value={claim.status} onChange={(e) => updateStatus(claim._id, e.target.value as ClaimStatus)}>
