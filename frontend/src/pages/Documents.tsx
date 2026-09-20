@@ -162,7 +162,7 @@ export default function Documents() {
       </div>
 
       <div className="section">
-        <h2>Upload Document</h2>
+        <span className="eyebrow">SECURE DOCUMENT VAULT</span><h2>Upload Document</h2><p className="section-copy">Upload KYC and policy documents securely. Verification status will appear below after review.</p>
 
         <div className="form-grid">
           <input
@@ -221,13 +221,11 @@ export default function Documents() {
           />
         </div>
 
-        <button className="btn small-btn" onClick={uploadDocument}>
-          Upload
-        </button>
+        <button className="btn small-btn" onClick={uploadDocument}>Upload securely</button>
       </div>
 
       <div className="section">
-        <h2>Document List</h2>
+        <div className="section-heading-row"><div><span className="eyebrow">KYC STATUS</span><h2>My Documents</h2></div><span className="secure-chip">🔒 Private vault</span></div>
 
         <button className="mini-btn" onClick={loadDocuments}>
           Refresh
