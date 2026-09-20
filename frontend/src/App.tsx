@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
 const RoleDashboard = lazy(() => import("./pages/RoleDashboard"));
 const Leads = lazy(() => import("./pages/Leads"));
 const Customers = lazy(() => import("./pages/Customers"));
@@ -54,65 +55,6 @@ const PremiumCalculator = lazy(() => import("./pages/PremiumCalculator"));
 const AiPolicyRecommendation = lazy(() => import("./pages/AiPolicyRecommendation"));
 const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
 const AssignPolicy = lazy(() => import("./admin/AssignPolicy"));
-
-
-
-import Profile from "./pages/Profile"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 import "./styles/app.css";
 
