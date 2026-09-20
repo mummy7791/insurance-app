@@ -13,7 +13,7 @@ type Policy = {
   status: string;
 };
 
-type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; coverageAmount:number; yearlyPremium:number; policyStatus:string; };
+type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; coverageAmount:number; yearlyPremium:number; policyStatus:string; paymentStatus?:string; receiptNumber?:string; startDate?:string; endDate?:string; };
 
 type Premium = {
   _id: string;
@@ -22,6 +22,8 @@ type Premium = {
   dueDate: string;
   status: "Due" | "Paid" | "Overdue";
 };
+
+type DocumentItem = { _id: string; status: "Pending" | "Verified" | "Rejected"; documentType: string; };
 
 type Claim = {
   _id: string;
@@ -43,6 +45,7 @@ export default function CustomerDashboard() {
   const [premiums, setPremiums] = useState<Premium[]>([]);
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const user = useMemo(() => {
@@ -58,11 +61,12 @@ export default function CustomerDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [policyRes, premiumRes, claimRes, purchaseRes] = await Promise.all([
+        const [policyRes, premiumRes, claimRes, purchaseRes, documentRes] = await Promise.all([
           api.get<Policy[]>("/policies"),
           api.get<Premium[]>("/premiums"),
           api.get<Claim[]>("/claims"),
           api.get<PurchasedPlan[]>("/plan-purchases/my-plans"),
+          api.get<DocumentItem[]>("/documents"),
         ]);
 
         if (!active) return;
@@ -70,6 +74,7 @@ export default function CustomerDashboard() {
         setPremiums(premiumRes.data);
         setClaims(claimRes.data);
         setPurchasedPlans(purchaseRes.data);
+        setDocuments(documentRes.data);
       } catch (error) {
         console.error("Customer dashboard load error:", error);
       } finally {
@@ -89,6 +94,10 @@ export default function CustomerDashboard() {
   const dueAmount = duePremiums.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const openClaims = claims.filter((c) => !["Settled", "Rejected"].includes(c.status));
   const nextDue = [...duePremiums].sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+  const verifiedDocuments = documents.filter((d) => d.status === "Verified").length;
+  const kycProgress = documents.length === 0 ? 0 : Math.round((verifiedDocuments / documents.length) * 100);
+  const recentClaim = claims[0];
+  const primaryPlan = activePurchased[0];
 
   return (
     <MainLayout
@@ -130,9 +139,30 @@ export default function CustomerDashboard() {
             <div className="customer-summary-card">
               <span>Open Claims</span>
               <strong>{openClaims.length}</strong>
-              <small>{claims.length} total claims</small>
+              <small>{recentClaim ? `Latest: ${recentClaim.status}` : "No claim submitted"}</small>
             </div>
           </div>
+
+          <div className="customer-health-grid">
+            <Link to="/documents" className="customer-health-card">
+              <div><span className="eyebrow">KYC READINESS</span><h3>{documents.length === 0 ? "Start verification" : `${kycProgress}% verified`}</h3><p>{verifiedDocuments} of {documents.length} uploaded documents verified</p></div>
+              <div className="kyc-ring" style={{"--progress": `${kycProgress * 3.6}deg`} as React.CSSProperties}><span>{kycProgress}%</span></div>
+            </Link>
+            <Link to="/premiums" className="customer-health-card">
+              <div><span className="eyebrow">NEXT PREMIUM</span><h3>{nextDue ? money(nextDue.amount) : "Nothing due"}</h3><p>{nextDue ? `Due on ${nextDue.dueDate}` : "Your current payments are up to date"}</p></div>
+              <span className={nextDue?.status === "Overdue" ? "status-pill overdue" : "status-pill active"}>{nextDue?.status || "Up to date"}</span>
+            </Link>
+            <Link to="/claims" className="customer-health-card">
+              <div><span className="eyebrow">CLAIM TRACKER</span><h3>{recentClaim?.status || "No active claim"}</h3><p>{recentClaim ? `${recentClaim.claimType} • ${money(recentClaim.claimAmount)}` : "Submit and track claims digitally"}</p></div>
+              <span className="health-arrow">→</span>
+            </Link>
+          </div>
+
+          {primaryPlan && <section className="section featured-cover">
+            <div><span className="eyebrow">PRIMARY PROTECTION</span><h2>{primaryPlan.planName}</h2><p>{primaryPlan.policyNumber || "Policy number processing"}</p></div>
+            <div className="featured-cover-metrics"><div><span>Protection</span><strong>{money(primaryPlan.coverageAmount)}</strong></div><div><span>Annual premium</span><strong>{money(primaryPlan.yearlyPremium)}</strong></div><div><span>Policy status</span><strong>{primaryPlan.policyStatus}</strong></div></div>
+            <Link className="mini-btn" to="/policies">Open digital policy →</Link>
+          </section>}
 
           <div className="customer-dashboard-grid">
             <section className="section">
