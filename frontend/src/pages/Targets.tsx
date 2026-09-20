@@ -130,7 +130,8 @@ export default function Targets() {
       title="Target Management"
       subtitle="Assign monthly targets and track achievement"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">PERFORMANCE OPERATIONS</span><h2>Sales target workspace</h2><p>Assign monthly targets, monitor achievement and identify performance gaps across the distribution team.</p></div><div className="admin-summary-metrics"><div><span>Records</span><strong>{targets.length}</strong></div><div><span>Achieved</span><strong>{targets.filter((t) => t.status === "Achieved").length}</strong></div><div><span>Completion</span><strong>{completion}%</strong></div></div></div>
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Records</h3>
           <h1>{targets.length}</h1>
@@ -138,12 +139,12 @@ export default function Targets() {
 
         <div className="card">
           <h3>Total Target</h3>
-          <h1>₹{totalTarget}</h1>
+          <h1>₹{Number(totalTarget || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
           <h3>Total Achievement</h3>
-          <h1>₹{totalAchieved}</h1>
+          <h1>₹{Number(totalAchieved || 0).toLocaleString("en-IN")}</h1>
         </div>
 
         <div className="card">
@@ -153,7 +154,7 @@ export default function Targets() {
       </div>
 
       <div className="section">
-        <h2>Assign Target</h2>
+        <span className="eyebrow">NEW PERFORMANCE GOAL</span><h2>Assign target</h2><p className="section-copy">Create a monthly target for a team member and track progress against achievement.</p>
 
         <div className="form-grid">
           <input
@@ -209,12 +210,8 @@ export default function Targets() {
         </button>
       </div>
 
-      <div className="section">
-        <h2>Target List</h2>
-
-        <button className="mini-btn" onClick={loadTargets}>
-          Refresh
-        </button>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">TARGET REGISTER</span><h2>Target list</h2></div><button className="mini-btn" onClick={loadTargets}>Refresh</button></div>
 
         {loading ? (
           <p>Loading...</p>
@@ -241,8 +238,8 @@ export default function Targets() {
                   <td>{item.employee}</td>
                   <td>{item.role}</td>
                   <td>{item.month}</td>
-                  <td>₹{item.target}</td>
-                  <td>₹{item.achieved}</td>
+                  <td>₹{Number(item.target || 0).toLocaleString("en-IN")}</td>
+                  <td>₹{Number(item.achieved || 0).toLocaleString("en-IN")}</td>
                   <td>
                     <span className="badge">{item.status}</span>
                   </td>
