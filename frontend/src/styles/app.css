@@ -956,3 +956,18 @@ body.dark .warning-badge {
 .confirmation-grid span { display:block; color:#64748b; font-size:12px; margin-bottom:6px; }
 .confirmation-grid strong { color:#431407; }
 @media(max-width:700px){.confirmation-grid{grid-template-columns:1fr}.payment-success{padding:24px}}
+
+
+/* ===== CUSTOMER PORTAL POLISH ===== */
+.customer-welcome-pro{position:relative;overflow:hidden;min-height:250px;background:linear-gradient(120deg,#7f1d1d 0%,#c81e1e 48%,#f97316 100%);color:#fff;border:0;box-shadow:0 22px 50px rgba(127,29,29,.2)}
+.customer-welcome-pro:after{content:"";position:absolute;width:300px;height:300px;border:55px solid rgba(255,255,255,.08);border-radius:50%;right:-100px;top:-120px}
+.customer-welcome-pro h1{font-size:38px;max-width:650px;margin:8px 0 10px;letter-spacing:-.8px}
+.customer-welcome-pro p{color:#fff7ed;max-width:650px;font-size:16px;line-height:1.65}
+.customer-hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}.customer-secondary-action{padding:13px 18px;border:1px solid rgba(255,255,255,.6);border-radius:13px;color:#fff;text-decoration:none;font-weight:800;background:rgba(255,255,255,.1)}
+.protection-shield{min-width:170px;min-height:170px;border-radius:50%;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:1;backdrop-filter:blur(8px)}
+.protection-shield span{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#b91c1c;font-size:25px;font-weight:950;margin-bottom:9px}.protection-shield strong{font-size:18px}.protection-shield small{color:#ffedd5;margin-top:4px}
+.customer-section-title{display:flex;align-items:end;justify-content:space-between;margin:28px 0 14px}.customer-section-title h2{margin:5px 0 0;font-size:25px}.secure-chip{background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:800}
+.customer-summary-card{position:relative;overflow:hidden;border:1px solid #fee2e2!important;box-shadow:0 10px 28px rgba(100,30,30,.07)!important;transition:.2s}.customer-summary-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(100,30,30,.12)!important}.customer-summary-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#dc2626,#f97316)}
+.sidebar-user-card{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;margin:4px 0 20px;padding:12px;background:rgba(255,255,255,.1);border-radius:14px}.sidebar-avatar{width:42px;height:42px;border-radius:13px;background:#fff;color:#b91c1c;display:grid;place-items:center;font-weight:950;font-size:18px}.sidebar-user-card small{opacity:.86;text-transform:capitalize}.sidebar-branch{grid-column:1/-1;margin-top:2px}
+.quick-service-grid a{transition:.2s;border:1px solid #f1f5f9}.quick-service-grid a:hover{transform:translateY(-3px);border-color:#fed7aa;box-shadow:0 12px 24px rgba(100,30,30,.08)}
+@media(max-width:760px){.customer-welcome-pro{min-height:auto}.protection-shield{display:none}.customer-welcome-pro h1{font-size:30px}.customer-section-title{align-items:flex-start;gap:12px;flex-direction:column}.secure-chip{align-self:flex-start}}
