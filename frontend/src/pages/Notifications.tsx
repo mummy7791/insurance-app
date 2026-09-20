@@ -210,6 +210,13 @@ export default function Notifications() {
     }
   };
 
+  const unreadCount = notifications.filter((item) => item.status === "Unread").length;
+
+  const markAllRead = async () => {
+    const unread = notifications.filter((item) => item.status === "Unread");
+    await Promise.all(unread.map((item) => markAsRead(item._id)));
+  };
+
   const filteredNotifications = useMemo(() => {
     return notifications.filter((item) => {
       const text = `${item.title} ${item.message}`.toLowerCase();
@@ -324,8 +331,8 @@ export default function Notifications() {
         </div>
       )}
 
-      <div className="section">
-        <h2>Search & Filter</h2>
+      <div className="section notification-tools">
+        <div className="section-heading-row"><div><span className="eyebrow">MESSAGE CENTER</span><h2>Search & Filter</h2></div>{!isStaff && unreadCount > 0 && <button className="mini-btn" onClick={() => void markAllRead()}>Mark all read</button>}</div>
 
         <div className="form-grid">
           <input
@@ -356,7 +363,7 @@ export default function Notifications() {
       </div>
 
       <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">INBOX</span><h2>{isStaff ? "Notifications" : "My Updates"}</h2></div><span className="secure-chip">{notifications.filter((item) => item.status === "Unread").length} unread</span></div>
+        <div className="section-heading-row"><div><span className="eyebrow">INBOX</span><h2>{isStaff ? "Notifications" : "My Updates"}</h2></div><span className="secure-chip">{unreadCount} unread</span></div>
 
         {loading ? (
           <p>Loading...</p>
@@ -366,10 +373,8 @@ export default function Notifications() {
           <div className="lead-grid">
             {filteredNotifications.map((item) => (
               <div className={`lead-card notification-card ${item.status === "Unread" ? "notification-unread" : ""}`} key={item._id}>
-                <h3>{item.title}</h3>
-                <p>{item.message}</p>
-                <p>📅 {item.date}</p>
-                <p>🏷️ {item.type}</p>
+                <div className="notification-meta"><span>{item.type}</span><time>{item.date}</time></div><h3>{item.title}</h3>
+                <p className="notification-message">{item.message}</p>
 
                 <span className="badge">{item.status}</span>
 
