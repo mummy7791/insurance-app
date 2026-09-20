@@ -8,6 +8,7 @@ type OrderResponse = {
   amount: number;
   currency: string;
   razorpayKey: string;
+  reused?: boolean;
   plan: {
     id: string;
     planName: string;
@@ -104,6 +105,7 @@ export default function Payment() {
             parsedProposal = JSON.parse(proposalRaw) as Record<string, unknown>;
           } catch {
             sessionStorage.removeItem(`proposal:${planId}`);
+      sessionStorage.removeItem("premiumEstimate");
             alert("Proposal data is invalid. Please complete it again.");
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
             return;
@@ -234,7 +236,7 @@ export default function Payment() {
           <div className="checkout-recovery"><strong>Checkout needs your attention</strong><p>{checkoutError || "No payment order found."}</p><button className="btn small-btn" onClick={() => navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans")}>Review proposal</button></div>
         ) : (
           <>
-            <div className="checkout-heading"><div><span className="eyebrow">SECURE CHECKOUT</span><h2>{order.plan.planName}</h2><p>Review your cover before continuing to the payment gateway.</p></div><div className="secure-payment-badge">🔒 Secure payment</div></div>
+            <div className="checkout-heading"><div><span className="eyebrow">SECURE CHECKOUT</span><h2>{order.plan.planName}</h2><p>Review your cover before continuing to the payment gateway.</p>{order.reused && <small className="order-resumed">Existing secure checkout resumed — no duplicate order created.</small>}</div><div className="secure-payment-badge">Secure payment</div></div>
 
             <table className="table checkout-table">
               <tbody>
