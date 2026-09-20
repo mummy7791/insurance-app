@@ -25,6 +25,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -36,6 +40,7 @@ api.interceptors.response.use(
         );
 
         localStorage.setItem("insuranceToken", res.data.token);
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
 
         return api(originalRequest);
