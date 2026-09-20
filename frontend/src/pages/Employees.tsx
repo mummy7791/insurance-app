@@ -138,7 +138,8 @@ export default function Employees() {
       title="Employee Management"
       subtitle="Manage agents, agency managers, unit managers and BM"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">TEAM OPERATIONS</span><h2>Insurance distribution team</h2><p>Manage field and branch team records, reporting lines and account status.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{employees.length}</strong></div><div><span>Active</span><strong>{employees.filter((e) => e.status === "Active").length}</strong></div><div><span>Agents</span><strong>{employees.filter((e) => e.role === "Agent").length}</strong></div></div></div>
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Employees</h3>
           <h1>{employees.length}</h1>
@@ -161,7 +162,7 @@ export default function Employees() {
       </div>
 
       <div className="section">
-        <h2>Add Employee</h2>
+        <span className="eyebrow">NEW TEAM MEMBER</span><h2>Add employee</h2><p className="section-copy">Create an operational employee record with branch and reporting details.</p>
 
         <div className="form-grid">
           <input
@@ -239,12 +240,8 @@ export default function Employees() {
         </button>
       </div>
 
-      <div className="section">
-        <h2>Employee List</h2>
-
-        <button className="mini-btn" onClick={loadEmployees}>
-          Refresh
-        </button>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">TEAM DIRECTORY</span><h2>Employee list</h2></div><button className="mini-btn" onClick={loadEmployees}>Refresh</button></div>
 
         <div className="form-grid">
           <input
@@ -299,8 +296,8 @@ export default function Employees() {
                   <td>{emp.phone}</td>
                   <td>{emp.branch}</td>
                   <td>{emp.manager}</td>
-                  <td>₹{emp.target}</td>
-                  <td>₹{emp.achievement}</td>
+                  <td>₹{Number(emp.target || 0).toLocaleString("en-IN")}</td>
+                  <td>₹{Number(emp.achievement || 0).toLocaleString("en-IN")}</td>
 
                   <td>
                     <span className="badge">{emp.status}</span>
