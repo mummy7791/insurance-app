@@ -52,10 +52,10 @@ const planPurchaseSchema = new mongoose.Schema(
       default: "Online",
     },
 
-    transactionId: { type: String, default: "", unique: true, sparse: true },
+    transactionId: { type: String, default: undefined, unique: true, sparse: true },
     orderId: { type: String, default: undefined, unique: true, sparse: true },
-    policyNumber: { type: String, default: "", unique: true, sparse: true },
-    receiptNumber: { type: String, default: "", unique: true, sparse: true },
+    policyNumber: { type: String, default: undefined, unique: true, sparse: true },
+    receiptNumber: { type: String, default: undefined, unique: true, sparse: true },
 
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
