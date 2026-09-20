@@ -53,6 +53,10 @@ export default function PremiumCalculator() {
   const [result, setResult] = useState<PremiumResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const continueToAccount = () => {
+    sessionStorage.setItem("premiumEstimate", JSON.stringify(result));
+  };
+
   const calculatePremium = async () => {
     if (!category || !coverageAmount || !age) {
       alert("Category, coverage amount and age required");
@@ -160,7 +164,7 @@ export default function PremiumCalculator() {
               </div>
             </div>
             <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>
-            <div className="calculator-actions"><Link className="btn small-btn" to="/register">Create free account</Link><Link className="mini-btn" to="/login">Already have an account</Link></div>
+            <div className="calculator-actions"><Link className="btn small-btn" to="/register" onClick={continueToAccount}>Create free account</Link><Link className="mini-btn" to="/login" onClick={continueToAccount}>Already have an account</Link></div>
           </div>
         )}
       </div>
