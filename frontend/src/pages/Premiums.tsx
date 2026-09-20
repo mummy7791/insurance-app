@@ -179,7 +179,7 @@ export default function Premiums() {
       )}
 
       <div className="section">
-        <h2>Premium List</h2>
+        <div className="section-heading-row"><div><span className="eyebrow">PAYMENT HISTORY</span><h2>{isCustomer ? "My Premiums" : "Premium List"}</h2></div>{isCustomer && <span className="secure-chip">Receipts verified</span>}</div>
 
         <button className="mini-btn" onClick={loadPremiums}>
           Refresh
@@ -210,7 +210,7 @@ export default function Premiums() {
                 <tr key={premium._id}>
                   <td>{premium.customerName}</td>
                   <td>{premium.policyNumber}</td>
-                  <td>₹{premium.amount}</td>
+                  <td><strong>₹{Number(premium.amount || 0).toLocaleString("en-IN")}</strong></td>
                   <td>{premium.dueDate}</td>
                   <td>{premium.paidDate || "-"}</td>
                   <td>{premium.paymentMode}</td>
