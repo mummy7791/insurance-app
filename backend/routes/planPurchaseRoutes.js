@@ -103,30 +103,41 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     }).sort({ createdAt: -1 });
 
     if (existingPending?.orderId && Number(existingPending.yearlyPremium) === amount) {
-      const existingOrder = await razorpay.orders.fetch(existingPending.orderId);
-      if (
-        existingOrder &&
-        Number(existingOrder.amount) === amountPaise &&
-        existingOrder.currency === "INR" &&
-        existingOrder.status === "created"
-      ) {
-        existingPending.proposal = { ...clean, consentedAt: new Date() };
+      try {
+        const existingOrder = await razorpay.orders.fetch(existingPending.orderId);
+        if (
+          existingOrder &&
+          Number(existingOrder.amount) === amountPaise &&
+          existingOrder.currency === "INR" &&
+          existingOrder.status === "created"
+        ) {
+          existingPending.proposal = { ...clean, consentedAt: new Date() };
+          await existingPending.save();
+          return res.json({
+            orderId: existingPending.orderId,
+            amount,
+            currency: "INR",
+            razorpayKey: process.env.RAZORPAY_KEY_ID,
+            reused: true,
+            plan: {
+              id: plan._id,
+              planName: plan.planName,
+              category: plan.category,
+              coverageAmount: plan.coverageAmount || 0,
+              yearlyPremium: amount,
+              paymentYears: plan.paymentYears || 1,
+            },
+          });
+        }
+
+        existingPending.paymentStatus = "Failed";
+        existingPending.policyStatus = "Inactive";
         await existingPending.save();
-        return res.json({
-          orderId: existingPending.orderId,
-          amount,
-          currency: "INR",
-          razorpayKey: process.env.RAZORPAY_KEY_ID,
-          reused: true,
-          plan: {
-            id: plan._id,
-            planName: plan.planName,
-            category: plan.category,
-            coverageAmount: plan.coverageAmount || 0,
-            yearlyPremium: amount,
-            paymentYears: plan.paymentYears || 1,
-          },
-        });
+      } catch (reuseError) {
+        console.warn("Pending Razorpay order could not be reused; creating a fresh order:", reuseError?.message || reuseError);
+        existingPending.paymentStatus = "Failed";
+        existingPending.policyStatus = "Inactive";
+        await existingPending.save();
       }
     }
 
