@@ -49,6 +49,7 @@ import HelpCenter from "./pages/HelpCenter";
 import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 
 import InsurancePlans from "./pages/InsurancePlans";
 import AdminCreateStaff from "./pages/AdminCreateStaff";
@@ -66,7 +67,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* PUBLIC ROUTES */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin-login" element={<AdminLogin />} />
