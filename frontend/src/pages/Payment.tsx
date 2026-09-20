@@ -50,6 +50,7 @@ declare global {
   interface Window {
     Razorpay?: new (options: RazorpayOptions) => {
       open: () => void;
+      on: (event: "payment.failed", handler: (response: { error?: { description?: string } }) => void) => void;
     };
   }
 }
@@ -108,8 +109,7 @@ export default function Payment() {
             parsedProposal = JSON.parse(proposalRaw) as Record<string, unknown>;
           } catch {
             sessionStorage.removeItem(`proposal:${planId}`);
-      sessionStorage.removeItem("premiumEstimate");
-      sessionStorage.removeItem("premiumEstimate");
+            sessionStorage.removeItem("premiumEstimate");
             alert("Proposal data is invalid. Please complete it again.");
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
             return;
@@ -189,6 +189,10 @@ export default function Payment() {
     };
 
     const razorpay = new window.Razorpay(options);
+    razorpay.on("payment.failed", (response) => {
+      setPaying(false);
+      setCheckoutError(response.error?.description || "Payment failed. Please try again.");
+    });
     razorpay.open();
   };
 
@@ -206,7 +210,9 @@ export default function Payment() {
       });
 
       setConfirmation(verified.data.confirmation);
+      setCheckoutError("");
       sessionStorage.removeItem(`proposal:${planId}`);
+      sessionStorage.removeItem("premiumEstimate");
     } catch (error: unknown) {
       alert(getErrorMessage(error, "Payment verification failed"));
     } finally {
