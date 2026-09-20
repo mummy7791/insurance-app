@@ -27,7 +27,7 @@ const planPurchaseSchema = new mongoose.Schema(
       customerPhone: { type: String, default: "" },
       address: { type: String, default: "" },
       dateOfBirth: { type: String, default: "" },
-      panNumber: { type: String, default: "" },
+      panNumber: { type: String, default: "", select: false },
       nomineeName: { type: String, default: "" },
       nomineeRelation: { type: String, default: "" },
       nomineeDateOfBirth: { type: String, default: "" },
