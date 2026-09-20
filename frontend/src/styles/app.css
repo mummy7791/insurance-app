@@ -1032,3 +1032,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 .policy-proposal-mini span{grid-row:1/3;color:#80686d;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.policy-proposal-mini strong{font-size:14px}.policy-proposal-mini small{color:#80686d}
 .policy-document-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.policy-document-actions .btn,.policy-document-actions .mini-btn{margin:0}
 @media(max-width:520px){.policy-document-actions{display:grid}.policy-document-actions button{width:100%}}
+
+
+/* ===== PREMIUM CUSTOMER DASHBOARD ===== */
+.customer-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.customer-health-card{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;background:#fff;border:1px solid #eee1e4;border-radius:18px;color:#24181a;text-decoration:none;box-shadow:0 8px 25px rgba(70,20,32,.05);transition:.2s}
+.customer-health-card:hover{transform:translateY(-3px);border-color:#f0b8a0;box-shadow:0 14px 32px rgba(70,20,32,.09)}.customer-health-card h3{margin:6px 0 5px;font-size:21px}.customer-health-card p{margin:0;color:#756066;font-size:13px;line-height:1.5}
+.kyc-ring{--progress:0deg;flex:0 0 58px;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#16a34a var(--progress),#e8ece9 0);position:relative}.kyc-ring:after{content:"";position:absolute;width:44px;height:44px;border-radius:50%;background:#fff}.kyc-ring span{position:relative;z-index:1;font-size:11px;font-weight:900;color:#166534}.health-arrow{font-size:25px;color:#8b1d35}
+.featured-cover{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:24px;background:linear-gradient(120deg,#351019,#6e1830)!important;color:#fff;border:0!important}.featured-cover h2{font-size:26px;margin:6px 0}.featured-cover p{margin:0;color:#e9d5da}.featured-cover .eyebrow{color:#f5c7ae}.featured-cover .mini-btn{background:#fff;color:#65172b;border:0;text-decoration:none;white-space:nowrap}
+.featured-cover-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.featured-cover-metrics div{min-width:120px;padding:12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.07)}.featured-cover-metrics span,.featured-cover-metrics strong{display:block}.featured-cover-metrics span{font-size:11px;color:#e8cfd5;margin-bottom:5px}.featured-cover-metrics strong{font-size:14px}
+@media(max-width:1100px){.customer-health-grid{grid-template-columns:1fr}.featured-cover{grid-template-columns:1fr}.featured-cover-metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.featured-cover-metrics{grid-template-columns:1fr}.featured-cover-metrics div{min-width:0}.customer-health-card{padding:17px}.kyc-ring{width:54px;height:54px;flex-basis:54px}}
