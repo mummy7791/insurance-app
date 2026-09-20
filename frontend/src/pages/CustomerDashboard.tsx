@@ -115,7 +115,7 @@ export default function CustomerDashboard() {
           <p>Manage policies, upcoming premiums, claims and KYC securely from anywhere.</p>
           <div className="customer-hero-actions">
             <Link className="customer-primary-action" to="/insurance-plans">Explore protection plans →</Link>
-            <Link className="customer-secondary-action" to="/ai-policy-recommendation">Find the right cover</Link>
+            <Link className="customer-secondary-action" to="/policies">View my policies</Link>
           </div>
         </div>
         <div className="protection-shield" aria-hidden="true"><span>✓</span><strong>Protected</strong><small>Secure digital access</small></div>
