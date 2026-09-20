@@ -37,6 +37,8 @@ export default function Documents() {
   const [loading, setLoading] = useState(false);
   const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
   const isCustomer = user.role === "customer" || !user.role;
+  const verifiedCount = documents.filter((d) => d.status === "Verified").length;
+  const kycProgress = documents.length === 0 ? 0 : Math.round((verifiedCount / documents.length) * 100);
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -57,7 +59,10 @@ export default function Documents() {
 
   useEffect(() => {
     void loadDocuments();
-  }, [loadDocuments]);
+    if (isCustomer) {
+      setForm((prev) => ({ ...prev, customerName: user.name || prev.customerName }));
+    }
+  }, [isCustomer, loadDocuments, user.name]);
 
   const uploadDocument = async () => {
     if (!form.customerName || !form.policyNumber || !file) {
@@ -139,6 +144,8 @@ export default function Documents() {
       title={isCustomer ? "Documents & KYC" : "Document / KYC Management"}
       subtitle={isCustomer ? "Upload required documents and track verification status" : "Upload and verify Aadhaar, PAN, Bank, Income and Policy documents"}
     >
+      {isCustomer && <div className="kyc-overview"><div><span className="eyebrow">KYC COMPLETION</span><h2>{documents.length === 0 ? "Upload your first KYC document" : `${kycProgress}% verified`}</h2><p>Your documents stay private and are available only through your authenticated account.</p></div><div className="kyc-progress-track"><span style={{width: `${kycProgress}%`}} /></div></div>}
+
       <div className="cards">
         <div className="card">
           <h3>Total Documents</h3>
@@ -167,6 +174,7 @@ export default function Documents() {
         <div className="form-grid">
           <input
             placeholder="Customer Name"
+            readOnly={isCustomer}
             value={form.customerName}
             onChange={(e) =>
               setForm((prev) => ({
