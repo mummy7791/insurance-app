@@ -32,6 +32,7 @@ export default function InsurancePlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
   const [buyingId, setBuyingId] = useState("");
+  const [estimate, setEstimate] = useState<{ category?: string; coverageAmount?: number; yearlyPremium?: number } | null>(null);
 
   const fetchPlans = useCallback(async (): Promise<Plan[]> => {
     const res = await api.get<Plan[]>("/insurance-plans");
@@ -39,6 +40,13 @@ export default function InsurancePlans() {
   }, []);
 
   useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("premiumEstimate");
+      if (saved) setEstimate(JSON.parse(saved));
+    } catch {
+      sessionStorage.removeItem("premiumEstimate");
+    }
+
     let active = true;
 
     const timer = window.setTimeout(() => {
@@ -92,6 +100,8 @@ export default function InsurancePlans() {
 
       <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>
 
+      {estimate && <div className="estimate-reminder"><div><span className="eyebrow">YOUR PREMIUM ESTIMATE</span><h3>{estimate.category || "Protection plan"}</h3><p>You estimated {estimate.coverageAmount ? `₹${estimate.coverageAmount.toLocaleString("en-IN")} cover` : "your cover"}{estimate.yearlyPremium ? ` at about ₹${estimate.yearlyPremium.toLocaleString("en-IN")} per year` : ""}.</p></div><button className="mini-btn" onClick={() => { sessionStorage.removeItem("premiumEstimate"); setEstimate(null); }}>Dismiss</button></div>}
+
       <div className="section">
         <h2>Plans designed around your protection needs</h2>
 
@@ -101,11 +111,14 @@ export default function InsurancePlans() {
           <p>No plans found.</p>
         ) : (
           <div className="insurance-plan-grid">
-            {plans.map((plan) => {
+            {[...plans].sort((a, b) => {
+              if (!estimate?.category) return 0;
+              return Number(b.category === estimate.category) - Number(a.category === estimate.category);
+            }).map((plan) => {
               const premium = plan.yearlyPremium || plan.yearlyAmount || 0;
 
               return (
-                <div className="insurance-plan-card" key={plan._id}><span className="plan-category">{plan.category}</span>
+                <div className={`insurance-plan-card ${estimate?.category === plan.category ? "recommended-match" : ""}`} key={plan._id}><div className="plan-label-row"><span className="plan-category">{plan.category}</span>{estimate?.category === plan.category && <span className="estimate-match">Matches estimate</span>}</div>
                   <h3>{plan.planName}</h3>
 
                   
