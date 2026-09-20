@@ -36,261 +36,43 @@ function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<div className="app-route-loading">Loading SecureLife...</div>}>
-      <Routes>
-        {/* PUBLIC ROUTES */}
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/customer-otp-login" element={<CustomerOtpLogin />} />
-        <Route path="/premium-calculator" element={<PremiumCalculator />} />
-
-        {/* PROTECTED ROUTES */}
-        <Route
-          path="/role-dashboard"
-          element={
-            <ProtectedRoute>
-              <RoleDashboard />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <Dashboard />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/leads"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <Leads />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/customers"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <Customers />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/policies"
-          element={
-            <ProtectedRoute>
-              <Policies />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/premiums"
-          element={
-            <ProtectedRoute>
-              <Premiums />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/payment"
-          element={
-            <ProtectedRoute>
-              <Payment />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/commission"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <Commission />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/claims"
-          element={
-            <ProtectedRoute>
-              <Claims />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/documents"
-          element={
-            <ProtectedRoute>
-              <Documents />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/calendar"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <Calendar />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
-
-        <Route
-          path="/gps-tracking"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}>
-              <GpsTracking />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <Notifications />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/employees"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <Employees />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/branch"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm"]}>
-              <Branch />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/targets"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <Targets />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/communication"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <Communication />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/pdf-reports"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <PdfReports />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <Reports />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/excel-reports"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}
-            >
-              <ExcelReports />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/user-management"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <UserManagement />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/audit-logs"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "bm"]}>
-              <AuditLogs />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/ai-assistant"
-          element={
-            <ProtectedRoute>
-              <AIAssistant />
-            </ProtectedRoute>
+</ProtectedRoute>
           }
         />
 <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
