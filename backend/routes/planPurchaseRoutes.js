@@ -26,11 +26,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-router.get("/test", (req, res) => {
-  res.json({
-    message: "Plan Purchase API Working",
-  });
-});
 router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
     const proposal = req.body?.proposal;
