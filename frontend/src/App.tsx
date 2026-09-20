@@ -4,41 +4,17 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
-const RoleDashboard = lazy(() => import("./pages/RoleDashboard"));
-const Leads = lazy(() => import("./pages/Leads"));
 const Customers = lazy(() => import("./pages/Customers"));
 const Policies = lazy(() => import("./pages/Policies"));
 const Premiums = lazy(() => import("./pages/Premiums"));
-const Payment = lazy(() => import("./pages/Payment"));
 const Commission = lazy(() => import("./pages/Commission"));
 const Claims = lazy(() => import("./pages/Claims"));
 const Documents = lazy(() => import("./pages/Documents"));
-const Calendar = lazy(() => import("./pages/Calendar"));
-const GpsTracking = lazy(() => import("./pages/GpsTracking"));
 const Employees = lazy(() => import("./pages/Employees"));
-const Branch = lazy(() => import("./pages/Branch"));
-const Targets = lazy(() => import("./pages/Targets"));
-const Analytics = lazy(() => import("./pages/Analytics"));
 const Notifications = lazy(() => import("./pages/Notifications"));
-const Communication = lazy(() => import("./pages/Communication"));
-const PdfReports = lazy(() => import("./pages/PdfReports"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
-const ExcelReports = lazy(() => import("./pages/ExcelReports"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
-const AuditLogs = lazy(() => import("./pages/AuditLogs"));
-const AIAssistant = lazy(() => import("./pages/AIAssistant"));
-const AIFollowup = lazy(() => import("./pages/AIFollowup"));
-const AIPerformance = lazy(() => import("./pages/AIPerformance"));
-const AILeadScoring = lazy(() => import("./pages/AILeadScoring"));
-const AISalesPrediction = lazy(() => import("./pages/AISalesPrediction"));
-const CustomerPortal = lazy(() => import("./pages/CustomerPortal"));
-const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
-const PolicyRecommendationAI = lazy(() => import("./pages/PolicyRecommendationAI"));
-const CEODashboard = lazy(() => import("./pages/CEODashboard"));
-const OCRVerification = lazy(() => import("./pages/OCRVerification"));
-const EnterpriseTools = lazy(() => import("./pages/EnterpriseTools"));
-const FileManager = lazy(() => import("./pages/FileManager"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const OnlinePolicyPurchase = lazy(() => import("./pages/OnlinePolicyPurchase"));
 const CustomerProfile = lazy(() => import("./pages/CustomerProfile"));
@@ -52,9 +28,7 @@ const AdminCreateStaff = lazy(() => import("./pages/AdminCreateStaff"));
 const CustomerOtpLogin = lazy(() => import("./pages/CustomerOtpLogin"));
 const AdminInsurancePlans = lazy(() => import("./pages/AdminInsurancePlans"));
 const PremiumCalculator = lazy(() => import("./pages/PremiumCalculator"));
-const AiPolicyRecommendation = lazy(() => import("./pages/AiPolicyRecommendation"));
 const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
-const AssignPolicy = lazy(() => import("./admin/AssignPolicy"));
 
 import "./styles/app.css";
 
@@ -319,31 +293,16 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route path="/ai-followups" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AIFollowup /></ProtectedRoute>} />
-        <Route path="/ai-performance" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AIPerformance /></ProtectedRoute>} />
-        <Route path="/ai-lead-scoring" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AILeadScoring /></ProtectedRoute>} />
-        <Route path="/ai-sales-prediction" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AISalesPrediction /></ProtectedRoute>} />
-        <Route path="/customer-portal" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerPortal /></ProtectedRoute>} />
-        <Route path="/email-marketing" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><EmailMarketing /></ProtectedRoute>} />
-        <Route path="/policy-recommendation-ai" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><PolicyRecommendationAI /></ProtectedRoute>} />
-        <Route path="/ceo-dashboard" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><CEODashboard /></ProtectedRoute>} />
-        <Route path="/ocr-verification" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><OCRVerification /></ProtectedRoute>} />
-        <Route path="/enterprise-tools" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><EnterpriseTools /></ProtectedRoute>} />
-        <Route path="/file-manager" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><FileManager /></ProtectedRoute>} />
-        <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
+<Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
         <Route path="/online-policy-purchase" element={<ProtectedRoute allowedRoles={["customer"]}><OnlinePolicyPurchase /></ProtectedRoute>} />
         <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
         <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
         <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
         <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreateStaff /></ProtectedRoute>} />
         <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInsurancePlans /></ProtectedRoute>} />
-        <Route path="/ai-policy-recommendation" element={<ProtectedRoute allowedRoles={["customer"]}><AiPolicyRecommendation /></ProtectedRoute>} />
-        <Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
+<Route path="/payment/:planId" element={<ProtectedRoute allowedRoles={["customer"]}><Payment /></ProtectedRoute>} />
         <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><PolicyPurchases /></ProtectedRoute>} />
-        <Route path="/assign-policy" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><AssignPolicy /></ProtectedRoute>} />
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
+<Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       </Suspense>
     </BrowserRouter>
