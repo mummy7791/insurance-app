@@ -111,7 +111,7 @@ export default function AuditLogs() {
     const doc = new jsPDF();
 
     doc.setFontSize(18);
-    doc.text("LifeSecure CRM - Audit Logs", 14, 18);
+    doc.text("SecureLife Insurance - Audit Logs", 14, 18);
 
     doc.setFontSize(10);
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
@@ -150,7 +150,9 @@ export default function AuditLogs() {
       title="Audit Logs"
       subtitle="Track login, user changes, role changes and admin activities"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">SECURITY OPERATIONS</span><h2>Audit & activity center</h2><p>Review staff activity, authentication events and operational changes across the workspace.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{logs.length}</strong></div><div><span>Today</span><strong>{logs.filter((log) => log.createdAt && new Date(log.createdAt).toDateString() === new Date().toDateString()).length}</strong></div><div><span>Modules</span><strong>{new Set(logs.map((log) => log.module || "Unknown")).size}</strong></div></div></div>
+
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Logs</h3>
           <h1>{logs.length}</h1>
@@ -182,7 +184,7 @@ export default function AuditLogs() {
       </div>
 
       <div className="section">
-        <h2>Search & Filter</h2>
+        <div className="section-heading-row"><div><span className="eyebrow">AUDIT SEARCH</span><h2>Search & filter</h2></div><span className="secure-chip">{filteredLogs.length} events</span></div>
 
         <div className="form-grid">
           <input
@@ -216,8 +218,8 @@ export default function AuditLogs() {
         </div>
       </div>
 
-      <div className="section">
-        <h2>Activity History</h2>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">ACTIVITY REGISTER</span><h2>Activity history</h2></div><span className="secure-chip">Restricted access</span></div>
 
         {loading ? (
           <p>Loading audit logs...</p>
