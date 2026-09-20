@@ -95,6 +95,41 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       { $set: { paymentStatus: "Failed", policyStatus: "Inactive" } }
     );
 
+    const existingPending = await PlanPurchase.findOne({
+      customerId: req.user.id,
+      planId: plan._id,
+      paymentStatus: "Pending",
+      createdAt: { $gte: staleBefore },
+    }).sort({ createdAt: -1 });
+
+    if (existingPending?.orderId && Number(existingPending.yearlyPremium) === amount) {
+      const existingOrder = await razorpay.orders.fetch(existingPending.orderId);
+      if (
+        existingOrder &&
+        Number(existingOrder.amount) === amountPaise &&
+        existingOrder.currency === "INR" &&
+        existingOrder.status === "created"
+      ) {
+        existingPending.proposal = { ...clean, consentedAt: new Date() };
+        await existingPending.save();
+        return res.json({
+          orderId: existingPending.orderId,
+          amount,
+          currency: "INR",
+          razorpayKey: process.env.RAZORPAY_KEY_ID,
+          reused: true,
+          plan: {
+            id: plan._id,
+            planName: plan.planName,
+            category: plan.category,
+            coverageAmount: plan.coverageAmount || 0,
+            yearlyPremium: amount,
+            paymentYears: plan.paymentYears || 1,
+          },
+        });
+      }
+    }
+
     const order = await razorpay.orders.create({
       amount: amountPaise,
       currency: "INR",
