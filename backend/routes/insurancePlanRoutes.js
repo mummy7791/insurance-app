@@ -71,12 +71,6 @@ const calculatePremium = ({
   return Math.round(premium);
 };
 
-/* ================= TEST ================= */
-
-router.get("/test", (req, res) => {
-  res.json({ message: "Insurance Plans Route Working" });
-});
-
 /* ================= PREMIUM CALCULATOR ================= */
 
 router.post("/calculate-premium", (req, res) => {
