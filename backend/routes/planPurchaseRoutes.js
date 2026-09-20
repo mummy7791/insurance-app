@@ -4,6 +4,8 @@ const crypto = require("crypto");
 
 const router = express.Router();
 
+const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
+
 const maskPan = (value = "") => {
   const pan = String(value).trim().toUpperCase();
   return pan.length === 10 ? `${pan.slice(0, 2)}******${pan.slice(-2)}` : "";
@@ -89,7 +91,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       return res.status(400).json({ message: "Plan premium is invalid" });
     }
 
-    const staleBefore = new Date(Date.now() - 30 * 60 * 1000);
+    const staleBefore = new Date(Date.now() - PAYMENT_WINDOW_MS);
     await PlanPurchase.updateMany(
       {
         customerId: req.user.id,
@@ -227,13 +229,6 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       return res.status(400).json({ message: "Payment order expired. Please create a new order." });
     }
 
-    if (purchase.paymentStatus === "Pending" && Date.now() - purchase.createdAt.getTime() > 30 * 60 * 1000) {
-      purchase.paymentStatus = "Failed";
-      purchase.policyStatus = "Inactive";
-      await purchase.save();
-      return res.status(400).json({ message: "Payment order expired. Please create a new order." });
-    }
-
     const plan = await InsurancePlan.findById(planId);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
 
@@ -280,6 +275,24 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     if (purchase.transactionId && purchase.transactionId !== razorpay_payment_id) {
       return res.status(409).json({ message: "Payment order already used" });
     }
+
+    if (
+      purchase.paymentStatus === "Paid" &&
+      purchase.transactionId === razorpay_payment_id &&
+      purchase.policyNumber &&
+      purchase.receiptNumber
+    ) {
+      return res.json({
+        message: "Payment already verified. Plan is active.",
+        confirmation: {
+          policyNumber: purchase.policyNumber,
+          receiptNumber: purchase.receiptNumber,
+          transactionId: purchase.transactionId,
+        },
+        alreadyVerified: true,
+      });
+    }
+
 
     const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
     const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
