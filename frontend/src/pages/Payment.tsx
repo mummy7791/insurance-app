@@ -163,6 +163,7 @@ export default function Payment() {
       user = {};
     }
 
+    setCheckoutError("");
     setPaying(true);
 
     const options: RazorpayOptions = {
@@ -214,7 +215,7 @@ export default function Payment() {
       sessionStorage.removeItem(`proposal:${planId}`);
       sessionStorage.removeItem("premiumEstimate");
     } catch (error: unknown) {
-      alert(getErrorMessage(error, "Payment verification failed"));
+      setCheckoutError(getErrorMessage(error, "Payment verification failed. If money was debited, do not pay again until the payment status is checked."));
     } finally {
       setPaying(false);
     }
@@ -276,6 +277,8 @@ export default function Payment() {
                 </tr>
               </tbody>
             </table>
+
+            {checkoutError && <div className="checkout-inline-error" role="alert">{checkoutError}</div>}
 
             <button
               className="btn small-btn"
