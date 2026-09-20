@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
@@ -35,7 +35,13 @@ export default function Documents() {
   const [form, setForm] = useState<DocumentForm>(initialForm);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
   const isCustomer = user.role === "customer" || !user.role;
   const verifiedCount = documents.filter((d) => d.status === "Verified").length;
   const kycProgress = documents.length === 0 ? 0 : Math.round((verifiedCount / documents.length) * 100);
@@ -86,7 +92,7 @@ export default function Documents() {
       });
 
       setDocuments((prev) => [res.data, ...prev]);
-      setForm(initialForm);
+      setForm(isCustomer ? { ...initialForm, customerName: user.name || "" } : initialForm);
       setFile(null);
 
       const input = document.getElementById("documentFile") as HTMLInputElement;
