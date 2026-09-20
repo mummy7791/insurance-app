@@ -44,6 +44,7 @@ import FileManager from "./pages/FileManager";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import OnlinePolicyPurchase from "./pages/OnlinePolicyPurchase";
 import CustomerProfile from "./pages/CustomerProfile";
+import HelpCenter from "./pages/HelpCenter";
 
 import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
@@ -335,6 +336,7 @@ function App() {
         <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
         <Route path="/online-policy-purchase" element={<ProtectedRoute allowedRoles={["customer"]}><OnlinePolicyPurchase /></ProtectedRoute>} />
         <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
         <Route path="/insurance-plans" element={<ProtectedRoute allowedRoles={["customer"]}><InsurancePlans /></ProtectedRoute>} />
         <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminCreateStaff /></ProtectedRoute>} />
         <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><AdminInsurancePlans /></ProtectedRoute>} />
