@@ -21,13 +21,22 @@ const Policy = require("../models/Policy");
 const Premium = require("../models/Premium");
 const User = require("../models/User");
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const getRazorpay = () => {
+  const keyId = String(process.env.RAZORPAY_KEY_ID || "").trim();
+  const keySecret = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
+
+  if (!keyId || !keySecret) {
+    const error = new Error("Payment gateway is not configured");
+    error.code = "RAZORPAY_NOT_CONFIGURED";
+    throw error;
+  }
+
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+};
 
 router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
+    const razorpay = getRazorpay();
     const proposal = req.body?.proposal;
     if (!proposal || proposal.proposalConsent !== true) {
       return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
@@ -180,12 +189,20 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     });
   } catch (error) {
     console.error("Create order error:", error);
-    res.status(500).json({ message: "Order create failed" });
+    if (error?.code === "RAZORPAY_NOT_CONFIGURED") {
+      return res.status(503).json({ message: "Online payment is temporarily unavailable. Payment gateway configuration is missing." });
+    }
+    const gatewayMessage = String(error?.error?.description || error?.description || error?.message || "");
+    if (/razorpay|authentication|key|order/i.test(gatewayMessage)) {
+      return res.status(502).json({ message: "Payment gateway could not create the order. Please try again shortly." });
+    }
+    res.status(500).json({ message: "Unable to create payment order right now. Please try again." });
   }
 });
 
 router.post("/verify-payment", auth(["customer"]), async (req, res) => {
   try {
+    const razorpay = getRazorpay();
     const { planId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
 
@@ -356,7 +373,10 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     });
   } catch (error) {
     console.error("Verify payment error:", error);
-    res.status(500).json({ message: "Payment verify failed" });
+    if (error?.code === "RAZORPAY_NOT_CONFIGURED") {
+      return res.status(503).json({ message: "Online payment verification is temporarily unavailable." });
+    }
+    res.status(500).json({ message: "Payment verification could not be completed. If money was debited, do not pay again and check My Policies." });
   }
 });
 
