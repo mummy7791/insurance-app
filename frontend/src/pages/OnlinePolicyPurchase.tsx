@@ -1,31 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
 
-type Policy = {
+type Plan = {
   _id: string;
-  policyName?: string;
-  name?: string;
-  policyNumber?: string;
-  number?: string;
-  status?: string;
-  premiumAmount?: number;
-  amount?: number;
-  premium?: number;
+  planName: string;
+  category: string;
+  yearlyAmount?: number;
+  yearlyPremium?: number;
+  coverageAmount?: number;
+  paymentYears?: number;
+  benefits?: string | string[];
+  coverage?: string;
   description?: string;
-};
-
-type Purchase = {
-  _id: string;
-  policyName?: string;
-  policyNumber?: string;
-  premiumAmount?: number;
-  customerName?: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  status?: string;
-  paymentStatus?: string;
-  createdAt?: string;
 };
 
 type BuyForm = {
@@ -42,309 +30,125 @@ type BuyForm = {
 };
 
 const initialForm: BuyForm = {
-  customerName: "",
-  customerEmail: "",
-  customerPhone: "",
-  address: "",
-  dateOfBirth: "",
-  panNumber: "",
-  nomineeName: "",
-  nomineeRelation: "",
-  nomineeDateOfBirth: "",
-  proposalConsent: false,
+  customerName: "", customerEmail: "", customerPhone: "", address: "",
+  dateOfBirth: "", panNumber: "", nomineeName: "", nomineeRelation: "",
+  nomineeDateOfBirth: "", proposalConsent: false,
 };
 
-const getPolicyName = (policy: Policy) => {
-  return policy.policyName || policy.name || "Policy";
-};
-
-const getPolicyNumber = (policy: Policy) => {
-  return policy.policyNumber || policy.number || "N/A";
-};
-
-const getPolicyPremium = (policy: Policy) => {
-  return Number(policy.premiumAmount || policy.amount || policy.premium || 0);
+const errorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    return (error as { response?: { data?: { message?: string } } }).response?.data?.message || fallback;
+  }
+  return fallback;
 };
 
 export default function OnlinePolicyPurchase() {
-  const [policies, setPolicies] = useState<Policy[]>([]);
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get("plan") || "";
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [form, setForm] = useState<BuyForm>(initialForm);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [buying, setBuying] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
+  const loadProposal = useCallback(async () => {
+    if (!planId) {
+      navigate("/insurance-plans", { replace: true });
+      return;
+    }
     try {
       setLoading(true);
-
-      const [policyRes, purchaseRes] = await Promise.all([
-        api.get<Policy[]>("/online-policy"),
-        api.get<Purchase[]>("/online-policy/my-purchases"),
+      const [planRes, profileRes] = await Promise.all([
+        api.get<Plan>(`/insurance-plans/${planId}`),
+        api.get<{ name?: string; email?: string; phone?: string; address?: string }>("/customer-profile"),
       ]);
-
-      setPolicies(Array.isArray(policyRes.data) ? policyRes.data : []);
-      setPurchases(Array.isArray(purchaseRes.data) ? purchaseRes.data : []);
+      setPlan(planRes.data);
+      setForm((prev) => ({
+        ...prev,
+        customerName: profileRes.data?.name || "",
+        customerEmail: profileRes.data?.email || "",
+        customerPhone: profileRes.data?.phone || "",
+        address: profileRes.data?.address || "",
+      }));
     } catch (error) {
-      console.error("Online policy load error:", error);
-      alert("Online policy load failed");
+      alert(errorMessage(error, "Unable to open this insurance plan"));
+      navigate("/insurance-plans", { replace: true });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate, planId]);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadData();
-    }, 0);
+  useEffect(() => { void loadProposal(); }, [loadProposal]);
 
-    return () => window.clearTimeout(timer);
-  }, [loadData]);
+  const update = (field: keyof BuyForm, value: string | boolean) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-  const filteredPolicies = useMemo(() => {
-    return policies.filter((policy) => {
-      const text = `${getPolicyName(policy)} ${getPolicyNumber(policy)} ${
-        policy.status || ""
-      } ${policy.description || ""}`.toLowerCase();
-
-      return text.includes(search.toLowerCase());
-    });
-  }, [policies, search]);
-
-  const updateForm = (field: keyof BuyForm, value: string | boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const openBuy = (policy: Policy) => {
-    setSelectedPolicy(policy);
-
-    const savedUser = localStorage.getItem("insuranceUser");
-
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-
-        setForm((prev) => ({
-          ...prev,
-          customerName: user.name || "",
-          customerEmail: user.email || "",
-        }));
-      } catch {
-        setForm(initialForm);
-      }
-    }
-  };
-
-  const buyPolicy = async () => {
-    if (!selectedPolicy) return;
-
-    if (!form.customerName || !form.customerEmail || !form.customerPhone || !form.dateOfBirth || !form.panNumber || !form.nomineeName || !form.nomineeRelation || !form.proposalConsent) {
-      alert("Please complete personal, PAN, nominee and consent details");
+  const continueToPayment = () => {
+    if (!form.customerName.trim() || !form.customerEmail.trim() || !form.customerPhone.trim() ||
+        !form.address.trim() || !form.dateOfBirth || !form.panNumber.trim() ||
+        !form.nomineeName.trim() || !form.nomineeRelation || !form.nomineeDateOfBirth ||
+        !form.proposalConsent) {
+      alert("Please complete all personal, KYC, nominee and consent details");
       return;
     }
-
-    try {
-      setBuying(true);
-
-      await api.post("/online-policy/buy", {
-        policyId: selectedPolicy._id,
-        ...form,
-      });
-
-      alert("Policy purchase request submitted");
-
-      setSelectedPolicy(null);
-      setForm(initialForm);
-      void loadData();
-    } catch (error) {
-      console.error("Buy policy error:", error);
-      alert("Policy purchase failed");
-    } finally {
-      setBuying(false);
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(form.panNumber.trim().toUpperCase())) {
+      alert("Enter a valid PAN number");
+      return;
     }
+    sessionStorage.setItem(`proposal:${planId}`, JSON.stringify({
+      ...form,
+      panNumber: form.panNumber.trim().toUpperCase(),
+      planId,
+      savedAt: new Date().toISOString(),
+    }));
+    navigate(`/payment/${planId}`);
   };
 
+  if (loading) return <MainLayout title="Insurance Proposal" subtitle="Preparing your application"><div className="section"><p>Loading plan and profile...</p></div></MainLayout>;
+  if (!plan) return null;
+
+  const premium = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+  const benefits = Array.isArray(plan.benefits) ? plan.benefits.join(" • ") : plan.benefits || plan.coverage || "Protection benefits as per plan terms.";
+
   return (
-    <MainLayout
-      title="Apply for Insurance"
-      subtitle="Complete your proposal details, nominee information and review before submission"
-    >
-      {loading && <p>Loading policies...</p>}
+    <MainLayout title="Insurance Proposal" subtitle="Review your plan and complete proposal details before payment">
+      <div className="payment-progress"><span className="done">1 Plan</span><span className="active">2 Proposal</span><span>3 Payment</span><span>4 Policy active</span></div>
 
-      <div className="cards">
-        <div className="card">
-          <h3>Available Policies</h3>
-          <h1>{policies.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>My Requests</h3>
-          <h1>{purchases.length}</h1>
-        </div>
-
-        <div className="card">
-          <h3>Approved</h3>
-          <h1>
-            {purchases.filter((item) => item.status === "Approved").length}
-          </h1>
-        </div>
-
-        <div className="card">
-          <h3>Pending</h3>
-          <h1>
-            {purchases.filter((item) => item.status === "Pending").length}
-          </h1>
-        </div>
-      </div>
-
-      <div className="section">
-        <h2>Search Policies</h2>
-
-        <div className="form-grid">
-          <input
-            placeholder="Search policy name or number"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <button className="mini-btn" onClick={() => void loadData()}>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div className="section">
-        <h2>Available Policies</h2>
-
-        {filteredPolicies.length === 0 ? (
-          <p>No policies found.</p>
-        ) : (
-          <div className="lead-grid">
-            {filteredPolicies.map((policy) => (
-              <div className="lead-card" key={policy._id}>
-                <h3>{getPolicyName(policy)}</h3>
-                <p>Policy No: {getPolicyNumber(policy)}</p>
-                <p>Premium: ₹{getPolicyPremium(policy)}</p>
-                <p>Status: {policy.status || "Active"}</p>
-                <p>{policy.description || "No description available."}</p>
-
-                <button
-                  className="btn small-btn"
-                  onClick={() => openBuy(policy)}
-                >
-                  Buy Now
-                </button>
-              </div>
-            ))}
+      <div className="proposal-layout">
+        <div>
+          <div className="section">
+            <span className="eyebrow">PERSONAL DETAILS</span><h2>Tell us about the policyholder</h2>
+            <div className="form-grid">
+              <input placeholder="Full Name" value={form.customerName} onChange={(e) => update("customerName", e.target.value)} />
+              <input placeholder="Verified Email" value={form.customerEmail} readOnly aria-readonly="true" />
+              <input placeholder="Mobile Number" inputMode="tel" value={form.customerPhone} onChange={(e) => update("customerPhone", e.target.value)} />
+              <input type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} />
+              <input className="proposal-full" placeholder="Residential Address" value={form.address} onChange={(e) => update("address", e.target.value)} />
+            </div>
           </div>
-        )}
-      </div>
 
-      {selectedPolicy && (
-        <div className="section">
-          <span className="eyebrow">INSURANCE PROPOSAL</span><h2>Apply: {getPolicyName(selectedPolicy)}</h2><div className="proposal-steps"><span className="active">1 Personal</span><span className="active">2 KYC</span><span className="active">3 Nominee</span><span>4 Review</span></div>
-
-          <div className="form-grid">
-            <input
-              placeholder="Customer Name"
-              value={form.customerName}
-              onChange={(e) => updateForm("customerName", e.target.value)}
-            />
-
-            <input
-              placeholder="Customer Email"
-              value={form.customerEmail}
-              onChange={(e) => updateForm("customerEmail", e.target.value)}
-            />
-
-            <input
-              placeholder="Customer Phone"
-              value={form.customerPhone}
-              onChange={(e) => updateForm("customerPhone", e.target.value)}
-            />
-
-            <input type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={(e) => updateForm("dateOfBirth", e.target.value)} />
-
-            <input placeholder="PAN Number" maxLength={10} value={form.panNumber} onChange={(e) => updateForm("panNumber", e.target.value.toUpperCase())} />
-
-            <input
-              placeholder="Address"
-              value={form.address}
-              onChange={(e) => updateForm("address", e.target.value)}
-            />
-
-            <input placeholder="Nominee Full Name" value={form.nomineeName} onChange={(e) => updateForm("nomineeName", e.target.value)} />
-            <select value={form.nomineeRelation} onChange={(e) => updateForm("nomineeRelation", e.target.value)}><option value="">Nominee Relationship</option><option>Spouse</option><option>Father</option><option>Mother</option><option>Son</option><option>Daughter</option><option>Other</option></select>
-            <input type="date" aria-label="Nominee Date of Birth" value={form.nomineeDateOfBirth} onChange={(e) => updateForm("nomineeDateOfBirth", e.target.value)} />
-          </div>
-          <label className="proposal-consent"><input type="checkbox" checked={form.proposalConsent} onChange={(e) => updateForm("proposalConsent", e.target.checked)} /> <span>I confirm the information provided is correct and I consent to proposal review and KYC verification.</span></label>
-
-          <div style={{ marginTop: 15 }}>
-            <button
-              className="btn small-btn"
-              onClick={() => void buyPolicy()}
-              disabled={buying}
-            >
-              {buying ? "Submitting..." : "Review & Submit Proposal"}
-            </button>
-
-            <button
-              className="mini-btn danger-btn"
-              onClick={() => setSelectedPolicy(null)}
-              style={{ marginLeft: 10 }}
-            >
-              Cancel
-            </button>
+          <div className="section">
+            <span className="eyebrow">KYC & NOMINEE</span><h2>Identity and nominee details</h2>
+            <div className="form-grid">
+              <input placeholder="PAN Number" maxLength={10} value={form.panNumber} onChange={(e) => update("panNumber", e.target.value.toUpperCase())} />
+              <input placeholder="Nominee Full Name" value={form.nomineeName} onChange={(e) => update("nomineeName", e.target.value)} />
+              <select value={form.nomineeRelation} onChange={(e) => update("nomineeRelation", e.target.value)}>
+                <option value="">Nominee Relationship</option><option>Spouse</option><option>Father</option><option>Mother</option><option>Son</option><option>Daughter</option><option>Other</option>
+              </select>
+              <input type="date" aria-label="Nominee Date of Birth" value={form.nomineeDateOfBirth} onChange={(e) => update("nomineeDateOfBirth", e.target.value)} />
+            </div>
+            <label className="proposal-consent"><input type="checkbox" checked={form.proposalConsent} onChange={(e) => update("proposalConsent", e.target.checked)} /><span>I confirm these details are correct and consent to KYC and proposal processing.</span></label>
           </div>
         </div>
-      )}
 
-      <div className="section">
-        <h2>My Purchase Requests</h2>
-
-        {purchases.length === 0 ? (
-          <p>No purchase requests found.</p>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Policy</th>
-                <th>Number</th>
-                <th>Premium</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {purchases.map((item) => (
-                <tr key={item._id}>
-                  <td>{item.policyName || "Policy"}</td>
-                  <td>{item.policyNumber || "N/A"}</td>
-                  <td>₹{item.premiumAmount || 0}</td>
-                  <td>
-                    <span className="badge">{item.status || "Pending"}</span>
-                  </td>
-                  <td>
-                    <span className="badge">
-                      {item.paymentStatus || "Pending"}
-                    </span>
-                  </td>
-                  <td>
-                    {item.createdAt
-                      ? new Date(item.createdAt).toLocaleString()
-                      : "N/A"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <aside className="proposal-summary">
+          <span className="eyebrow">PLAN SUMMARY</span><h2>{plan.planName}</h2><p>{plan.category}</p>
+          <div><span>Life / Benefit Cover</span><strong>₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</strong></div>
+          <div><span>Annual Premium</span><strong>₹{premium.toLocaleString("en-IN")}</strong></div>
+          <div><span>Payment Years</span><strong>{plan.paymentYears || 1}</strong></div>
+          <small>{benefits}</small>
+          <button className="btn small-btn" onClick={continueToPayment}>Review & continue to payment →</button>
+          <button className="mini-btn" onClick={() => navigate("/insurance-plans")}>Change plan</button>
+        </aside>
       </div>
     </MainLayout>
   );
