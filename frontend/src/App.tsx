@@ -1,70 +1,125 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import Dashboard from "./pages/Dashboard";
-import RoleDashboard from "./pages/RoleDashboard";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const RoleDashboard = lazy(() => import("./pages/RoleDashboard"));
+const Leads = lazy(() => import("./pages/Leads"));
+const Customers = lazy(() => import("./pages/Customers"));
+const Policies = lazy(() => import("./pages/Policies"));
+const Premiums = lazy(() => import("./pages/Premiums"));
+const Payment = lazy(() => import("./pages/Payment"));
+const Commission = lazy(() => import("./pages/Commission"));
+const Claims = lazy(() => import("./pages/Claims"));
+const Documents = lazy(() => import("./pages/Documents"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+const GpsTracking = lazy(() => import("./pages/GpsTracking"));
+const Employees = lazy(() => import("./pages/Employees"));
+const Branch = lazy(() => import("./pages/Branch"));
+const Targets = lazy(() => import("./pages/Targets"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Communication = lazy(() => import("./pages/Communication"));
+const PdfReports = lazy(() => import("./pages/PdfReports"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ExcelReports = lazy(() => import("./pages/ExcelReports"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const AuditLogs = lazy(() => import("./pages/AuditLogs"));
+const AIAssistant = lazy(() => import("./pages/AIAssistant"));
+const AIFollowup = lazy(() => import("./pages/AIFollowup"));
+const AIPerformance = lazy(() => import("./pages/AIPerformance"));
+const AILeadScoring = lazy(() => import("./pages/AILeadScoring"));
+const AISalesPrediction = lazy(() => import("./pages/AISalesPrediction"));
+const CustomerPortal = lazy(() => import("./pages/CustomerPortal"));
+const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
+const PolicyRecommendationAI = lazy(() => import("./pages/PolicyRecommendationAI"));
+const CEODashboard = lazy(() => import("./pages/CEODashboard"));
+const OCRVerification = lazy(() => import("./pages/OCRVerification"));
+const EnterpriseTools = lazy(() => import("./pages/EnterpriseTools"));
+const FileManager = lazy(() => import("./pages/FileManager"));
+const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
+const OnlinePolicyPurchase = lazy(() => import("./pages/OnlinePolicyPurchase"));
+const CustomerProfile = lazy(() => import("./pages/CustomerProfile"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const Register = lazy(() => import("./pages/Register"));
+const Login = lazy(() => import("./pages/Login"));
+const Landing = lazy(() => import("./pages/Landing"));
+const InsurancePlans = lazy(() => import("./pages/InsurancePlans"));
+const AdminCreateStaff = lazy(() => import("./pages/AdminCreateStaff"));
+const CustomerOtpLogin = lazy(() => import("./pages/CustomerOtpLogin"));
+const AdminInsurancePlans = lazy(() => import("./pages/AdminInsurancePlans"));
+const PremiumCalculator = lazy(() => import("./pages/PremiumCalculator"));
+const AiPolicyRecommendation = lazy(() => import("./pages/AiPolicyRecommendation"));
+const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
+const AssignPolicy = lazy(() => import("./admin/AssignPolicy"));
+
+
+
 import Profile from "./pages/Profile"
 
-import Leads from "./pages/Leads";
-import Customers from "./pages/Customers";
-import Policies from "./pages/Policies";
-import Premiums from "./pages/Premiums";
-import Payment from "./pages/Payment";
-import Commission from "./pages/Commission";
-import Claims from "./pages/Claims";
-import Documents from "./pages/Documents";
-import Calendar from "./pages/Calendar";
-import GpsTracking from "./pages/GpsTracking";
 
-import Employees from "./pages/Employees";
-import Branch from "./pages/Branch";
-import Targets from "./pages/Targets";
-import Analytics from "./pages/Analytics";
-import Notifications from "./pages/Notifications";
-import Communication from "./pages/Communication";
-import PdfReports from "./pages/PdfReports";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import ExcelReports from "./pages/ExcelReports";
 
-import UserManagement from "./pages/UserManagement";
-import AuditLogs from "./pages/AuditLogs";
-import AIAssistant from "./pages/AIAssistant";
-import AIFollowup from "./pages/AIFollowup";
-import AIPerformance from "./pages/AIPerformance";
-import AILeadScoring from "./pages/AILeadScoring";
-import AISalesPrediction from "./pages/AISalesPrediction";
-import CustomerPortal from "./pages/CustomerPortal";
-import EmailMarketing from "./pages/EmailMarketing";
-import PolicyRecommendationAI from "./pages/PolicyRecommendationAI";
-import CEODashboard from "./pages/CEODashboard";
-import OCRVerification from "./pages/OCRVerification";
-import EnterpriseTools from "./pages/EnterpriseTools";
-import FileManager from "./pages/FileManager";
-import CustomerDashboard from "./pages/CustomerDashboard";
-import OnlinePolicyPurchase from "./pages/OnlinePolicyPurchase";
-import CustomerProfile from "./pages/CustomerProfile";
-import HelpCenter from "./pages/HelpCenter";
 
-import AdminLogin from "./pages/AdminLogin";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Landing from "./pages/Landing";
 
-import InsurancePlans from "./pages/InsurancePlans";
-import AdminCreateStaff from "./pages/AdminCreateStaff";
-import CustomerOtpLogin from "./pages/CustomerOtpLogin";
-import AdminInsurancePlans from "./pages/AdminInsurancePlans";
-import PremiumCalculator from "./pages/PremiumCalculator";
-import AiPolicyRecommendation from "./pages/AiPolicyRecommendation";
-import PolicyPurchases from "./pages/PolicyPurchases";
-import AssignPolicy from "./admin/AssignPolicy";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import "./styles/app.css";
 
 function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<div className="app-route-loading">Loading SecureLife...</div>}>
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Landing />} />
@@ -348,6 +403,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
