@@ -193,19 +193,21 @@ export default function Payment() {
             <div><span>Receipt Number</span><strong>{confirmation.receiptNumber}</strong></div>
             <div><span>Transaction ID</span><strong>{confirmation.transactionId}</strong></div>
           </div>
-          <button className="btn small-btn" onClick={() => navigate("/customer-dashboard")}>Go to My Dashboard</button>
+          <div className="success-actions"><button className="btn small-btn" onClick={() => navigate("/policies")}>View My Policies</button><button className="mini-btn" onClick={() => navigate("/customer-dashboard")}>Go to Dashboard</button></div>
         </div>
       ) : (
-      <div className="section">
+      <div className="payment-shell">
+        <div className="payment-progress"><span className="done">1 Plan</span><span className="done">2 Review</span><span className="active">3 Payment</span><span>4 Policy active</span></div>
+        <div className="section payment-checkout">
         {loading ? (
           <p>Creating payment order...</p>
         ) : !order ? (
           <p>No payment order found.</p>
         ) : (
           <>
-            <h2>{order.plan.planName}</h2>
+            <div className="checkout-heading"><div><span className="eyebrow">SECURE CHECKOUT</span><h2>{order.plan.planName}</h2><p>Review your cover before continuing to the payment gateway.</p></div><div className="secure-payment-badge">🔒 Secure payment</div></div>
 
-            <table className="table">
+            <table className="table checkout-table">
               <tbody>
                 <tr>
                   <th>Category</th>
@@ -238,10 +240,12 @@ export default function Payment() {
               disabled={paying}
               style={{ marginTop: 20 }}
             >
-              {paying ? "Processing..." : `Pay ₹${order.amount}`}
+              {paying ? "Processing..." : `Pay ₹${order.amount.toLocaleString("en-IN")} securely →`}
             </button>
           </>
         )}
+        <div className="payment-trust"><span>✓ Server-verified payment</span><span>✓ Instant receipt</span><span>✓ Policy number after successful payment</span></div>
+      </div>
       </div>
       )}
     </MainLayout>
