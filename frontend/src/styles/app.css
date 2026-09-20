@@ -1105,3 +1105,23 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
   color: #17324d;
   background: #f6f9fc;
 }
+
+
+/* ===== CUSTOMER UI RESPONSIVE REFINEMENT ===== */
+.profile-hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:20px;padding:24px 28px;border:1px solid #fed7aa;border-radius:22px;background:linear-gradient(135deg,#fff,#fff7ed);overflow:hidden}
+.profile-avatar-large{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#b91c1c,#f97316);display:grid;place-items:center;color:#fff;font-size:30px;overflow:hidden;flex:none}
+.profile-avatar-large img{width:100%;height:100%;object-fit:cover}
+.profile-hero h2{margin:5px 0 3px;font-size:30px;color:#1e293b}
+.profile-hero p{margin:0;color:#64748b;overflow-wrap:anywhere}
+.cards .card{min-width:0;overflow:hidden}
+.cards .card h1{font-size:clamp(22px,2.2vw,34px);line-height:1.15;overflow-wrap:anywhere;word-break:break-word}
+.proposal-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,400px);gap:28px;align-items:start}
+.proposal-layout>div,.proposal-summary{min-width:0}
+.proposal-summary{position:sticky;top:18px;background:#fff;border:1px solid #fee2e2;border-radius:22px;padding:28px;box-shadow:0 16px 38px rgba(91,33,33,.08);overflow:hidden}
+.proposal-summary>div{display:flex;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid #f1f5f9}
+.proposal-summary strong{text-align:right;overflow-wrap:anywhere}
+.proposal-summary .small-btn,.proposal-summary .mini-btn{width:100%;margin-top:12px}
+.proposal-full{grid-column:1/-1}
+@media(max-width:1100px){.proposal-layout{grid-template-columns:minmax(0,1fr) 330px}.profile-hero{padding:22px}}
+@media(max-width:900px){.proposal-layout{grid-template-columns:1fr}.proposal-summary{position:static}.profile-hero{grid-template-columns:auto minmax(0,1fr)}.profile-hero>.secure-chip{grid-column:1/-1}}
+@media(max-width:650px){.profile-hero{grid-template-columns:1fr;text-align:left}.profile-avatar-large{width:64px;height:64px}.profile-hero>.secure-chip{grid-column:auto}.payment-progress{grid-template-columns:repeat(2,1fr)}}
