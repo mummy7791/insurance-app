@@ -1125,3 +1125,31 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 @media(max-width:1100px){.proposal-layout{grid-template-columns:minmax(0,1fr) 330px}.profile-hero{padding:22px}}
 @media(max-width:900px){.proposal-layout{grid-template-columns:1fr}.proposal-summary{position:static}.profile-hero{grid-template-columns:auto minmax(0,1fr)}.profile-hero>.secure-chip{grid-column:1/-1}}
 @media(max-width:650px){.profile-hero{grid-template-columns:1fr;text-align:left}.profile-avatar-large{width:64px;height:64px}.profile-hero>.secure-chip{grid-column:auto}.payment-progress{grid-template-columns:repeat(2,1fr)}}
+
+
+/* ===== PROPOSAL FORM OVERFLOW FIX ===== */
+.proposal-layout{grid-template-columns:minmax(0,1fr) minmax(340px,390px);gap:24px}
+.proposal-layout .section{min-width:0;overflow:hidden}
+.proposal-layout .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.proposal-layout .form-grid input,
+.proposal-layout .form-grid select{width:100%;min-width:0;max-width:100%;height:58px}
+.proposal-layout .proposal-full{grid-column:1/-1;width:100%}
+.proposal-layout .proposal-consent{width:100%;max-width:100%;box-sizing:border-box}
+.proposal-layout .proposal-consent input{width:auto;min-width:18px;height:18px;flex:0 0 18px;padding:0}
+.proposal-summary{width:100%;max-width:100%;box-sizing:border-box}
+.proposal-summary .btn,
+.proposal-summary .small-btn,
+.proposal-summary .mini-btn{max-width:100%;white-space:normal;line-height:1.25}
+@media(max-width:1180px){
+  .proposal-layout{grid-template-columns:minmax(0,1fr) 330px}
+  .proposal-layout .form-grid{grid-template-columns:1fr}
+  .proposal-layout .proposal-full{grid-column:auto}
+}
+@media(max-width:900px){
+  .proposal-layout{grid-template-columns:1fr}
+  .proposal-layout .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .proposal-layout .form-grid{grid-template-columns:1fr}
+  .proposal-layout .section,.proposal-summary{padding:20px}
+}
