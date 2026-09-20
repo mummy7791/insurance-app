@@ -142,7 +142,9 @@ export default function UserManagement() {
       title="User Role Management"
       subtitle="Create users and assign admin, BM, unit manager, agency manager and agent roles"
     >
-      <div className="cards">
+      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create operational users, review roles and control account access from one secure screen.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{users.length}</strong></div><div><span>Admins</span><strong>{users.filter((u) => u.role === "admin").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
+
+      <div className="cards admin-kpi-grid">
         <div className="card">
           <h3>Total Users</h3>
           <h1>{users.length}</h1>
@@ -165,7 +167,7 @@ export default function UserManagement() {
       </div>
 
       <div className="section">
-        <h2>Create New User</h2>
+        <span className="eyebrow">NEW STAFF ACCOUNT</span><h2>Create new user</h2><p className="section-copy">Create a staff profile and assign only the access level required for their role.</p>
 
         <div className="form-grid">
           <input
@@ -221,23 +223,21 @@ export default function UserManagement() {
       </div>
 
       <div className="section">
-        <h2>Search Users</h2>
+        <div className="section-heading-row"><div><span className="eyebrow">STAFF DIRECTORY</span><h2>Search users</h2></div><button className="mini-btn" onClick={loadUsers}>Refresh</button></div>
 
-        <div className="form-grid">
+        <div className="admin-search-bar">
           <input
             placeholder="Search name, email, role"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <button className="mini-btn" onClick={loadUsers}>
-            Refresh
-          </button>
+          <span>{filteredUsers.length} records</span>
         </div>
       </div>
 
-      <div className="section">
-        <h2>User List</h2>
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">ROLE MANAGEMENT</span><h2>User list</h2></div><span className="secure-chip">Admin only</span></div>
 
         {loading ? (
           <p>Loading users...</p>
