@@ -134,7 +134,7 @@ export default function Dashboard() {
       }
       if (auditRes.status === "fulfilled") {
         setAuditLogs(
-          Array.isArray(auditRes.value.data) ? auditRes.value.data.slice(0, 5) : []
+          Array.isArray(auditRes.value.data) ? auditRes.value.data : []
         );
       }
     } catch (error) {
@@ -323,7 +323,7 @@ export default function Dashboard() {
       </div>
 
       <div className="section admin-audit-section">
-        <div className="section-heading-row"><div><span className="eyebrow">SECURITY & ACTIVITY</span><h2>Recent audit activity</h2></div><Link className="mini-btn" to="/audit-logs">View audit logs</Link></div>
+        <div className="section-heading-row"><div><span className="eyebrow">SECURITY & ACTIVITY</span><h2>Recent audit activity</h2></div><span className="secure-chip">Latest 5 events</span></div>
 
         {auditLogs.length === 0 ? (
           <p>No recent activity found.</p>
@@ -340,7 +340,7 @@ export default function Dashboard() {
             </thead>
 
             <tbody>
-              {auditLogs.map((log) => (
+              {auditLogs.slice(0, 5).map((log) => (
                 <tr key={log._id}>
                   <td>
                     {log.createdAt
