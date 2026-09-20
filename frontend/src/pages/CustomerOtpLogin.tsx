@@ -26,7 +26,7 @@ export default function CustomerOtpLogin() {
   const [email, setEmail] = useState(state.email || pendingEmail);
   const [otp, setOtp] = useState("");
   const [mode, setMode] = useState<"verify" | "login">(state.mode || (pendingEmail ? "verify" : "login"));
-  const [sent, setSent] = useState(Boolean(state.email || pendingEmail));
+  const [sent, setSent] = useState(Boolean((state.mode === "verify" && state.email) || pendingEmail));
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState(sent ? "Verification code sent. Check your inbox and spam folder." : "");
   const [error, setError] = useState("");
