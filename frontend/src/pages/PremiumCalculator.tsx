@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import "../styles/Auth.css";
 import api from "../services/api";
 
 type Category =
@@ -80,25 +81,10 @@ export default function PremiumCalculator() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg,#fff7ed,#fee2e2,#ffffff)",
-        padding: 30,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 900,
-          margin: "0 auto",
-          background: "#fff",
-          borderRadius: 24,
-          padding: 30,
-          boxShadow: "0 20px 60px rgba(0,0,0,.18)",
-        }}
-      >
-        <span className="eyebrow">SECURELIFE INSURANCE</span><h1>Premium Calculator</h1>
-        <p>Get an indicative yearly premium based on your age, cover and plan category.</p>
+    <div className="calculator-page">
+      <div className="calculator-shell">
+        <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><Link to="/" className="mini-btn">Back to home</Link></header>
+        <div className="calculator-intro"><span className="eyebrow">PLAN AHEAD</span><h1>Estimate your protection premium.</h1><p>Choose your cover, age and payment term for an indicative annual estimate.</p></div>
 
         <div className="form-grid">
           <select
@@ -145,7 +131,7 @@ export default function PremiumCalculator() {
 
         {result && (
           <div className="section" style={{ marginTop: 25 }}>
-            <h2>Premium Result</h2>
+            <span className="eyebrow">YOUR ESTIMATE</span><h2>Premium Result</h2>
 
             <div className="cards">
               <div className="card">
@@ -155,7 +141,7 @@ export default function PremiumCalculator() {
 
               <div className="card">
                 <h3>Coverage</h3>
-                <h1>₹{result.coverageAmount}</h1>
+                <h1>₹{result.coverageAmount.toLocaleString("en-IN")}</h1>
               </div>
 
               <div className="card">
@@ -170,11 +156,11 @@ export default function PremiumCalculator() {
 
               <div className="card">
                 <h3>Yearly Premium</h3>
-                <h1>₹{result.yearlyPremium}</h1>
+                <h1>₹{result.yearlyPremium.toLocaleString("en-IN")}</h1>
               </div>
             </div>
             <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>
-            <Link className="btn small-btn" to="/login">Sign in to explore plans</Link>
+            <div className="calculator-actions"><Link className="btn small-btn" to="/register">Create free account</Link><Link className="mini-btn" to="/login">Already have an account</Link></div>
           </div>
         )}
       </div>
