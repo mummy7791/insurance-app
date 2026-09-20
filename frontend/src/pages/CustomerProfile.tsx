@@ -106,7 +106,6 @@ export default function CustomerProfile() {
 
       const res = await api.put<CustomerProfileData>("/customer-profile", {
         name: profile.name || "",
-        email: profile.email || "",
         phone: profile.phone || "",
         address: profile.address || "",
       });
@@ -150,8 +149,8 @@ export default function CustomerProfile() {
   };
 
   const changePassword = async () => {
-    if (!newPassword) {
-      alert("New password required");
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(newPassword)) {
+      alert("New password must be at least 8 characters and include a letter and number");
       return;
     }
 
