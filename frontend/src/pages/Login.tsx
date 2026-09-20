@@ -31,7 +31,8 @@ export default function Login() {
       const res = await api.post<LoginResponse>("/auth/login", { email: email.trim().toLowerCase(), password });
       localStorage.setItem("insuranceToken", res.data.token);
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
-      navigate(res.data.user.role === "customer" ? "/customer-dashboard" : "/dashboard");
+      const hasEstimate = Boolean(sessionStorage.getItem("premiumEstimate"));
+      navigate(res.data.user.role === "customer" && hasEstimate ? "/insurance-plans" : res.data.user.role === "customer" ? "/customer-dashboard" : "/dashboard");
     } catch (error: unknown) {
       const message = getMessage(error);
       setError(message);
