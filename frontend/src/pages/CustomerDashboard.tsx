@@ -61,7 +61,7 @@ export default function CustomerDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [policyRes, premiumRes, claimRes, purchaseRes, documentRes] = await Promise.all([
+        const [policyRes, premiumRes, claimRes, purchaseRes, documentRes] = await Promise.allSettled([
           api.get<Policy[]>("/policies"),
           api.get<Premium[]>("/premiums"),
           api.get<Claim[]>("/claims"),
@@ -70,11 +70,11 @@ export default function CustomerDashboard() {
         ]);
 
         if (!active) return;
-        setPolicies(policyRes.data);
-        setPremiums(premiumRes.data);
-        setClaims(claimRes.data);
-        setPurchasedPlans(purchaseRes.data);
-        setDocuments(documentRes.data);
+        if (policyRes.status === "fulfilled") setPolicies(Array.isArray(policyRes.value.data) ? policyRes.value.data : []);
+        if (premiumRes.status === "fulfilled") setPremiums(Array.isArray(premiumRes.value.data) ? premiumRes.value.data : []);
+        if (claimRes.status === "fulfilled") setClaims(Array.isArray(claimRes.value.data) ? claimRes.value.data : []);
+        if (purchaseRes.status === "fulfilled") setPurchasedPlans(Array.isArray(purchaseRes.value.data) ? purchaseRes.value.data : []);
+        if (documentRes.status === "fulfilled") setDocuments(Array.isArray(documentRes.value.data) ? documentRes.value.data : []);
       } catch (error) {
         console.error("Customer dashboard load error:", error);
       } finally {
@@ -89,9 +89,10 @@ export default function CustomerDashboard() {
   const activePolicies = policies.filter((p) => p.status === "active");
   const activePurchased = purchasedPlans.filter((p) => p.policyStatus === "Active");
   const purchasedPolicyNumbers = new Set(activePurchased.map((p) => p.policyNumber).filter(Boolean));
+  const allPurchasedPolicyNumbers = new Set(purchasedPlans.map((p) => p.policyNumber).filter(Boolean));
   const standaloneActivePolicies = activePolicies.filter((p) => !p.policyNumber || !purchasedPolicyNumbers.has(p.policyNumber));
   const activePolicyCount = standaloneActivePolicies.length + activePurchased.length;
-  const totalPolicyCount = policies.filter((p) => !p.policyNumber || !new Set(purchasedPlans.map((item) => item.policyNumber).filter(Boolean)).has(p.policyNumber)).length + purchasedPlans.length;
+  const totalPolicyCount = policies.filter((p) => !p.policyNumber || !allPurchasedPolicyNumbers.has(p.policyNumber)).length + purchasedPlans.length;
   const totalCoverage = standaloneActivePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0) + activePurchased.reduce((sum, p) => sum + Number(p.coverageAmount || 0), 0);
   const duePremiums = premiums.filter((p) => p.status === "Due" || p.status === "Overdue");
   const dueAmount = duePremiums.reduce((sum, p) => sum + Number(p.amount || 0), 0);
