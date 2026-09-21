@@ -12,7 +12,9 @@ type Policy = {
   premiumAmount: number;
   sumAssured: number;
   paymentMode: "monthly" | "quarterly" | "half_yearly" | "yearly";
-  status: "pending" | "active" | "rejected" | "closed" | "expired";\n  kycStatus?: "Pending" | "Verified" | "Action Required";\n  kycVerifiedAt?: string;
+  status: "pending" | "active" | "rejected" | "closed" | "expired";
+  kycStatus?: "Pending" | "Verified" | "Action Required";
+  kycVerifiedAt?: string;
 };
 
 type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
