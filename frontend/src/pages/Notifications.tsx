@@ -9,6 +9,10 @@ type NotificationType =
   | "Policy Expiry"
   | "Claim Update"
   | "KYC Pending"
+  | "KYC Verified"
+  | "KYC Action Required"
+  | "Payment Successful"
+  | "Policy Issued"
   | "Target Alert";
 
 type NotificationStatus = "Unread" | "Read";
@@ -21,6 +25,9 @@ type NotificationItem = {
   date: string;
   status: NotificationStatus;
   recipientId?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  reference?: string;
 };
 
 type Recipient = {
@@ -304,6 +311,10 @@ export default function Notifications() {
               <option value="Policy Expiry">Policy Expiry</option>
               <option value="Claim Update">Claim Update</option>
               <option value="KYC Pending">KYC Pending</option>
+              <option value="KYC Verified">KYC Verified</option>
+              <option value="KYC Action Required">KYC Action Required</option>
+              <option value="Payment Successful">Payment Successful</option>
+              <option value="Policy Issued">Policy Issued</option>
               <option value="Target Alert">Target Alert</option>
             </select>
 
@@ -353,6 +364,10 @@ export default function Notifications() {
             <option value="Policy Expiry">Policy Expiry</option>
             <option value="Claim Update">Claim Update</option>
             <option value="KYC Pending">KYC Pending</option>
+            <option value="KYC Verified">KYC Verified</option>
+            <option value="KYC Action Required">KYC Action Required</option>
+            <option value="Payment Successful">Payment Successful</option>
+            <option value="Policy Issued">Policy Issued</option>
             <option value="Target Alert">Target Alert</option>
           </select>
 
@@ -377,8 +392,14 @@ export default function Notifications() {
                 <p className="notification-message">{item.message}</p>
 
                 <span className="badge">{item.status}</span>
+                {item.reference && <div className="notification-reference">Ref: {item.reference}</div>}
 
                 <div style={{ marginTop: 12 }}>
+                  {item.actionUrl && (
+                    <button className="mini-btn" onClick={() => { window.location.href = item.actionUrl || "/notifications"; }}>
+                      {item.actionLabel || "View details"}
+                    </button>
+                  )}
                   {item.status === "Unread" && (
                     <button
                       className="mini-btn"
