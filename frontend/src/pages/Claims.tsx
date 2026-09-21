@@ -171,174 +171,176 @@ export default function Claims() {
 
   const downloadSettlementReceipt = (claim: Claim) => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 16;
-    const contentWidth = pageWidth - margin * 2;
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const L = 16;
+    const R = W - 16;
+    const CW = R - L;
     const claimRef = claim.claimNumber || claim._id;
     const money = (value?: number) => `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
     const generatedAt = new Date().toLocaleString("en-IN", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
     });
-    const settlementDate = claim.settlementDate || "-";
-    const receiptNo = `CSR-${String(claimRef).replace(/^CLM-/, "")}`;
+    const receiptNo = `SL-CSR-${String(claimRef).replace(/^CLM-/, "").slice(-18)}`;
 
-    // Corporate header
+    // Premium corporate stationery
+    pdf.setDrawColor(166, 10, 38);
+    pdf.setLineWidth(0.7);
+    pdf.rect(8, 8, W - 16, H - 16);
     pdf.setFillColor(166, 10, 38);
-    pdf.rect(0, 0, pageWidth, 38, "F");
+    pdf.rect(8, 8, W - 16, 35, "F");
     pdf.setFillColor(244, 94, 20);
-    pdf.rect(0, 36, pageWidth, 2, "F");
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(22);
-    pdf.text("SecureLife", margin, 15);
-    pdf.setFontSize(10);
-    pdf.text("INSURANCE", margin, 22);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8.5);
-    pdf.text("CLAIMS & SETTLEMENT SERVICES", margin, 29);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
-    pdf.text("CLAIM SETTLEMENT RECEIPT", pageWidth - margin, 16, { align: "right" });
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.text("Official system-generated acknowledgement", pageWidth - margin, 23, { align: "right" });
-    pdf.text(`Receipt No: ${receiptNo}`, pageWidth - margin, 30, { align: "right" });
+    pdf.rect(8, 41, W - 16, 2, "F");
 
-    // Confirmation banner
-    pdf.setFillColor(240, 253, 244);
-    pdf.setDrawColor(134, 239, 172);
-    pdf.roundedRect(margin, 47, contentWidth, 23, 3, 3, "FD");
-    pdf.setTextColor(21, 128, 61);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
-    pdf.text("CLAIM SETTLED", margin + 7, 57);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(51, 65, 85);
-    pdf.text("The settlement below has been recorded successfully in the SecureLife system.", margin + 7, 64);
-
-    // Customer & policy details
+    // Brand mark
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(L, 15, 20, 20, 3, 3, "F");
     pdf.setTextColor(166, 10, 38);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.text("Customer & Policy Details", margin, 82);
+    pdf.setFontSize(13);
+    pdf.text("SL", L + 10, 27.5, { align: "center" });
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.text("SecureLife Insurance", L + 26, 22);
+    pdf.setFontSize(7.5);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("CLAIMS & SETTLEMENT SERVICES", L + 26, 28);
+    pdf.text("Customer Settlement Acknowledgement", L + 26, 33);
 
-    const boxY = 87;
-    pdf.setDrawColor(226, 232, 240);
-    pdf.setFillColor(250, 250, 250);
-    pdf.roundedRect(margin, boxY, contentWidth, 42, 3, 3, "FD");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(12);
+    pdf.text("CLAIM SETTLEMENT RECEIPT", R, 21, { align: "right" });
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.text(`Receipt No: ${receiptNo}`, R, 28, { align: "right" });
+    pdf.text(`Generated: ${generatedAt}`, R, 33, { align: "right" });
 
-    const detail = (label: string, value: string, x: number, y: number, width = 72) => {
+    // Document title / status
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(17);
+    pdf.text("Settlement Confirmation", L, 57);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(71, 85, 105);
+    pdf.text("Official acknowledgement of the claim settlement recorded in the SecureLife system.", L, 64);
+
+    pdf.setFillColor(236, 253, 245);
+    pdf.setDrawColor(167, 243, 208);
+    pdf.roundedRect(R - 39, 50, 39, 14, 7, 7, "FD");
+    pdf.setTextColor(4, 120, 87);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.text("SETTLED", R - 19.5, 58.8, { align: "center" });
+
+    const sectionTitle = (title: string, y: number) => {
+      pdf.setTextColor(166, 10, 38);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7.5);
+      pdf.setFontSize(10);
+      pdf.text(title.toUpperCase(), L, y);
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(L, y + 3, R, y + 3);
+    };
+    const field = (label: string, value: string, x: number, y: number, width: number) => {
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
       pdf.setTextColor(100, 116, 139);
       pdf.text(label.toUpperCase(), x, y);
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(9.5);
+      pdf.setFontSize(9.3);
       pdf.setTextColor(15, 23, 42);
-      const lines = pdf.splitTextToSize(value || "-", width);
-      pdf.text(lines, x, y + 6);
+      pdf.text(pdf.splitTextToSize(value || "-", width), x, y + 5.5);
     };
 
-    detail("Customer Name", claim.customerName, margin + 7, 98);
-    detail("Policy Number", claim.policyNumber, 108, 98, 78);
-    detail("Claim Reference", claimRef, margin + 7, 116);
-    detail("Claim Type", claim.claimType, 108, 116, 78);
+    sectionTitle("Customer & Policy Information", 77);
+    pdf.setFillColor(249, 250, 251);
+    pdf.roundedRect(L, 84, CW, 39, 2.5, 2.5, "F");
+    field("Customer Name", claim.customerName, L + 6, 94, 74);
+    field("Policy Number", claim.policyNumber, 108, 94, 78);
+    field("Claim Reference", String(claimRef), L + 6, 111, 74);
+    field("Claim Type", claim.claimType, 108, 111, 78);
 
-    // Settlement summary
-    pdf.setTextColor(166, 10, 38);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.text("Settlement Summary", margin, 142);
-
-    pdf.setFillColor(255, 247, 237);
-    pdf.setDrawColor(253, 186, 116);
-    pdf.roundedRect(margin, 147, 55, 31, 3, 3, "FD");
-    pdf.roundedRect(margin + 63, 147, 55, 31, 3, 3, "FD");
-    pdf.roundedRect(margin + 126, 147, 52, 31, 3, 3, "FD");
-
-    const summary = (label: string, value: string, x: number, width: number) => {
-      pdf.setTextColor(124, 45, 18);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7.5);
-      pdf.text(label.toUpperCase(), x + width / 2, 157, { align: "center" });
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFontSize(12);
-      pdf.text(value, x + width / 2, 169, { align: "center" });
-    };
-    summary("Claim Amount", money(claim.claimAmount), margin, 55);
-    summary("Settlement Amount", money(claim.settlementAmount), margin + 63, 55);
-    summary("Status", claim.status.toUpperCase(), margin + 126, 52);
-
-    // Payment / transaction record
-    pdf.setTextColor(166, 10, 38);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.text("Settlement Transaction Details", margin, 191);
-
-    const transactionRows: Array<[string, string]> = [
-      ["Settlement Date", settlementDate],
-      ["Transaction / Reference ID", claim.settlementReference || "-"],
-      ["Receipt Number", receiptNo],
-      ["Generated On", generatedAt],
-      ["Remarks", claim.remarks || "Claim settled successfully"],
+    sectionTitle("Settlement Summary", 137);
+    const cards = [
+      ["CLAIM AMOUNT", money(claim.claimAmount)],
+      ["SETTLEMENT AMOUNT", money(claim.settlementAmount)],
+      ["SETTLEMENT DATE", claim.settlementDate || "-"],
     ];
-    let y = 201;
-    transactionRows.forEach(([label, value], index) => {
-      if (index % 2 === 0) {
-        pdf.setFillColor(248, 250, 252);
-        pdf.roundedRect(margin, y - 6, contentWidth, 11, 1.5, 1.5, "F");
-      }
+    cards.forEach(([label, value], i) => {
+      const x = L + i * 61;
+      pdf.setFillColor(i === 1 ? 255 : 249, i === 1 ? 247 : 250, i === 1 ? 237 : 251);
+      pdf.setDrawColor(i === 1 ? 253 : 226, i === 1 ? 186 : 232, i === 1 ? 116 : 240);
+      pdf.roundedRect(x, 144, 55, 28, 2.5, 2.5, "FD");
+      pdf.setTextColor(100, 116, 139);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8);
-      pdf.setTextColor(71, 85, 105);
-      pdf.text(label, margin + 5, y);
-      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(6.8);
+      pdf.text(label, x + 27.5, 153, { align: "center" });
       pdf.setTextColor(15, 23, 42);
-      const lines = pdf.splitTextToSize(String(value), 104);
-      pdf.text(lines, 78, y);
-      y += Math.max(12, lines.length * 4.5 + 4);
+      pdf.setFontSize(11);
+      pdf.text(value, x + 27.5, 164, { align: "center" });
     });
 
-    // Declaration and signature
-    y += 2;
-    pdf.setDrawColor(226, 232, 240);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 8;
-    pdf.setTextColor(166, 10, 38);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.text("Declaration", margin, y);
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(71, 85, 105);
-    pdf.setFontSize(7.3);
-    const declaration = "This receipt acknowledges the settlement entry recorded in the SecureLife Insurance system for the claim referenced above. Please retain this receipt and the transaction reference for future correspondence. It does not replace the policy contract, bank confirmation, statutory document, or any document required by an applicable regulator.";
-    pdf.text(pdf.splitTextToSize(declaration, 118), margin, y + 6);
+    sectionTitle("Transaction & Settlement Record", 187);
+    const rows: Array<[string, string]> = [
+      ["Transaction / Reference ID", claim.settlementReference || "-"],
+      ["Receipt Number", receiptNo],
+      ["Claim Status", claim.status],
+      ["Remarks", claim.remarks || "Claim settled successfully"],
+    ];
+    let y = 197;
+    rows.forEach(([label, value], index) => {
+      const rowH = label === "Remarks" ? 16 : 12;
+      if (index % 2 === 0) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(L, y - 6, CW, rowH, "F");
+      }
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(71, 85, 105);
+      pdf.text(label, L + 5, y);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(pdf.splitTextToSize(value, 105), 78, y);
+      y += rowH;
+    });
 
-    pdf.setDrawColor(203, 213, 225);
-    pdf.roundedRect(pageWidth - 65, y + 2, 49, 25, 2, 2);
-    pdf.setTextColor(71, 85, 105);
+    // Important note
+    pdf.setFillColor(255, 251, 235);
+    pdf.setDrawColor(253, 230, 138);
+    pdf.roundedRect(L, 247, 112, 24, 2, 2, "FD");
+    pdf.setTextColor(146, 64, 14);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(7.5);
-    pdf.text("AUTHORIZED SIGNATORY", pageWidth - 40.5, y + 12, { align: "center" });
+    pdf.text("IMPORTANT", L + 5, 255);
     pdf.setFont("helvetica", "normal");
-    pdf.text("System Generated", pageWidth - 40.5, y + 19, { align: "center" });
+    pdf.setFontSize(6.7);
+    const note = "Please retain this receipt with your policy records. Quote the policy number, claim reference and transaction reference in any future correspondence.";
+    pdf.text(pdf.splitTextToSize(note, 101), L + 5, 261);
+
+    // Signature / validation panel
+    pdf.setDrawColor(203, 213, 225);
+    pdf.roundedRect(135, 247, 59, 24, 2, 2);
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7.5);
+    pdf.text("AUTHORIZED VALIDATION", 164.5, 255, { align: "center" });
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(100, 116, 139);
+    pdf.setFontSize(6.8);
+    pdf.text("System Generated", 164.5, 262, { align: "center" });
+    pdf.text("No physical signature required", 164.5, 267, { align: "center" });
 
     // Footer
     pdf.setFillColor(248, 250, 252);
-    pdf.rect(0, 276, pageWidth, 21, "F");
-    pdf.setDrawColor(226, 232, 240);
-    pdf.line(0, 276, pageWidth, 276);
+    pdf.rect(8, 278, W - 16, 11, "F");
     pdf.setTextColor(100, 116, 139);
-    pdf.setFontSize(7);
-    pdf.text("SecureLife Insurance | Claims & Settlement Services", margin, 284);
-    pdf.text(`Claim Ref: ${claimRef}`, pageWidth / 2, 284, { align: "center" });
-    pdf.text("Page 1 of 1", pageWidth - margin, 284, { align: "right" });
     pdf.setFontSize(6.5);
-    pdf.text("This is a computer-generated receipt.", pageWidth / 2, 290, { align: "center" });
+    pdf.text("SecureLife Insurance | Claims & Settlement Services", L, 284);
+    pdf.text("Computer-generated settlement acknowledgement", W / 2, 284, { align: "center" });
+    pdf.text("Page 1 of 1", R, 284, { align: "right" });
 
-    pdf.save(`${claimRef}-settlement-receipt.pdf`);
+    pdf.save(`${claimRef}-corporate-settlement-receipt.pdf`);
   };
 
   const deleteClaim = async (id: string) => {
