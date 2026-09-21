@@ -61,6 +61,8 @@ const planPurchaseSchema = new mongoose.Schema(
 
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
+    nextPremiumDate: { type: Date, default: null },
+    totalPremiumPayable: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
