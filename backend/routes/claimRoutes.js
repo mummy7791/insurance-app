@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
-const Policy = require("../models/Policy");
+const Policy = require("../models/Policy");\nconst PlanPurchase = require("../models/PlanPurchase");
 
 const STAFF_ROLES = [
   "admin",
@@ -88,12 +88,12 @@ router.get("/", auth(), async (req, res) => {
   try {
     let query = {};
     if (req.user.role === "customer") {
-      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");
+      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");\n      const purchases = await PlanPurchase.find({ customerId: req.user.id, paymentStatus: "Paid" }).select("policyNumber");\n      const policyNumbers = [...policies, ...purchases].map((policy) => policy.policyNumber).filter(Boolean);
       query = {
         $or: [
           { customerId: req.user.id },
           { createdBy: req.user.id },
-          { policyNumber: { $in: policies.map((policy) => policy.policyNumber) } },
+          { policyNumber: { $in: policyNumbers } },
         ],
       };
     }
