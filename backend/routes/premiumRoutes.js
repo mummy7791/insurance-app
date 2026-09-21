@@ -3,6 +3,7 @@ const Premium = require("../models/Premium");
 const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
+const Notification = require("../models/Notification");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -210,6 +211,18 @@ router.post("/:id/verify-payment", auth(["customer"]), async (req, res) => {
       { policyNumber: premium.policyNumber, customerId: req.user.id },
       { nextPremiumDate: nextDue?.dueDate ? new Date(nextDue.dueDate) : null }
     );
+
+    const notification = await Notification.create({
+      recipientId: req.user.id,
+      title: "Premium payment successful",
+      message: `Payment of INR ${Number(premium.amount || 0).toLocaleString("en-IN")} for policy ${premium.policyNumber} was verified successfully. Receipt: ${premium.receiptNumber}.`,
+      type: "Payment Successful",
+      date: premium.paidDate,
+      reference: premium.receiptNumber,
+      actionLabel: "View receipt",
+      actionUrl: "/premiums",
+    });
+    req.app.get("io").to(`user:${String(req.user.id)}`).emit("newNotification", notification);
 
     res.json({ message: "Renewal premium verified", premium, nextPremiumDate: nextDue?.dueDate || null });
   } catch (error) {
