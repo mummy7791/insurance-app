@@ -56,6 +56,61 @@ const pickClaimUpdateFields = (body = {}) => {
   return payload;
 };
 
+const buildVerificationCode = (claim) => {
+  const claimRef = claim.claimNumber || String(claim._id);
+  const receiptNo = `SL-CSR-${String(claimRef).replace(/^CLM-/, "").slice(-18)}`;
+  const verificationText = [
+    receiptNo,
+    claimRef,
+    claim.policyNumber,
+    claim.settlementReference || "-",
+    claim.settlementAmount || 0,
+  ].join("|");
+  let hash = 2166136261;
+  for (let i = 0; i < verificationText.length; i += 1) {
+    hash ^= verificationText.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return {
+    receiptNo,
+    verificationCode: `SLV-${(hash >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
+  };
+};
+
+// Public receipt verification endpoint. It exposes only settlement receipt fields.
+router.get("/verify/:claimNumber", async (req, res) => {
+  try {
+    const claim = await Claim.findOne({ claimNumber: req.params.claimNumber }).lean();
+    if (!claim || claim.status !== "Settled") {
+      return res.status(404).json({ verified: false, message: "Settlement receipt not found" });
+    }
+
+    const { receiptNo, verificationCode } = buildVerificationCode(claim);
+    const suppliedCode = String(req.query.code || "").trim().toUpperCase();
+    if (!suppliedCode || suppliedCode !== verificationCode) {
+      return res.status(400).json({ verified: false, message: "Invalid verification code" });
+    }
+
+    return res.json({
+      verified: true,
+      receiptNo,
+      verificationCode,
+      customerName: claim.customerName,
+      policyNumber: claim.policyNumber,
+      claimNumber: claim.claimNumber,
+      claimType: claim.claimType,
+      claimAmount: claim.claimAmount,
+      settlementAmount: claim.settlementAmount,
+      settlementDate: claim.settlementDate,
+      settlementReference: claim.settlementReference,
+      status: claim.status,
+    });
+  } catch (error) {
+    console.error("Claim verification error:", error);
+    return res.status(500).json({ verified: false, message: "Receipt verification failed" });
+  }
+});
+
 router.post("/", auth(), async (req, res) => {
   try {
     const policy = await Policy.findOne({ policyNumber: req.body.policyNumber });
