@@ -347,7 +347,7 @@ export default function Premiums() {
         ) : premiums.length === 0 ? (
           <p>No premium records found.</p>
         ) : (
-          <table className="table">
+          <div className={isCustomer ? "premium-table-wrap" : "table-wrap"}><table className={`table ${isCustomer ? "premium-table" : ""}`}>
             <thead>
               <tr>
                 <th>Customer</th>
