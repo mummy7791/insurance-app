@@ -1337,3 +1337,24 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 .kyc-upload em{font-style:normal;font-size:10px;color:#94a3b8}
 .kyc-upload input{position:absolute;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
 @media(max-width:650px){.kyc-upload-grid{grid-template-columns:1fr}}
+
+
+/* ===== KYC DOCUMENT VAULT CLARITY ===== */
+.kyc-documents-section{overflow:hidden;padding:28px 30px}
+.kyc-documents-section .section-heading-row{align-items:flex-start;margin-bottom:12px}
+.kyc-status-note{max-width:760px;margin:8px 0 0;color:#64748b;font-size:13px;line-height:1.6}
+.kyc-status-note strong{color:#9f1239}
+.kyc-table-wrap{width:100%;overflow-x:auto;border:1px solid #f1e2d7;border-radius:16px;background:#fff;margin-top:14px}
+.kyc-documents-table{min-width:1180px;table-layout:fixed}
+.kyc-documents-table th,.kyc-documents-table td{padding:16px 14px;vertical-align:middle;line-height:1.35;overflow-wrap:anywhere}
+.kyc-documents-table th{font-size:12px;letter-spacing:.4px;color:#334155;background:#f8fafc}
+.kyc-documents-table th:nth-child(1),.kyc-documents-table td:nth-child(1){width:14%}
+.kyc-documents-table th:nth-child(2),.kyc-documents-table td:nth-child(2){width:18%}
+.kyc-documents-table th:nth-child(3),.kyc-documents-table td:nth-child(3){width:11%}
+.kyc-documents-table th:nth-child(4),.kyc-documents-table td:nth-child(4){width:15%}
+.kyc-documents-table th:nth-child(5),.kyc-documents-table td:nth-child(5){width:9%}
+.kyc-documents-table th:nth-child(6),.kyc-documents-table td:nth-child(6){width:10%}
+.kyc-documents-table th:nth-child(7),.kyc-documents-table td:nth-child(7){width:23%}
+.kyc-documents-table .mini-btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.kyc-remarks{min-width:190px;padding:10px 12px;border-radius:11px;background:#fff8f3;border:1px solid #fed7aa;color:#7c2d12;font-size:12px;font-weight:700;line-height:1.45}
+@media(max-width:768px){.kyc-documents-section{padding:20px 14px!important}.kyc-documents-section .section-heading-row{flex-direction:column}.kyc-documents-table{min-width:1100px}}
