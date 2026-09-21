@@ -27,6 +27,7 @@ type Claim = {
   claimNumber?: string;
   settlementAmount?: number;
   settlementDate?: string;
+  settlementReference?: string;
 };
 
 type ClaimForm = {
@@ -51,6 +52,7 @@ export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ClaimForm>(initialForm);
+  const [settlingId, setSettlingId] = useState<string | null>(null);
   const [customerPolicies, setCustomerPolicies] = useState<Array<{ policyNumber: string; planName?: string }>>([]);
   let user: { role?: string; name?: string } = {};
   try { user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { role?: string; name?: string }; } catch { user = {}; }
@@ -135,8 +137,24 @@ export default function Claims() {
 
   const updateStatus = async (id: string, status: ClaimStatus) => {
     try {
+      let settlement: Record<string, string | number> = {};
+      if (status === "Settled") {
+        const claim = claims.find((item) => item._id === id);
+        const amountText = window.prompt("Settlement Amount", String(claim?.claimAmount || ""));
+        if (amountText === null) return;
+        const amount = Number(amountText);
+        if (!Number.isFinite(amount) || amount <= 0) { alert("Enter a valid settlement amount"); return; }
+        const date = window.prompt("Settlement Date (YYYY-MM-DD)", new Date().toISOString().split("T")[0]);
+        if (!date) return;
+        const reference = window.prompt("Transaction / Reference ID");
+        if (!reference?.trim()) { alert("Transaction / Reference ID required"); return; }
+        const remarks = window.prompt("Admin Remarks", claim?.remarks === "No remarks" ? "Claim settled successfully" : claim?.remarks || "Claim settled successfully");
+        settlement = { settlementAmount: amount, settlementDate: date, settlementReference: reference.trim(), remarks: remarks?.trim() || "Claim settled successfully" };
+        setSettlingId(id);
+      }
       const res = await api.put<Claim>(`/claims/${id}`, {
         status,
+        ...settlement,
       });
 
       setClaims((prev) =>
@@ -145,7 +163,20 @@ export default function Claims() {
     } catch (error) {
       console.error("Claim status update error:", error);
       alert("Claim status update failed");
+    } finally {
+      setSettlingId(null);
     }
+  };
+
+  const downloadSettlementReceipt = (claim: Claim) => {
+    const receipt = `SECURELIFE INSURANCE\nCLAIM SETTLEMENT RECEIPT\n\nClaim Reference: ${claim.claimNumber || claim._id}\nPolicy Number: ${claim.policyNumber}\nCustomer: ${claim.customerName}\nClaim Type: ${claim.claimType}\nClaim Amount: ₹${Number(claim.claimAmount || 0).toLocaleString("en-IN")}\nSettlement Amount: ₹${Number(claim.settlementAmount || 0).toLocaleString("en-IN")}\nSettlement Date: ${claim.settlementDate || "-"}\nTransaction / Reference ID: ${claim.settlementReference || "-"}\nStatus: ${claim.status}\nRemarks: ${claim.remarks || "-"}\n\nThis is a system-generated settlement acknowledgement.`;
+    const blob = new Blob([receipt], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${claim.claimNumber || "claim"}-settlement-receipt.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const deleteClaim = async (id: string) => {
@@ -266,7 +297,7 @@ export default function Claims() {
           <p>No claims found.</p>
         ) : (
           <>
-          {isCustomer && <div className="claim-mobile-list">{claims.map((claim) => { const current = claim.status === "Rejected" ? 1 : claimStages.indexOf(claim.status); return <article className="claim-track-card" key={`track-${claim._id}`}><div className="claim-track-head"><div><span className="eyebrow">{claim.claimType}</span><h3>{claim.policyNumber}</h3>{claim.claimNumber && <small>{claim.claimNumber}</small>}</div><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></div><div className="claim-timeline">{claimStages.map((stage, index) => <div className={`${index <= current && claim.status !== "Rejected" ? "complete" : ""} ${stage === claim.status ? "current" : ""}`} key={stage}><i>{index < current ? "✓" : index + 1}</i><span>{stage}</span></div>)}</div>{claim.status === "Rejected" && <div className="claim-rejected">Claim requires attention: {claim.remarks || "Please contact support."}</div>}<p className="claim-note">{claim.remarks || "We will show service updates here."}</p></article>; })}</div>}
+          {isCustomer && <div className="claim-mobile-list">{claims.map((claim) => { const current = claim.status === "Rejected" ? 1 : claimStages.indexOf(claim.status); return <article className="claim-track-card" key={`track-${claim._id}`}><div className="claim-track-head"><div><span className="eyebrow">{claim.claimType}</span><h3>{claim.policyNumber}</h3>{claim.claimNumber && <small>{claim.claimNumber}</small>}</div><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></div><div className="claim-timeline">{claimStages.map((stage, index) => <div className={`${index <= current && claim.status !== "Rejected" ? "complete" : ""} ${stage === claim.status ? "current" : ""}`} key={stage}><i>{index < current ? "✓" : index + 1}</i><span>{stage}</span></div>)}</div>{claim.status === "Rejected" && <div className="claim-rejected">Claim requires attention: {claim.remarks || "Please contact support."}</div>}<p className="claim-note">{claim.remarks || "We will show service updates here."}</p>{claim.status === "Settled" && <div className="claim-settlement"><strong>Settlement ₹{Number(claim.settlementAmount || 0).toLocaleString("en-IN")}</strong><span>{claim.settlementDate || "-"}</span><span>Ref: {claim.settlementReference || "-"}</span><button className="mini-btn" onClick={() => downloadSettlementReceipt(claim)}>Download Settlement Receipt</button></div>}</article>; })}</div>}
           <table className={`table ${isCustomer ? "customer-claim-table" : ""}`}>
             <thead>
               <tr>
@@ -290,11 +321,11 @@ export default function Claims() {
                   <td><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></td>
                   <td>{claim.submittedDate}</td>
                   <td>{isCustomer ? <span className="status-pill due">{claim.status}</span> : (
-                    <select className="status-select" value={claim.status} onChange={(e) => updateStatus(claim._id, e.target.value as ClaimStatus)}>
+                    <select className="status-select" value={claim.status} disabled={settlingId === claim._id} onChange={(e) => updateStatus(claim._id, e.target.value as ClaimStatus)}>
                       <option value="Submitted">Submitted</option><option value="Under Review">Under Review</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Settled">Settled</option>
                     </select>
                   )}</td>
-                  <td>{claim.remarks}</td>
+                  <td>{claim.remarks}{isCustomer && claim.status === "Settled" && <><br/><button className="mini-btn" onClick={() => downloadSettlementReceipt(claim)}>Download Receipt</button></>}</td>
                   {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deleteClaim(claim._id)}>Delete</button></td>}
                 </tr>
               ))}
