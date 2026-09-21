@@ -1,7 +1,8 @@
 const router = require("express").Router();
 const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
-const Policy = require("../models/Policy");\nconst PlanPurchase = require("../models/PlanPurchase");
+const Policy = require("../models/Policy");
+const PlanPurchase = require("../models/PlanPurchase");
 
 const STAFF_ROLES = [
   "admin",
