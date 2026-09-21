@@ -112,14 +112,68 @@ export default function Policies() {
     return y;
   };
 
-  const addPdfFooter = (doc: jsPDF, note: string) => {
+  const addPdfFooter = (doc: jsPDF, note: string, page = 1) => {
     doc.setDrawColor(226, 232, 240);
     doc.line(18, 270, 192, 270);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
     doc.text(note, 18, 278, { maxWidth: 174 });
-    doc.text("Generated securely from the authenticated SecureLife customer portal.", 18, 287);
+    doc.text(`SecureLife Insurance | Established 1990 | Page ${page}`, 18, 287);
+  };
+
+  const addPolicyTermsPage = (doc: jsPDF, plan: PurchasedPlan) => {
+    doc.addPage();
+    addPdfHeader(doc, "Policy Highlights & Terms", `Policy: ${plan.policyNumber || "N/A"}`);
+    let y = 73;
+
+    doc.setFillColor(255, 247, 237);
+    doc.roundedRect(18, y - 7, 174, 28, 3, 3, "F");
+    doc.setTextColor(154, 52, 18);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("POLICY HIGHLIGHTS", 24, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Claim settlement ratio: 99.8% (company-stated)", 24, y + 8);
+    doc.text("SecureLife Insurance - Established 1990", 24, y + 15);
+    y += 35;
+
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Terms & Conditions", 18, y);
+    y += 8;
+
+    const terms = [
+      "Coverage is subject to the selected plan benefits, limits, exclusions and the information accepted at proposal stage.",
+      "The policy becomes active only after successful payment verification and policy issuance in the SecureLife customer portal.",
+      "Claims must be submitted with the required supporting documents and are subject to policy terms, eligibility, exclusions and verification.",
+      "Premium, coverage, payment term, nominee and validity shown on this certificate form part of the digital policy summary.",
+      "Non-disclosure, misrepresentation, fraud or invalid documentation may affect claim assessment or policy benefits as permitted by applicable terms and law.",
+      "Renewal, cancellation, refund, grace period and free-look benefits, where applicable, are governed by the issued plan terms and applicable requirements.",
+      "This certificate is a digitally generated summary. Detailed plan wording and any applicable endorsements should be read together with this certificate.",
+    ];
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    terms.forEach((term, index) => {
+      const lines = doc.splitTextToSize(`${index + 1}. ${term}`, 168);
+      doc.text(lines, 22, y);
+      y += lines.length * 5 + 4;
+    });
+
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(18, 226, 174, 28, 3, 3, "F");
+    doc.setTextColor(22, 101, 52);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Customer support", 24, 237);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text("Use the Help & Support and Claims sections in your authenticated SecureLife portal.", 24, 245, { maxWidth: 160 });
+
+    addPdfFooter(doc, "Policy terms should be read with the selected plan details and any applicable endorsements.", 2);
   };
 
   const downloadReceipt = (plan: PurchasedPlan) => {
@@ -176,7 +230,8 @@ export default function Policies() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.text("POLICY ISSUED & PAYMENT VERIFIED", 24, y + 16);
-    addPdfFooter(doc, "This digitally generated certificate summarizes the policy and verified payment information available in your SecureLife account.");
+    addPdfFooter(doc, "This digitally generated certificate summarizes the policy and verified payment information available in your SecureLife account.", 1);
+    addPolicyTermsPage(doc, plan);
     doc.save(`${plan.policyNumber}-Policy-Certificate.pdf`);
   };
 
