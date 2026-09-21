@@ -126,15 +126,15 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
 
     if (payload.status === "Settled") {
       const amount = Number(payload.settlementAmount);
-      if (!Number.isFinite(amount) || amount <= 0) {
-        return res.status(400).json({ message: "Settlement amount is required" });
-      }
-      if (!payload.settlementDate) {
-        return res.status(400).json({ message: "Settlement date is required" });
-      }
-      if (!String(payload.settlementReference || "").trim()) {
-        return res.status(400).json({ message: "Settlement reference is required" });
-      }
+      payload.settlementAmount =
+        Number.isFinite(amount) && amount > 0 ? amount : Number(claim.claimAmount || 0);
+      payload.settlementDate =
+        payload.settlementDate || new Date().toISOString().split("T")[0];
+      payload.settlementReference =
+        String(payload.settlementReference || "").trim() ||
+        `SET-${claim.claimNumber || claim._id}-${Date.now()}`;
+      payload.remarks =
+        String(payload.remarks || "").trim() || "Claim settled successfully";
     }
 
     Object.assign(claim, payload);
