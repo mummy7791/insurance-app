@@ -18,6 +18,16 @@ type Premium = {
   status: PremiumStatus;
 };
 
+type CashfreeInstance = {
+  checkout: (options: { paymentSessionId: string; redirectTarget: "_self" }) => Promise<{ error?: { message?: string } }>;
+};
+
+declare global {
+  interface Window {
+    Cashfree?: (options: { mode: "production" | "sandbox" }) => CashfreeInstance;
+  }
+}
+
 type PremiumForm = {
   customerName: string;
   policyNumber: string;
@@ -40,6 +50,7 @@ export default function Premiums() {
   const [premiums, setPremiums] = useState<Premium[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PremiumForm>(initialForm);
+  const [payingId, setPayingId] = useState("");
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
 
@@ -61,8 +72,65 @@ export default function Premiums() {
   }, []);
 
   useEffect(() => {
-    void loadPremiums();
+    const script = document.createElement("script");
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) document.body.removeChild(script);
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("cf_renewal_order_id");
+    const premiumId = params.get("premium_id");
+
+    const verifyReturnedPayment = async () => {
+      if (!orderId || !premiumId) {
+        await loadPremiums();
+        return;
+      }
+      try {
+        setPayingId(premiumId);
+        await api.post(`/premiums/${premiumId}/verify-payment`, { orderId });
+        window.history.replaceState({}, "", "/premiums");
+        await loadPremiums();
+        alert("Premium paid successfully. Your receipt is ready.");
+      } catch (error) {
+        console.error("Renewal verification error:", error);
+        alert("Payment verification failed. If money was debited, do not pay again. Refresh and check the premium status.");
+      } finally {
+        setPayingId("");
+      }
+    };
+
+    void verifyReturnedPayment();
   }, [loadPremiums]);
+
+  const payPremium = async (premium: Premium) => {
+    if (!window.Cashfree) {
+      alert("Cashfree checkout is loading. Please try again.");
+      return;
+    }
+    try {
+      setPayingId(premium._id);
+      const res = await api.post<{ paymentSessionId: string }>(`/premiums/${premium._id}/create-payment-order`);
+      const cashfree = window.Cashfree({ mode: "production" });
+      const result = await cashfree.checkout({
+        paymentSessionId: res.data.paymentSessionId,
+        redirectTarget: "_self",
+      });
+      if (result?.error) {
+        alert(result.error.message || "Payment could not be started");
+        setPayingId("");
+      }
+    } catch (error) {
+      console.error("Renewal payment start error:", error);
+      alert("Renewal payment could not be started");
+      setPayingId("");
+    }
+  };
 
   const addPremium = async () => {
     if (!form.customerName || !form.policyNumber || !form.amount || !form.dueDate) {
@@ -223,7 +291,7 @@ export default function Premiums() {
                 <th>Mode</th>
                 <th>Receipt</th>
                 <th>Status</th>
-                {isCustomer && <th>Receipt PDF</th>}
+                {isCustomer && <th>Payment / Receipt</th>}
                 {!isCustomer && <th>Action</th>}
               </tr>
             </thead>
@@ -243,7 +311,7 @@ export default function Premiums() {
                       <option value="Due">Due</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option>
                     </select>
                   )}</td>
-                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download</button> : "-"}</td>}
+                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : <button className="btn small-btn" disabled={payingId === premium._id} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
                   {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deletePremium(premium._id)}>Delete</button></td>}
                 </tr>
               ))}
