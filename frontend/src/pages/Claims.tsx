@@ -169,7 +169,7 @@ export default function Claims() {
     }
   };
 
-  const downloadSettlementReceipt = (claim: Claim) => {
+  const downloadSettlementReceipt = async (claim: Claim) => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
@@ -305,8 +305,7 @@ export default function Claims() {
       y += rowH;
     });
 
-    // QR-style verification seal. Encodes a deterministic verification fingerprint
-    // from the receipt data without requiring an external QR dependency.
+    // Real scannable QR: points to the public verification page.
     const verificationText = [receiptNo, claimRef, claim.policyNumber, claim.settlementReference || "-", claim.settlementAmount || 0].join("|");
     let verificationHash = 2166136261;
     for (let i = 0; i < verificationText.length; i += 1) {
@@ -314,29 +313,37 @@ export default function Claims() {
       verificationHash = Math.imul(verificationHash, 16777619);
     }
     const verificationCode = `SLV-${(verificationHash >>> 0).toString(16).toUpperCase().padStart(8, "0")}`;
-    const qrSize = 21;
+    const verificationUrl = `${window.location.origin}/verify-claim?claim=${encodeURIComponent(String(claimRef))}&code=${encodeURIComponent(verificationCode)}`;
     const qrX = 164;
-    const qrY = 224;
-    const cell = 1.25;
-    const bitAt = (row: number, col: number) => {
-      const seed = (verificationHash ^ Math.imul(row + 11, 2654435761) ^ Math.imul(col + 17, 2246822519)) >>> 0;
-      return ((seed >>> ((row + col) % 24)) & 1) === 1;
-    };
-    const finder = (r0: number, c0: number) => {
-      for (let r = 0; r < 7; r += 1) for (let col = 0; col < 7; col += 1) {
-        const on = r === 0 || r === 6 || col === 0 || col === 6 || (r >= 2 && r <= 4 && col >= 2 && col <= 4);
-        if (on) pdf.rect(qrX + (c0 + col) * cell, qrY + (r0 + r) * cell, cell, cell, "F");
-      }
-    };
+    const qrY = 220;
+    const qrBox = 27;
+
     pdf.setFillColor(255, 255, 255);
     pdf.setDrawColor(226, 232, 240);
-    pdf.roundedRect(157, 218, 37, 28, 2, 2, "FD");
-    pdf.setFillColor(15, 23, 42);
-    for (let r = 0; r < qrSize; r += 1) for (let col = 0; col < qrSize; col += 1) {
-      const inFinder = (r < 7 && col < 7) || (r < 7 && col >= 14) || (r >= 14 && col < 7);
-      if (!inFinder && bitAt(r, col)) pdf.rect(qrX + col * cell, qrY + r * cell, cell, cell, "F");
+    pdf.roundedRect(157, 218, 37, 29, 2, 2, "FD");
+
+    try {
+      const qrResponse = await fetch(`https://quickchart.io/qr?size=220&margin=1&text=${encodeURIComponent(verificationUrl)}`);
+      if (!qrResponse.ok) throw new Error("QR service unavailable");
+      const qrBlob = await qrResponse.blob();
+      const qrDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Unable to read QR image"));
+        reader.readAsDataURL(qrBlob);
+      });
+      pdf.addImage(qrDataUrl, "PNG", qrX, qrY, qrBox, qrBox);
+      pdf.link(qrX, qrY, qrBox, qrBox, { url: verificationUrl });
+    } catch (error) {
+      console.error("Receipt QR generation error:", error);
+      pdf.setTextColor(166, 10, 38);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
+      pdf.text("VERIFY ONLINE", qrX + qrBox / 2, qrY + 12, { align: "center" });
+      pdf.setFontSize(5.5);
+      pdf.text("Use verification code", qrX + qrBox / 2, qrY + 17, { align: "center" });
     }
-    finder(0, 0); finder(0, 14); finder(14, 0);
+
     pdf.setTextColor(71, 85, 105);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(6.2);
@@ -348,8 +355,8 @@ export default function Claims() {
     pdf.text(verificationCode, 134, 236);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(5.8);
-    pdf.text("Match this code with the", 134, 241);
-    pdf.text("receipt record for validation.", 134, 244.5);
+    pdf.text("Scan QR to validate this", 134, 241);
+    pdf.text("settlement receipt online.", 134, 244.5);
 
     // Important note
     pdf.setFillColor(255, 251, 235);
