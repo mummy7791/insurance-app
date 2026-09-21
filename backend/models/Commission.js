@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 
 const commissionSchema = new mongoose.Schema(
   {
+    advisorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
+    advisorCode: { type: String, default: "" },
+
     employeeName: {
       type: String,
       required: true,
