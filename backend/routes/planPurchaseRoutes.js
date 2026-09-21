@@ -374,6 +374,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
     purchase.startDate = purchase.startDate || new Date();
+    purchase.totalPremiumPayable = amount * Number(plan.paymentYears || 1);
 
     if (!purchase.endDate) {
       const endDate = new Date();
@@ -381,6 +382,15 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
         endDate.getFullYear() + Number(plan.paymentYears || 1)
       );
       purchase.endDate = endDate;
+    }
+
+    const paymentYears = Math.max(1, Number(plan.paymentYears || 1));
+    if (paymentYears > 1) {
+      const nextPremiumDate = new Date(purchase.startDate);
+      nextPremiumDate.setFullYear(nextPremiumDate.getFullYear() + 1);
+      purchase.nextPremiumDate = nextPremiumDate;
+    } else {
+      purchase.nextPremiumDate = null;
     }
 
     await purchase.save();
@@ -421,6 +431,24 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    for (let year = 2; year <= paymentYears; year += 1) {
+      const dueDate = new Date(purchase.startDate);
+      dueDate.setFullYear(dueDate.getFullYear() + year - 1);
+      await Premium.findOneAndUpdate(
+        { policyNumber, dueDate: dueDate.toISOString().split("T")[0] },
+        {
+          customerName: purchase.proposal?.customerName || customer?.name || "Customer",
+          policyNumber,
+          amount,
+          dueDate: dueDate.toISOString().split("T")[0],
+          paymentMode: "UPI",
+          status: "Due",
+          createdBy: req.user.id,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
 
     res.status(201).json({
       message: "Payment verified. Plan is active.",
@@ -513,7 +541,7 @@ router.get("/my-plans", auth(["customer"]), async (req, res) => {
 
     const customerPlans = await PlanPurchase.find({ customerId: req.user.id })
       .select(
-        "_id planId planName category coverageAmount yearlyPremium paymentYears paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate proposal.customerName proposal.nomineeName proposal.nomineeRelation createdAt"
+        "_id planId planName category coverageAmount yearlyPremium paymentYears totalPremiumPayable nextPremiumDate paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate proposal.customerName proposal.nomineeName proposal.nomineeRelation createdAt"
       )
       .sort({ createdAt: -1 })
       .lean();
