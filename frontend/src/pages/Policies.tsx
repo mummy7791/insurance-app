@@ -15,7 +15,7 @@ type Policy = {
   status: "pending" | "active" | "rejected" | "closed" | "expired";
 };
 
-type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
+type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
 
 type PolicyForm = {
   customerName: string;
@@ -145,6 +145,16 @@ export default function Policies() {
     doc.text("Terms & Conditions", 18, y);
     y += 8;
 
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(`Premium schedule: INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")} x ${plan.paymentYears || 1} year(s) = INR ${Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}`, 18, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text("Savings/maturity value is shown only when the selected plan has a defined maturity benefit; insurance cover is not treated as guaranteed savings.", 18, y, { maxWidth: 174 });
+    y += 15;
+
     const terms = [
       "Coverage is subject to the selected plan benefits, limits, exclusions and the information accepted at proposal stage.",
       "The policy becomes active only after successful payment verification and policy issuance in the SecureLife customer portal.",
@@ -218,6 +228,8 @@ export default function Policies() {
       ["Life / Benefit Cover", `INR ${Number(plan.coverageAmount || 0).toLocaleString("en-IN")}`],
       ["Annual Premium", `INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`],
       ["Payment Term", `${plan.paymentYears || 1} year(s)`],
+      ["Total Premium Payable", `INR ${Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}`],
+      ["Next Premium Date", plan.nextPremiumDate ? new Date(plan.nextPremiumDate).toLocaleDateString("en-IN") : "No further premium due"],
       ["Policy Status", plan.policyStatus],
       ["Payment Status", plan.paymentStatus],
       ["Nominee", `${plan.proposal?.nomineeName || "N/A"}${plan.proposal?.nomineeRelation ? ` (${plan.proposal.nomineeRelation})` : ""}`],
@@ -312,7 +324,7 @@ export default function Policies() {
       </div>
       )}
 
-      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions">{plan.paymentStatus === "Paid" && plan.policyNumber ? <button className="btn small-btn" onClick={() => downloadCertificate(plan)}>Download policy certificate</button> : <span className="status-pill due">Certificate after payment</span>}{plan.paymentStatus === "Paid" && plan.receiptNumber && <button className="mini-btn" onClick={() => downloadReceipt(plan)}>Download receipt</button>}</div></div>)}</div></div>}
+      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Total Premium ({plan.paymentYears || 1} years):</b> ₹{Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}</p><p><b>Next Premium:</b> {plan.nextPremiumDate ? new Date(plan.nextPremiumDate).toLocaleDateString("en-IN") : "No further premium due"}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions">{plan.paymentStatus === "Paid" && plan.policyNumber ? <button className="btn small-btn" onClick={() => downloadCertificate(plan)}>Download policy certificate</button> : <span className="status-pill due">Certificate after payment</span>}{plan.paymentStatus === "Paid" && plan.receiptNumber && <button className="mini-btn" onClick={() => downloadReceipt(plan)}>Download receipt</button>}</div></div>)}</div></div>}
 
       <div className="section">
         <h2>{isCustomer ? "Other Assigned Policies" : "Policy List"}</h2>
