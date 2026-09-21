@@ -305,6 +305,52 @@ export default function Claims() {
       y += rowH;
     });
 
+    // QR-style verification seal. Encodes a deterministic verification fingerprint
+    // from the receipt data without requiring an external QR dependency.
+    const verificationText = [receiptNo, claimRef, claim.policyNumber, claim.settlementReference || "-", claim.settlementAmount || 0].join("|");
+    let verificationHash = 2166136261;
+    for (let i = 0; i < verificationText.length; i += 1) {
+      verificationHash ^= verificationText.charCodeAt(i);
+      verificationHash = Math.imul(verificationHash, 16777619);
+    }
+    const verificationCode = `SLV-${(verificationHash >>> 0).toString(16).toUpperCase().padStart(8, "0")}`;
+    const qrSize = 21;
+    const qrX = 164;
+    const qrY = 224;
+    const cell = 1.25;
+    const bitAt = (row: number, col: number) => {
+      const seed = (verificationHash ^ Math.imul(row + 11, 2654435761) ^ Math.imul(col + 17, 2246822519)) >>> 0;
+      return ((seed >>> ((row + col) % 24)) & 1) === 1;
+    };
+    const finder = (r0: number, c0: number) => {
+      for (let r = 0; r < 7; r += 1) for (let col = 0; col < 7; col += 1) {
+        const on = r === 0 || r === 6 || col === 0 || col === 6 || (r >= 2 && r <= 4 && col >= 2 && col <= 4);
+        if (on) pdf.rect(qrX + (c0 + col) * cell, qrY + (r0 + r) * cell, cell, cell, "F");
+      }
+    };
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(226, 232, 240);
+    pdf.roundedRect(157, 218, 37, 28, 2, 2, "FD");
+    pdf.setFillColor(15, 23, 42);
+    for (let r = 0; r < qrSize; r += 1) for (let col = 0; col < qrSize; col += 1) {
+      const inFinder = (r < 7 && col < 7) || (r < 7 && col >= 14) || (r >= 14 && col < 7);
+      if (!inFinder && bitAt(r, col)) pdf.rect(qrX + col * cell, qrY + r * cell, cell, cell, "F");
+    }
+    finder(0, 0); finder(0, 14); finder(14, 0);
+    pdf.setTextColor(71, 85, 105);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(6.2);
+    pdf.text("DOCUMENT VERIFICATION", 134, 224);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6.4);
+    pdf.text("Verification Code", 134, 231);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(verificationCode, 134, 236);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(5.8);
+    pdf.text("Match this code with the", 134, 241);
+    pdf.text("receipt record for validation.", 134, 244.5);
+
     // Important note
     pdf.setFillColor(255, 251, 235);
     pdf.setDrawColor(253, 230, 138);
