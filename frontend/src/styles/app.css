@@ -1264,3 +1264,64 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
     -webkit-overflow-scrolling: touch;
   }
 }
+
+
+/* ===== POLICY & PREMIUM DOWNLOAD ACTION FIX ===== */
+.policy-document-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:16px;
+}
+.policy-download-btn{
+  width:100%;
+  min-height:46px;
+  margin:0;
+  padding:11px 16px;
+  border:0;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:800;
+  text-align:center;
+  white-space:nowrap;
+}
+.policy-download-btn.primary{
+  color:#fff;
+  background:linear-gradient(90deg,var(--icici-red),var(--icici-orange));
+  box-shadow:0 8px 20px rgba(215,25,32,.18);
+}
+.policy-download-btn.secondary{
+  color:var(--icici-dark-red);
+  background:#fff;
+  border:1.5px solid #fecaca;
+}
+.policy-download-btn:hover{transform:translateY(-1px)}
+
+.premium-table td:last-child{
+  padding-left:10px;
+  padding-right:10px;
+}
+.premium-table td:last-child .btn,
+.premium-table td:last-child .mini-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:145px;
+  min-width:0;
+  min-height:42px;
+  padding:9px 10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px;
+  line-height:1.1;
+}
+.premium-table th:nth-child(9),
+.premium-table td:nth-child(9){width:15%}
+
+@media(max-width:650px){
+  .policy-download-btn{white-space:normal}
+}
