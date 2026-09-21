@@ -8,6 +8,8 @@ const { uploadPrivateDocument, signedDownloadUrl, deletePrivateDocument } = requ
 const Document = require("../models/Document");
 const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
+const User = require("../models/User");
+const { sendEmail } = require("../services/gmailService");
 
 const router = express.Router();
 
@@ -55,7 +57,37 @@ const syncPolicyKycStatus = async (policyNumber) => {
   const allVerified = requiredStatuses.every((status) => status === "Verified");
   policy.kycStatus = hasRejected ? "Action Required" : allVerified ? "Verified" : "Pending";
   policy.kycVerifiedAt = allVerified ? (policy.kycVerifiedAt || new Date()) : null;
+  const previousStatus = policy.kycStatus;
   await policy.save();
+
+  if (previousStatus !== policy.kycStatus && policy.customerId) {
+    try {
+      const customer = await User.findById(policy.customerId).select("name email");
+      if (customer?.email) {
+        const verified = policy.kycStatus === "Verified";
+        const actionRequired = policy.kycStatus === "Action Required";
+        const subject = verified
+          ? `KYC Verified - ${policy.policyNumber}`
+          : actionRequired
+            ? `KYC Action Required - ${policy.policyNumber}`
+            : `KYC Status Updated - ${policy.policyNumber}`;
+        const statusMessage = verified
+          ? "Your required KYC documents have been verified successfully."
+          : actionRequired
+            ? "One or more required KYC documents need your attention. Please sign in to review the remarks and re-upload any rejected document."
+            : "Your KYC documents are currently under verification.";
+        await sendEmail({
+          to: customer.email,
+          subject,
+          text: `${statusMessage} Policy: ${policy.policyNumber}. KYC status: ${policy.kycStatus}.`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#172033"><h2 style="color:#b3132b">SecureLife Insurance</h2><p>Hello ${customer.name || policy.customerName || "Customer"},</p><p>${statusMessage}</p><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:18px 0"><b>Policy Number:</b> ${policy.policyNumber}<br/><b>KYC Status:</b> ${policy.kycStatus}</div><p>Please use your authenticated SecureLife customer portal for document status and next steps.</p></div>`,
+        });
+      }
+    } catch (mailError) {
+      console.error("KYC status email failed:", mailError);
+    }
+  }
+
   return policy.kycStatus;
 };
 
@@ -415,6 +447,7 @@ router.patch("/:id/review", auth(STAFF_ROLES), async (req, res) => {
     document.reviewedBy = req.user.id;
     document.reviewedAt = new Date();
     await document.save();
+    await syncPolicyKycStatus(document.policyNumber);
 
     return res.json(document);
   } catch (error) {
@@ -468,6 +501,7 @@ router.post("/:id/reupload", auth(["customer"]), (req, res, next) => {
     document.reviewedBy = undefined;
     document.reviewedAt = undefined;
     await document.save();
+    await syncPolicyKycStatus(document.policyNumber);
     if (oldStorageKey) await deletePrivateDocument(oldStorageKey);
 
     return res.json(document);
