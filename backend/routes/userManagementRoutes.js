@@ -1,3 +1,4 @@
+const bcrypt = require("bcryptjs");
 const express = require("express");
 const router = express.Router();
 
@@ -11,17 +12,18 @@ const allowedRoles = [
   "unit_manager",
   "agency_manager",
   "agent",
+  "advisor",
 ];
 
 const allowedStatus = ["active", "blocked"];
 
 router.post("/", auth(["admin"]), async (req, res) => {
   try {
-    const { name, email, role, status } = req.body;
+    const { name, email, role, status, phone, advisorCode, address, password } = req.body;
 
-    if (!name || !email || !role) {
+    if (!name || !email || !role || (role === "advisor" && (!phone || !advisorCode || !password))) {
       return res.status(400).json({
-        message: "Name, email and role are required",
+        message: role === "advisor" ? "Name, email, phone, advisor code and password are required" : "Name, email and role are required",
       });
     }
 
@@ -43,12 +45,19 @@ router.post("/", auth(["admin"]), async (req, res) => {
       });
     }
 
+    const hashedPassword = password ? await bcrypt.hash(String(password), 10) : await bcrypt.hash("ChangeMe123", 10);
+
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
-      password: "email-otp-login",
+      phone: phone || "",
+      advisorCode: advisorCode || "",
+      address: address || "",
+      password: hashedPassword,
       role,
       status: status || "active",
+      isEmailVerified: role === "advisor",
+      permissions: role === "advisor" ? ["plans", "commission", "profile"] : [],
     });
 
     await createAuditLog({
@@ -65,6 +74,9 @@ router.post("/", auth(["admin"]), async (req, res) => {
       email: user.email,
       role: user.role,
       status: user.status,
+      phone: user.phone,
+      advisorCode: user.advisorCode,
+      address: user.address,
       createdAt: user.createdAt,
     });
   } catch (error) {
