@@ -80,7 +80,7 @@ export default function Claims() {
     if (!isCustomer) return;
 
     api
-      .get<Array<{ policyNumber?: string; planName?: string }>>("/plan-purchases/my")
+      .get<Array<{ policyNumber?: string; planName?: string }>>("/plan-purchases/my-plans")
       .then((res) => {
         const policies = res.data
           .filter((purchase) => purchase.policyNumber)
@@ -122,7 +122,11 @@ export default function Claims() {
       });
 
       setClaims((prev) => [res.data, ...prev]);
-      setForm(initialForm);
+      setForm({
+        ...initialForm,
+        customerName: isCustomer ? user.name || "" : "",
+        policyNumber: isCustomer && customerPolicies.length ? customerPolicies[0].policyNumber : "",
+      });
     } catch (error) {
       console.error("Claim add error:", error);
       alert("Claim add failed");
@@ -192,6 +196,7 @@ export default function Claims() {
           <input
             placeholder="Customer Name"
             value={form.customerName}
+            readOnly={isCustomer}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, customerName: e.target.value }))
             }
