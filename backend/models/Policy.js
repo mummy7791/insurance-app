@@ -53,7 +53,7 @@ const policySchema = new mongoose.Schema(
       ref: "User",
     },
 
-    verificationToken: {
+    kycStatus: {\n      type: String,\n      enum: ["Pending", "Verified", "Action Required"],\n      default: "Pending",\n      index: true,\n    },\n\n    kycVerifiedAt: { type: Date, default: null },\n\n    verificationToken: {
       type: String,
       unique: true,
       sparse: true,
