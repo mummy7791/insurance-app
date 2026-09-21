@@ -47,9 +47,9 @@ const initialForm: ClaimForm = {
 export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<ClaimForm>(initialForm);
-  let user: { role?: string } = {};
-  try { user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { role?: string }; } catch { user = {}; }
+  const [form, setForm] = useState<ClaimForm>(initialForm);\n  const [customerPolicies, setCustomerPolicies] = useState<Array<{ policyNumber: string; planName?: string }>>([]);
+  let user: { role?: string; name?: string } = {};
+  try { user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { role?: string; name?: string }; } catch { user = {}; }
   const claimStages: ClaimStatus[] = ["Submitted", "Under Review", "Approved", "Settled"];
   const isCustomer = user.role === "customer" || !user.role;
 
@@ -167,13 +167,13 @@ export default function Claims() {
             }
           />
 
-          <input
-            placeholder="Policy Number"
-            value={form.policyNumber}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, policyNumber: e.target.value }))
-            }
-          />
+          {isCustomer && customerPolicies.length ? (
+            <select value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))}>
+              {customerPolicies.map((p) => <option key={p.policyNumber} value={p.policyNumber}>{p.policyNumber}{p.planName ? ` - ${p.planName}` : ""}</option>)}
+            </select>
+          ) : (
+            <input placeholder="Policy Number" value={form.policyNumber} onChange={(e) => setForm((prev) => ({ ...prev, policyNumber: e.target.value }))} />
+          )}
 
           <select
             value={form.claimType}
@@ -231,7 +231,7 @@ export default function Claims() {
           <p>No claims found.</p>
         ) : (
           <>
-          {isCustomer && <div className="claim-mobile-list">{claims.map((claim) => { const current = claim.status === "Rejected" ? 1 : claimStages.indexOf(claim.status); return <article className="claim-track-card" key={`track-${claim._id}`}><div className="claim-track-head"><div><span className="eyebrow">{claim.claimType}</span><h3>{claim.policyNumber}</h3></div><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></div><div className="claim-timeline">{claimStages.map((stage, index) => <div className={`${index <= current && claim.status !== "Rejected" ? "complete" : ""} ${stage === claim.status ? "current" : ""}`} key={stage}><i>{index < current ? "✓" : index + 1}</i><span>{stage}</span></div>)}</div>{claim.status === "Rejected" && <div className="claim-rejected">Claim requires attention: {claim.remarks || "Please contact support."}</div>}<p className="claim-note">{claim.remarks || "We will show service updates here."}</p></article>; })}</div>}
+          {isCustomer && <div className="claim-mobile-list">{claims.map((claim) => { const current = claim.status === "Rejected" ? 1 : claimStages.indexOf(claim.status); return <article className="claim-track-card" key={`track-${claim._id}`}><div className="claim-track-head"><div><span className="eyebrow">{claim.claimType}</span><h3>{claim.policyNumber}</h3>{claim.claimNumber && <small>{claim.claimNumber}</small>}</div><strong>₹{Number(claim.claimAmount || 0).toLocaleString("en-IN")}</strong></div><div className="claim-timeline">{claimStages.map((stage, index) => <div className={`${index <= current && claim.status !== "Rejected" ? "complete" : ""} ${stage === claim.status ? "current" : ""}`} key={stage}><i>{index < current ? "✓" : index + 1}</i><span>{stage}</span></div>)}</div>{claim.status === "Rejected" && <div className="claim-rejected">Claim requires attention: {claim.remarks || "Please contact support."}</div>}<p className="claim-note">{claim.remarks || "We will show service updates here."}</p></article>; })}</div>}
           <table className={`table ${isCustomer ? "customer-claim-table" : ""}`}>
             <thead>
               <tr>
