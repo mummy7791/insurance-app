@@ -3,6 +3,8 @@ const router = express.Router();
 
 const Notification = require("../models/Notification");
 const User = require("../models/User");
+const Premium = require("../models/Premium");
+const Policy = require("../models/Policy");
 const auth = require("../middleware/auth");
 
 const STAFF_ROLES = ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"];
@@ -68,6 +70,44 @@ router.post("/", auth(STAFF_ROLES), async (req, res) => {
 
 router.get("/", auth(), async (req, res) => {
   try {
+    if (!isStaff(req.user)) {
+      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber").lean();
+      const policyNumbers = policies.map((policy) => policy.policyNumber).filter(Boolean);
+      if (policyNumbers.length) {
+        const today = new Date();
+        const reminderUntil = new Date(today);
+        reminderUntil.setDate(reminderUntil.getDate() + 30);
+        const from = today.toISOString().split("T")[0];
+        const to = reminderUntil.toISOString().split("T")[0];
+        const duePremiums = await Premium.find({
+          policyNumber: { $in: policyNumbers },
+          status: { $in: ["Due", "Overdue"] },
+          dueDate: { $gte: from, $lte: to },
+        }).lean();
+
+        for (const premium of duePremiums) {
+          const title = "Upcoming premium due";
+          const message = `Premium of INR ${Number(premium.amount || 0).toLocaleString("en-IN")} for policy ${premium.policyNumber} is due on ${premium.dueDate}.`;
+          const existing = await Notification.findOne({
+            recipientId: req.user.id,
+            type: "Premium Due",
+            title,
+            message,
+          }).select("_id");
+          if (!existing) {
+            const notification = await Notification.create({
+              title,
+              message,
+              type: "Premium Due",
+              date: premium.dueDate,
+              recipientId: req.user.id,
+            });
+            emitToRecipient(req, "newNotification", notification, req.user.id);
+          }
+        }
+      }
+    }
+
     const filter = isStaff(req.user) ? {} : { recipientId: req.user.id };
     const notifications = await Notification.find(filter).sort({ createdAt: -1 });
     res.json(notifications);
