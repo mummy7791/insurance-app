@@ -35,6 +35,9 @@ const premiumSchema = new mongoose.Schema(
 
     receiptNumber: String,
 
+    gatewayOrderId: { type: String, default: "" },
+    gatewayPaymentId: { type: String, default: "" },
+
     status: {
       type: String,
       enum: ["Due", "Paid", "Overdue"],
