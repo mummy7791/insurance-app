@@ -3,6 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { uploadPrivateDocument, signedDownloadUrl, deletePrivateDocument } = require("../services/privateDocumentStorage");
 
 const Document = require("../models/Document");
 const auth = require("../middleware/auth");
@@ -71,25 +72,7 @@ const pickDocumentUpdateFields = (body = {}) => {
   return { payload };
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-
-  filename: (req, file, cb) => {
-    const extensionByMime = {
-      "application/pdf": ".pdf",
-      "image/jpeg": ".jpg",
-      "image/png": ".png",
-      "image/webp": ".webp",
-    };
-    const extension = extensionByMime[file.mimetype] || "";
-    const uniqueName =
-      `${crypto.randomBytes(24).toString("hex")}${extension}`;
-
-    cb(null, uniqueName);
-  },
-});
+const storage = multer.memoryStorage();
 
 const allowedMimeTypes = new Set([
   "application/pdf",
@@ -109,12 +92,9 @@ const upload = multer({
   },
 });
 
-const detectFileType = async (filePath) => {
-  const handle = await fs.promises.open(filePath, "r");
+const detectFileType = async (fileOrBuffer) => {
+  const bytes = Buffer.isBuffer(fileOrBuffer) ? fileOrBuffer.subarray(0, 16) : Buffer.alloc(0);
   try {
-    const buffer = Buffer.alloc(16);
-    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
-    const bytes = buffer.subarray(0, bytesRead);
 
     if (bytes.length >= 5 && bytes.subarray(0, 5).toString("ascii") === "%PDF-") {
       return "application/pdf";
@@ -136,9 +116,7 @@ const detectFileType = async (filePath) => {
       return "image/webp";
     }
     return null;
-  } finally {
-    await handle.close();
-  }
+  } finally {}
 };
 
 const removeUploadedFile = async (filePath) => {
@@ -162,22 +140,22 @@ router.post("/proposal-kyc/:planId", auth(["customer"]), (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "KYC file required" });
 
-    const detectedMimeType = await detectFileType(req.file.path);
+    const detectedMimeType = await detectFileType(req.file.buffer);
     if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "File content does not match the allowed document type" });
     }
 
     const documentType = normalizeText(req.body.documentType, 50);
     const customerName = normalizeText(req.body.customerName, 120);
     if (!DOCUMENT_TYPES.has(documentType) || !customerName) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Invalid KYC document details" });
     }
 
     const planId = normalizeText(req.params.planId, 80);
     if (!/^[a-f\d]{24}$/i.test(planId)) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Invalid plan reference" });
     }
 
@@ -187,18 +165,29 @@ router.post("/proposal-kyc/:planId", auth(["customer"]), (req, res, next) => {
       policyNumber: pendingPolicyNumber,
       documentType,
     });
-    if (previous?.filePath) {
-      const previousPath = path.join(__dirname, "..", "uploads", path.basename(previous.filePath));
-      await removeUploadedFile(previousPath);
+    if (previous?.storageProvider === "cloudinary" && previous.storageKey) {
+      await deletePrivateDocument(previous.storageKey);
+      await previous.deleteOne();
+    } else if (previous) {
       await previous.deleteOne();
     }
+
+    const stored = await uploadPrivateDocument({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      customerId: req.user.id,
+      documentType,
+    });
 
     const document = await Document.create({
       customerName,
       policyNumber: pendingPolicyNumber,
       documentType,
       fileName: normalizeText(req.file.originalname, 255) || "document",
-      filePath: `/uploads/${req.file.filename}`,
+      filePath: stored.secure_url || stored.url || "private-cloud",
+      storageProvider: "cloudinary",
+      storageKey: stored.public_id,
+      resourceType: stored.resource_type || "raw",
       uploadedDate: new Date().toISOString().split("T")[0],
       status: "Pending",
       remarks: "Uploaded with online proposal - awaiting policy activation",
@@ -215,7 +204,7 @@ router.post("/proposal-kyc/:planId", auth(["customer"]), (req, res, next) => {
     });
   } catch (error) {
     if (req.file?.path) {
-      try { await removeUploadedFile(req.file.path); } catch {}
+      try {  } catch {}
     }
     console.error("Proposal KYC upload error:", error);
     return res.status(500).json({ message: "KYC document upload failed" });
@@ -236,9 +225,9 @@ router.post("/", auth(), (req, res, next) => {
       return res.status(400).json({ message: "File required" });
     }
 
-    const detectedMimeType = await detectFileType(req.file.path);
+    const detectedMimeType = await detectFileType(req.file.buffer);
     if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "File content does not match the allowed document type" });
     }
 
@@ -248,42 +237,52 @@ router.post("/", auth(), (req, res, next) => {
     const remarks = normalizeText(req.body.remarks, 500);
 
     if (!customerName) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Customer name is required" });
     }
 
     if (!policyNumber) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Policy number is required" });
     }
 
     if (!DOCUMENT_TYPES.has(documentType)) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Invalid document type" });
     }
 
     const policy = await Policy.findOne({ policyNumber });
     if (!policy) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(404).json({ message: "Policy not found" });
     }
 
     if (req.user.role === "customer" && String(policy.customerId || "") !== String(req.user.id)) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(403).json({ message: "Policy does not belong to this customer" });
     }
 
     if (!policy.customerId) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "Policy is not linked to a customer account" });
     }
+
+    const stored = await uploadPrivateDocument({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      customerId: policy.customerId,
+      documentType,
+    });
 
     const document = await Document.create({
       customerName,
       policyNumber,
       documentType,
       fileName: normalizeText(req.file.originalname, 255) || "document",
-      filePath: `/uploads/${req.file.filename}`,
+      filePath: stored.secure_url || stored.url || "private-cloud",
+      storageProvider: "cloudinary",
+      storageKey: stored.public_id,
+      resourceType: stored.resource_type || "raw",
       uploadedDate: new Date().toISOString().split("T")[0],
       status: "Pending",
       remarks: remarks || "No remarks",
@@ -295,7 +294,7 @@ router.post("/", auth(), (req, res, next) => {
   } catch (error) {
     if (req.file?.path) {
       try {
-        await removeUploadedFile(req.file.path);
+        
       } catch (cleanupError) {
         console.error("Document upload cleanup error:", cleanupError);
       }
@@ -346,9 +345,13 @@ router.get("/:id/file", auth(), async (req, res) => {
       }
     }
 
+    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r\n]/g, "");
+    if (document.storageProvider === "cloudinary" && document.storageKey) {
+      const url = signedDownloadUrl(document.storageKey);
+      return res.redirect(302, url);
+    }
     const fileName = path.basename(document.filePath);
     const absolutePath = path.join(__dirname, "..", "uploads", fileName);
-    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r\n]/g, "");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cache-Control", "private, no-store, max-age=0");
     res.setHeader("Pragma", "no-cache");
@@ -399,38 +402,45 @@ router.post("/:id/reupload", auth(["customer"]), (req, res, next) => {
   try {
     const document = await Document.findById(req.params.id);
     if (!document) {
-      if (req.file?.path) await removeUploadedFile(req.file.path);
+      if (req.file?.path) 
       return res.status(404).json({ message: "Document not found" });
     }
     if (String(document.customerId || "") !== String(req.user.id) || document.status !== "Rejected") {
-      if (req.file?.path) await removeUploadedFile(req.file.path);
+      if (req.file?.path) 
       return res.status(403).json({ message: "Only your rejected KYC document can be re-uploaded" });
     }
     if (!req.file) return res.status(400).json({ message: "Replacement file required" });
 
-    const detectedMimeType = await detectFileType(req.file.path);
+    const detectedMimeType = await detectFileType(req.file.buffer);
     if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
-      await removeUploadedFile(req.file.path);
+      
       return res.status(400).json({ message: "File content does not match the allowed document type" });
     }
 
-    const oldPath = document.filePath
-      ? path.join(__dirname, "..", "uploads", path.basename(document.filePath))
-      : null;
+    const oldStorageKey = document.storageProvider === "cloudinary" ? document.storageKey : "";
+    const stored = await uploadPrivateDocument({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      customerId: req.user.id,
+      documentType: document.documentType,
+    });
     document.fileName = normalizeText(req.file.originalname, 255) || "document";
-    document.filePath = `/uploads/${req.file.filename}`;
+    document.filePath = stored.secure_url || stored.url || "private-cloud";
+    document.storageProvider = "cloudinary";
+    document.storageKey = stored.public_id;
+    document.resourceType = stored.resource_type || "raw";
     document.uploadedDate = new Date().toISOString().split("T")[0];
     document.status = "Pending";
     document.remarks = "Re-uploaded by customer - awaiting verification";
     document.reviewedBy = undefined;
     document.reviewedAt = undefined;
     await document.save();
-    if (oldPath) await removeUploadedFile(oldPath);
+    if (oldStorageKey) await deletePrivateDocument(oldStorageKey);
 
     return res.json(document);
   } catch (error) {
     if (req.file?.path) {
-      try { await removeUploadedFile(req.file.path); } catch {}
+      try {  } catch {}
     }
     console.error("Document re-upload error:", error);
     return res.status(500).json({ message: "Document re-upload failed" });
@@ -470,12 +480,16 @@ router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
     const document = await Document.findById(req.params.id);
     if (!document) return res.status(404).json({ message: "Document not found" });
 
-    const fileName = path.basename(document.filePath || "");
-    const absolutePath = fileName
-      ? path.join(__dirname, "..", "uploads", fileName)
-      : null;
+    const cloudKey = document.storageProvider === "cloudinary" ? document.storageKey : "";
+    const fileName = document.storageProvider !== "cloudinary" ? path.basename(document.filePath || "") : "";
+    const absolutePath = fileName ? path.join(__dirname, "..", "uploads", fileName) : null;
 
     await document.deleteOne();
+    if (cloudKey) {
+      try { await deletePrivateDocument(cloudKey); } catch (cloudError) {
+        console.error("Cloud document cleanup error:", cloudError);
+      }
+    }
 
     if (absolutePath) {
       try {
