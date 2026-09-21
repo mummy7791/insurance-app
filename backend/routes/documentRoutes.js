@@ -348,7 +348,20 @@ router.get("/:id/file", auth(), async (req, res) => {
     const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r\n]/g, "");
     if (document.storageProvider === "cloudinary" && document.storageKey) {
       const url = signedDownloadUrl(document.storageKey);
-      return res.redirect(302, url);
+      const upstream = await fetch(url, { redirect: "follow" });
+      if (!upstream.ok) {
+        console.error("Cloud document fetch failed:", upstream.status, upstream.statusText);
+        return res.status(502).json({ message: "Secure document could not be retrieved" });
+      }
+      const body = Buffer.from(await upstream.arrayBuffer());
+      const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Length", String(body.length));
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Cache-Control", "private, no-store, max-age=0");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Content-Disposition", `inline; filename="${downloadName}"`);
+      return res.send(body);
     }
     const fileName = path.basename(document.filePath);
     const absolutePath = path.join(__dirname, "..", "uploads", fileName);
