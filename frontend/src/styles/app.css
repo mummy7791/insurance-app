@@ -1459,3 +1459,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 .notification-count{position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;padding:0 6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;border-radius:999px;background:linear-gradient(135deg,#dc2626,#f97316);color:#fff;font-size:10px;font-weight:900;line-height:1}
 .notification-reference{margin-top:10px;color:#64748b;font-size:11px;font-weight:700;overflow-wrap:anywhere}
 @media(max-width:650px){.topbar-actions{gap:7px}.notification-bell{width:40px;height:40px;flex-basis:40px;border-radius:12px}.topbar .user-box{min-width:0}.topbar .user-box strong{display:inline-block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+
+/* ===== CORPORATE NOTIFICATION CARD ACTIONS ===== */
+.notification-card{display:flex;flex-direction:column;min-width:0;padding:22px!important}
+.notification-card .badge{align-self:flex-start;margin-top:auto;white-space:nowrap}
+.notification-reference{display:flex;align-items:center;gap:7px;margin-top:10px;color:#64748b;font-size:10px;font-weight:700;line-height:1.35}
+.notification-reference span{display:inline-block;max-width:100%;padding:4px 7px;border:1px solid #e2e8f0;border-radius:7px;background:#f8fafc;color:#475569;font-size:9px;letter-spacing:.15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notification-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:13px}
+.notification-actions .mini-btn{width:auto!important;min-width:0!important;min-height:38px;margin:0!important;padding:8px 13px!important;border-radius:10px;font-size:12px;line-height:1.15;white-space:nowrap}
+.notification-actions .danger-btn{margin:0!important}
+@media(max-width:650px){.notification-card{padding:18px!important}.notification-actions{align-items:stretch;flex-direction:column}.notification-actions .mini-btn{width:100%!important}.notification-reference{align-items:flex-start;flex-direction:column}.notification-reference span{width:100%;box-sizing:border-box}}
