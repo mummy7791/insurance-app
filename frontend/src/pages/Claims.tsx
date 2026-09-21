@@ -24,6 +24,9 @@ type Claim = {
   submittedDate: string;
   status: ClaimStatus;
   remarks: string;
+  claimNumber?: string;
+  settlementAmount?: number;
+  settlementDate?: string;
 };
 
 type ClaimForm = {
@@ -73,7 +76,33 @@ export default function Claims() {
 
   useEffect(() => {
     void loadClaims();
-  }, [loadClaims]);
+
+    if (!isCustomer) return;
+
+    api
+      .get<Array<{ policyNumber?: string; planName?: string }>>("/plan-purchases/my")
+      .then((res) => {
+        const policies = res.data
+          .filter((purchase) => purchase.policyNumber)
+          .map((purchase) => ({
+            policyNumber: purchase.policyNumber as string,
+            planName: purchase.planName,
+          }));
+
+        setCustomerPolicies(policies);
+
+        if (policies.length > 0) {
+          setForm((prev) => ({
+            ...prev,
+            customerName: prev.customerName || user.name || "",
+            policyNumber: prev.policyNumber || policies[0].policyNumber,
+          }));
+        }
+      })
+      .catch((error) => {
+        console.error("Customer policies load error:", error);
+      });
+  }, [loadClaims, isCustomer, user.name]);
 
   const addClaim = async () => {
     if (!form.customerName || !form.policyNumber || !form.claimAmount) {
