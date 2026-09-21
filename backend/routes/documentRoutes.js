@@ -39,7 +39,7 @@ const DOCUMENT_STATUSES = new Set([
   "Rejected",
 ]);
 
-const normalizeText = (value, maxLength) =>
+const REQUIRED_KYC_TYPES = ["Aadhaar", "PAN", "Customer Photo", "Address Proof"];\n\nconst syncPolicyKycStatus = async (policyNumber) => {\n  if (!policyNumber || String(policyNumber).startsWith("PENDING-")) return null;\n  const policy = await Policy.findOne({ policyNumber });\n  if (!policy) return null;\n  const documents = await Document.find({ policyNumber }).select("documentType status");\n  const latestByType = new Map();\n  for (const doc of documents) {\n    if (!latestByType.has(doc.documentType)) latestByType.set(doc.documentType, doc.status);\n  }\n  const requiredStatuses = REQUIRED_KYC_TYPES.map((type) => latestByType.get(type));\n  const hasRejected = requiredStatuses.some((status) => status === "Rejected");\n  const allVerified = requiredStatuses.every((status) => status === "Verified");\n  policy.kycStatus = hasRejected ? "Action Required" : allVerified ? "Verified" : "Pending";\n  policy.kycVerifiedAt = allVerified ? (policy.kycVerifiedAt || new Date()) : null;\n  await policy.save();\n  return policy.kycStatus;\n};\n\nconst normalizeText = (value, maxLength) =>
   typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 
 const pickDocumentUpdateFields = (body = {}) => {
