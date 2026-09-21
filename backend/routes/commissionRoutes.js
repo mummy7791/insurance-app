@@ -6,6 +6,8 @@ const auth = require("../middleware/auth");
 
 const pickCommissionFields = (body = {}) => {
   const allowedFields = [
+    "advisorId",
+    "advisorCode",
     "employeeName",
     "employeeRole",
     "customerName",
@@ -93,7 +95,7 @@ router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async 
 router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
   try {
     const query = ["advisor", "agent"].includes(req.user.role)
-      ? { createdBy: req.user.id }
+      ? { advisorId: req.user.id }
       : {};
 
     const commissions = await Commission.find(query).sort({
@@ -114,7 +116,7 @@ router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advis
     const query = {
       _id: req.params.id,
       ...(["advisor", "agent"].includes(req.user.role)
-        ? { createdBy: req.user.id }
+        ? { advisorId: req.user.id }
         : {}),
     };
 
