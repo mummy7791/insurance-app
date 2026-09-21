@@ -20,25 +20,6 @@ type OrderResponse = {
   };
 };
 
-type CashfreeCheckoutResult = {
-  error?: { message?: string };
-  redirect?: boolean;
-  paymentDetails?: { paymentMessage?: string };
-};
-
-type CashfreeInstance = {
-  checkout: (options: {
-    paymentSessionId: string;
-    redirectTarget: "_self" | "_blank" | "_top";
-  }) => Promise<CashfreeCheckoutResult>;
-};
-
-declare global {
-  interface Window {
-    Cashfree?: (options: { mode: "production" | "sandbox" }) => CashfreeInstance;
-  }
-}
-
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error === "object" && error !== null && "response" in error) {
     const err = error as { response?: { data?: { message?: string } } };
