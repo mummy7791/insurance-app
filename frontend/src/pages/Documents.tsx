@@ -271,7 +271,7 @@ export default function Documents() {
         ) : documents.length === 0 ? (
           <p>No documents uploaded yet.</p>
         ) : (
-          <table className="table">
+          <div className="kyc-table-wrap"><table className="table kyc-documents-table">
             <thead>
               <tr>
                 <th>Customer</th>
@@ -303,7 +303,7 @@ export default function Documents() {
                   <td>{doc.uploadedDate}</td>
                   <td><span className={`status-pill ${doc.status === "Verified" ? "active" : doc.status === "Rejected" ? "overdue" : "due"}`}>{doc.status}</span></td>
                   <td>
-                    <div>{doc.remarks}</div>
+                    <div className="kyc-remarks">{doc.remarks || "KYC document linked to active online policy - pending verification"}</div>
                     {!isCustomer && <input className="status-select" placeholder="Review / rejection remarks" value={reviewRemarks[doc._id] || ""} onChange={(e) => setReviewRemarks((prev) => ({...prev,[doc._id]:e.target.value}))} />}
                     {isCustomer && doc.status === "Rejected" && <label className="mini-btn">Re-upload<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" hidden onChange={(e)=>void reuploadDocument(doc,e.target.files?.[0]||null)} /></label>}
                   </td>
