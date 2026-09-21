@@ -51,6 +51,7 @@ export default function OnlinePolicyPurchase(){
    }
    if(!uploadRef) throw new Error("KYC upload reference was not created");
    const safe={...form,aadhaarNumber:`XXXXXXXX${digits(form.aadhaarNumber).slice(-4)}`,panNumber:form.panNumber.trim().toUpperCase(),accountNumber:`XXXXXX${form.accountNumber.slice(-4)}`,nomineeAadhaar:`XXXXXXXX${digits(form.nomineeAadhaar).slice(-4)}`,nomineePan:`${form.nomineePan.slice(0,2).toUpperCase()}******${form.nomineePan.slice(-2).toUpperCase()}`,kycUploadRef:uploadRef,kycDocuments:Object.fromEntries(Object.entries(uploads).map(([k,v])=>[k,v?.name||""]))};
+   sessionStorage.removeItem(`payment-confirmation:${planId}`);
    sessionStorage.setItem(`proposal:${planId}`,JSON.stringify({...safe,planId,savedAt:new Date().toISOString()}));
    navigate(`/payment/${planId}`);
   }catch(e){alert(errorMessage(e,"Secure KYC upload failed. Please try again."));}finally{setUploading(false);}
