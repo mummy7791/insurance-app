@@ -5,6 +5,7 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 const Premium = require("../models/Premium");
 const Policy = require("../models/Policy");
+const Document = require("../models/Document");
 const auth = require("../middleware/auth");
 
 const STAFF_ROLES = ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"];
@@ -104,6 +105,35 @@ router.get("/", auth(), async (req, res) => {
             });
             emitToRecipient(req, "newNotification", notification, req.user.id);
           }
+        }
+      }
+
+      const kycDocuments = await Document.find({ customerId: req.user.id })
+        .select("_id policyNumber documentType status remarks uploadedDate updatedAt")
+        .lean();
+
+      for (const document of kycDocuments) {
+        const reference = "kyc:" + document._id;
+        const status = document.status || "Pending";
+        const config = status === "Verified"
+          ? { type: "KYC Verified", title: "KYC document verified", message: document.documentType + " for policy " + document.policyNumber + " has been verified.", actionLabel: "View documents", actionUrl: "/documents" }
+          : status === "Rejected"
+            ? { type: "KYC Action Required", title: "KYC document needs attention", message: document.documentType + " for policy " + document.policyNumber + " was rejected" + (document.remarks && document.remarks !== "No remarks" ? ": " + document.remarks : "."), actionLabel: "Re-upload document", actionUrl: "/documents" }
+            : { type: "KYC Pending", title: "KYC verification pending", message: document.documentType + " for policy " + document.policyNumber + " is awaiting verification.", actionLabel: "View documents", actionUrl: "/documents" };
+
+        const existing = await Notification.findOne({ recipientId: req.user.id, reference });
+        if (!existing) {
+          const notification = await Notification.create({
+            ...config,
+            date: document.uploadedDate || new Date(document.updatedAt || Date.now()).toISOString().split("T")[0],
+            recipientId: req.user.id,
+            reference,
+          });
+          emitToRecipient(req, "newNotification", notification, req.user.id);
+        } else if (existing.type !== config.type || existing.title !== config.title || existing.message !== config.message) {
+          Object.assign(existing, config, { status: "Unread" });
+          await existing.save();
+          emitToRecipient(req, "notificationUpdated", existing, req.user.id);
         }
       }
     }
