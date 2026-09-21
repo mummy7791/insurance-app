@@ -102,21 +102,6 @@ export default function UserManagement() {
     }
   };
 
-  const updateRole = async (id: string, role: UserRole) => {
-    try {
-      const res = await api.put<UserItem>(`/user-management/${id}/role`, {
-        role,
-      });
-
-      setUsers((prev) =>
-        prev.map((user) => (user._id === id ? res.data : user))
-      );
-    } catch (error) {
-      console.error("Role update error:", error);
-      alert("Role update failed");
-    }
-  };
-
   const updateStatus = async (id: string, status: UserStatus) => {
     try {
       const res = await api.put<UserItem>(`/user-management/${id}/status`, {
