@@ -19,6 +19,7 @@ const PlanPurchase = require("../models/PlanPurchase");
 const Policy = require("../models/Policy");
 const Premium = require("../models/Premium");
 const User = require("../models/User");
+const Document = require("../models/Document");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -98,6 +99,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       nomineeName: String(proposal.nomineeName || "").trim().slice(0, 120),
       nomineeRelation: String(proposal.nomineeRelation || "").trim().slice(0, 40),
       nomineeDateOfBirth: String(proposal.nomineeDateOfBirth || "").trim(),
+      kycUploadRef: String(proposal.kycUploadRef || "").trim().slice(0, 180),
     };
 
     const phoneDigits = clean.customerPhone.replace(/\D/g, "");
@@ -112,6 +114,20 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
         customerDob > today || nomineeDob > today ||
         !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(clean.panNumber)) {
       return res.status(400).json({ message: "Proposal details are incomplete or invalid" });
+    }
+
+    const expectedKycRef = `PENDING-${req.user.id}-${req.params.planId}`;
+    if (clean.kycUploadRef !== expectedKycRef) {
+      return res.status(400).json({ message: "Secure KYC uploads are required before payment" });
+    }
+    const requiredKycTypes = ["Customer Photo", "Aadhaar", "PAN", "Address Proof", "Nominee Photo", "Nominee Aadhaar", "Nominee PAN"];
+    const uploadedKyc = await Document.distinct("documentType", {
+      customerId: req.user.id,
+      policyNumber: expectedKycRef,
+      documentType: { $in: requiredKycTypes },
+    });
+    if (requiredKycTypes.some((type) => !uploadedKyc.includes(type))) {
+      return res.status(400).json({ message: "Please upload all policyholder and nominee KYC documents before payment" });
     }
 
     const plan = await InsurancePlan.findById(req.params.planId);
@@ -394,6 +410,18 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     }
 
     await purchase.save();
+
+    const pendingKycRef = `PENDING-${req.user.id}-${planId}`;
+    await Document.updateMany(
+      { customerId: req.user.id, policyNumber: pendingKycRef },
+      {
+        $set: {
+          policyNumber,
+          customerName: purchase.proposal?.customerName || customer?.name || "Customer",
+          remarks: "KYC document linked to active online policy - pending verification",
+        },
+      }
+    );
 
     await Policy.findOneAndUpdate(
       { policyNumber },
