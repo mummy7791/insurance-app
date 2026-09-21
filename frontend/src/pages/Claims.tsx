@@ -47,7 +47,8 @@ const initialForm: ClaimForm = {
 export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<ClaimForm>(initialForm);\n  const [customerPolicies, setCustomerPolicies] = useState<Array<{ policyNumber: string; planName?: string }>>([]);
+  const [form, setForm] = useState<ClaimForm>(initialForm);
+  const [customerPolicies, setCustomerPolicies] = useState<Array<{ policyNumber: string; planName?: string }>>([]);
   let user: { role?: string; name?: string } = {};
   try { user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { role?: string; name?: string }; } catch { user = {}; }
   const claimStages: ClaimStatus[] = ["Submitted", "Under Review", "Approved", "Settled"];
