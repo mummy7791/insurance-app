@@ -5,9 +5,10 @@ import api from "../services/api";
 
 type OrderResponse = {
   orderId: string;
+  paymentSessionId: string;
   amount: number;
   currency: string;
-  razorpayKey: string;
+  gateway: "cashfree";
   reused?: boolean;
   plan: {
     id: string;
@@ -19,39 +20,22 @@ type OrderResponse = {
   };
 };
 
-type RazorpayResponse = {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+type CashfreeCheckoutResult = {
+  error?: { message?: string };
+  redirect?: boolean;
+  paymentDetails?: { paymentMessage?: string };
 };
 
-type RazorpayOptions = {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  handler: (response: RazorpayResponse) => void;
-  prefill?: {
-    name?: string;
-    email?: string;
-    contact?: string;
-  };
-  theme?: {
-    color?: string;
-  };
-  modal?: {
-    ondismiss?: () => void;
-  };
+type CashfreeInstance = {
+  checkout: (options: {
+    paymentSessionId: string;
+    redirectTarget: "_self" | "_blank" | "_top";
+  }) => Promise<CashfreeCheckoutResult>;
 };
 
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayOptions) => {
-      open: () => void;
-      on: (event: "payment.failed", handler: (response: { error?: { description?: string } }) => void) => void;
-    };
+    Cashfree?: (options: { mode: "production" | "sandbox" }) => CashfreeInstance;
   }
 }
 
@@ -77,12 +61,14 @@ export default function Payment() {
 
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
     script.async = true;
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -145,69 +131,21 @@ export default function Payment() {
     };
   }, [planId, navigate]);
 
-  const startPayment = () => {
-    if (!order || !planId) {
-      alert("Order not ready");
-      return;
-    }
-
-    if (!window.Razorpay) {
-      alert("Razorpay not loaded. Please refresh page.");
-      return;
-    }
-
-    let user: { name?: string; email?: string; phone?: string } = {};
-    try {
-      user = JSON.parse(localStorage.getItem("insuranceUser") || "{}") as { name?: string; email?: string; phone?: string };
-    } catch {
-      user = {};
-    }
-
-    setCheckoutError("");
-    setPaying(true);
-
-    const options: RazorpayOptions = {
-      key: order.razorpayKey,
-      amount: order.amount * 100,
-      currency: order.currency,
-      name: "SecureLife Insurance",
-      description: order.plan.planName,
-      order_id: order.orderId,
-      prefill: {
-        name: proposal?.customerName || user.name || "",
-        email: proposal?.customerEmail || user.email || "",
-        contact: proposal?.customerPhone || user.phone || "",
-      },
-      theme: {
-        color: "#7b1730",
-      },
-      modal: {
-        ondismiss: () => setPaying(false),
-      },
-      handler: (response) => {
-        void verifyPayment(response);
-      },
-    };
-
-    const razorpay = new window.Razorpay(options);
-    razorpay.on("payment.failed", (response) => {
-      setPaying(false);
-      setCheckoutError(response.error?.description || "Payment failed. Please try again.");
-    });
-    razorpay.open();
-  };
-
-  const verifyPayment = async (response: RazorpayResponse) => {
+  const verifyPayment = async (orderId: string) => {
     if (!planId) return;
 
     try {
       setPaying(true);
 
-      const verified = await api.post<{ confirmation: { policyNumber: string; receiptNumber: string; transactionId: string } }>("/plan-purchases/verify-payment", {
+      const verified = await api.post<{
+        confirmation: {
+          policyNumber: string;
+          receiptNumber: string;
+          transactionId: string;
+        };
+      }>("/plan-purchases/verify-payment", {
         planId,
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature,
+        orderId,
       });
 
       setConfirmation(verified.data.confirmation);
@@ -215,8 +153,59 @@ export default function Payment() {
       sessionStorage.removeItem(`proposal:${planId}`);
       sessionStorage.removeItem("premiumEstimate");
     } catch (error: unknown) {
-      setCheckoutError(getErrorMessage(error, "Payment verification failed. If money was debited, do not pay again until the payment status is checked."));
+      setCheckoutError(
+        getErrorMessage(
+          error,
+          "Payment verification failed. If money was debited, do not pay again until the payment status is checked."
+        )
+      );
     } finally {
+      setPaying(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!order || !planId) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const returnedOrderId = params.get("cf_order_id");
+
+    if (returnedOrderId && returnedOrderId === order.orderId) {
+      void verifyPayment(returnedOrderId);
+    }
+  }, [order, planId]);
+
+  const startPayment = async () => {
+    if (!order || !planId) {
+      alert("Order not ready");
+      return;
+    }
+
+    if (!window.Cashfree) {
+      setCheckoutError("Cashfree checkout is still loading. Please refresh and try again.");
+      return;
+    }
+
+    setCheckoutError("");
+    setPaying(true);
+
+    try {
+      const cashfree = window.Cashfree({ mode: "production" });
+      const result = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_self",
+      });
+
+      if (result?.error) {
+        setCheckoutError(result.error.message || "Payment could not be started.");
+        setPaying(false);
+      }
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error
+          ? error.message
+          : "Payment could not be started. Please try again."
+      );
       setPaying(false);
     }
   };
