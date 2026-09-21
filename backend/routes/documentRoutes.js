@@ -360,6 +360,83 @@ router.get("/:id/file", auth(), async (req, res) => {
   }
 });
 
+router.patch("/:id/review", auth(STAFF_ROLES), async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: "Document not found" });
+
+    const status = normalizeText(req.body.status, 20);
+    const remarks = normalizeText(req.body.remarks, 500);
+    if (!["Verified", "Rejected"].includes(status)) {
+      return res.status(400).json({ message: "Review status must be Verified or Rejected" });
+    }
+    if (status === "Rejected" && !remarks) {
+      return res.status(400).json({ message: "Rejection reason is required" });
+    }
+
+    document.status = status;
+    document.remarks = remarks || "KYC document verified";
+    document.reviewedBy = req.user.id;
+    document.reviewedAt = new Date();
+    await document.save();
+
+    return res.json(document);
+  } catch (error) {
+    console.error("Document review error:", error);
+    return res.status(500).json({ message: "Document review failed" });
+  }
+});
+
+router.post("/:id/reupload", auth(["customer"]), (req, res, next) => {
+  upload.single("file")(req, res, (error) => {
+    if (!error) return next();
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File size must be 5 MB or less" });
+    }
+    return res.status(400).json({ message: error.message || "Invalid file upload" });
+  });
+}, async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+    if (!document) {
+      if (req.file?.path) await removeUploadedFile(req.file.path);
+      return res.status(404).json({ message: "Document not found" });
+    }
+    if (String(document.customerId || "") !== String(req.user.id) || document.status !== "Rejected") {
+      if (req.file?.path) await removeUploadedFile(req.file.path);
+      return res.status(403).json({ message: "Only your rejected KYC document can be re-uploaded" });
+    }
+    if (!req.file) return res.status(400).json({ message: "Replacement file required" });
+
+    const detectedMimeType = await detectFileType(req.file.path);
+    if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "File content does not match the allowed document type" });
+    }
+
+    const oldPath = document.filePath
+      ? path.join(__dirname, "..", "uploads", path.basename(document.filePath))
+      : null;
+    document.fileName = normalizeText(req.file.originalname, 255) || "document";
+    document.filePath = `/uploads/${req.file.filename}`;
+    document.uploadedDate = new Date().toISOString().split("T")[0];
+    document.status = "Pending";
+    document.remarks = "Re-uploaded by customer - awaiting verification";
+    document.reviewedBy = undefined;
+    document.reviewedAt = undefined;
+    await document.save();
+    if (oldPath) await removeUploadedFile(oldPath);
+
+    return res.json(document);
+  } catch (error) {
+    if (req.file?.path) {
+      try { await removeUploadedFile(req.file.path); } catch {}
+    }
+    console.error("Document re-upload error:", error);
+    return res.status(500).json({ message: "Document re-upload failed" });
+  }
+});
+
 router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
     const document = await Document.findById(req.params.id);
