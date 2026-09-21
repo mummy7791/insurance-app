@@ -82,6 +82,17 @@ export default function Payment() {
           setLoading(true);
           setCheckoutError("");
 
+          const params = new URLSearchParams(window.location.search);
+          const returnedOrderId = params.get("cf_order_id");
+
+          if (returnedOrderId) {
+            if (active) {
+              setLoading(false);
+              await verifyPayment(returnedOrderId);
+            }
+            return;
+          }
+
           const proposalRaw = sessionStorage.getItem(`proposal:${planId}`);
           if (!proposalRaw) {
             alert("Please complete your proposal before payment");
@@ -157,17 +168,6 @@ export default function Payment() {
       setPaying(false);
     }
   };
-
-  useEffect(() => {
-    if (!order || !planId) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const returnedOrderId = params.get("cf_order_id");
-
-    if (returnedOrderId && returnedOrderId === order.orderId) {
-      void verifyPayment(returnedOrderId);
-    }
-  }, [order, planId]);
 
   const startPayment = async () => {
     if (!order || !planId) {
