@@ -5,7 +5,7 @@ type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "advisor" |
 
 type ProtectedRouteProps = {
   children: ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: readonly string[];
 };
 
 type User = {
