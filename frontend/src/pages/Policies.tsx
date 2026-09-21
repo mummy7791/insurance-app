@@ -12,7 +12,7 @@ type Policy = {
   premiumAmount: number;
   sumAssured: number;
   paymentMode: "monthly" | "quarterly" | "half_yearly" | "yearly";
-  status: "pending" | "active" | "rejected" | "closed" | "expired";
+  status: "pending" | "active" | "rejected" | "closed" | "expired";\n  kycStatus?: "Pending" | "Verified" | "Action Required";\n  kycVerifiedAt?: string;
 };
 
 type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
@@ -344,7 +344,7 @@ export default function Policies() {
                 <h3>{policy.policyName}</h3>
                 <div className="admin-detail-list"><p><span>Customer</span><strong>{policy.customerName || "N/A"}</strong></p>{!isCustomer && <p><span>Phone</span><strong>{policy.customerPhone || "N/A"}</strong></p>}<p><span>Policy No</span><strong>{policy.policyNumber}</strong></p><p><span>Premium</span><strong>₹{Number(policy.premiumAmount || 0).toLocaleString("en-IN")}</strong></p><p><span>Sum Assured</span><strong>₹{Number(policy.sumAssured || 0).toLocaleString("en-IN")}</strong></p><p><span>Mode</span><strong>{policy.paymentMode}</strong></p></div>
 
-                <span className="badge">{policy.status}</span>
+                <span className="badge">{policy.status}</span><span className={`status-pill ${policy.kycStatus === "Verified" ? "active" : policy.kycStatus === "Action Required" ? "overdue" : "due"}`}>KYC: {policy.kycStatus || "Pending"}</span>
 
 {isCustomer ? (
                   <span className="status-pill active">{policy.status}</span>
