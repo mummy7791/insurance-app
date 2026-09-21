@@ -55,7 +55,15 @@ export default function Payment() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [paying, setPaying] = useState(false);
-  const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
+  const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(() => {
+    if (!planId) return null;
+    try {
+      const raw = sessionStorage.getItem(`payment-confirmation:${planId}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
@@ -81,6 +89,11 @@ export default function Payment() {
         try {
           setLoading(true);
           setCheckoutError("");
+
+          if (confirmation) {
+            setLoading(false);
+            return;
+          }
 
           const params = new URLSearchParams(window.location.search);
           const returnedOrderId = params.get("cf_order_id");
@@ -134,7 +147,7 @@ export default function Payment() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [planId, navigate]);
+  }, [planId, navigate, confirmation]);
 
   const verifyPayment = async (orderId: string) => {
     if (!planId) return;
@@ -154,6 +167,9 @@ export default function Payment() {
       });
 
       setConfirmation(verified.data.confirmation);
+      sessionStorage.setItem(`payment-confirmation:${planId}`, JSON.stringify(verified.data.confirmation));
+      window.history.replaceState({}, "", `/payment/${planId}`);
+      setOrder(null);
       setCheckoutError("");
       sessionStorage.removeItem(`proposal:${planId}`);
       sessionStorage.removeItem("premiumEstimate");
