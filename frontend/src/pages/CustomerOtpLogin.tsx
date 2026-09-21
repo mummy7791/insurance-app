@@ -61,7 +61,7 @@ export default function CustomerOtpLogin() {
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
       sessionStorage.removeItem("pendingVerificationEmail");
       const hasEstimate = Boolean(sessionStorage.getItem("premiumEstimate"));
-      navigate(hasEstimate ? "/insurance-plans" : "/customer-dashboard", { replace: true });
+      navigate(res.data.user.role === "advisor" ? "/insurance-plans" : hasEstimate ? "/insurance-plans" : "/customer-dashboard", { replace: true });
     } catch (error: unknown) {
       setError(getMessage(error, "Invalid or expired OTP."));
     } finally { setLoading(false); }
