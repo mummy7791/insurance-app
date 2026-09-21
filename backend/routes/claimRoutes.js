@@ -40,6 +40,9 @@ const pickClaimUpdateFields = (body = {}) => {
     "submittedDate",
     "status",
     "remarks",
+    "settlementAmount",
+    "settlementDate",
+    "settlementReference",
   ];
 
   const payload = {};
@@ -72,6 +75,7 @@ router.post("/", auth(), async (req, res) => {
 
     const claim = await Claim.create({
       ...payload,
+      claimNumber: `CLM-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
       status: "Submitted",
       remarks: "No remarks",
       customerId: policy.customerId,
@@ -119,6 +123,19 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
     if (!claim) return res.status(404).json({ message: "Claim not found" });
 
     const payload = pickClaimUpdateFields(req.body);
+
+    if (payload.status === "Settled") {
+      const amount = Number(payload.settlementAmount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Settlement amount is required" });
+      }
+      if (!payload.settlementDate) {
+        return res.status(400).json({ message: "Settlement date is required" });
+      }
+      if (!String(payload.settlementReference || "").trim()) {
+        return res.status(400).json({ message: "Settlement reference is required" });
+      }
+    }
 
     Object.assign(claim, payload);
     await claim.save();
