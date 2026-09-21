@@ -39,7 +39,27 @@ const DOCUMENT_STATUSES = new Set([
   "Rejected",
 ]);
 
-const REQUIRED_KYC_TYPES = ["Aadhaar", "PAN", "Customer Photo", "Address Proof"];\n\nconst syncPolicyKycStatus = async (policyNumber) => {\n  if (!policyNumber || String(policyNumber).startsWith("PENDING-")) return null;\n  const policy = await Policy.findOne({ policyNumber });\n  if (!policy) return null;\n  const documents = await Document.find({ policyNumber }).select("documentType status");\n  const latestByType = new Map();\n  for (const doc of documents) {\n    if (!latestByType.has(doc.documentType)) latestByType.set(doc.documentType, doc.status);\n  }\n  const requiredStatuses = REQUIRED_KYC_TYPES.map((type) => latestByType.get(type));\n  const hasRejected = requiredStatuses.some((status) => status === "Rejected");\n  const allVerified = requiredStatuses.every((status) => status === "Verified");\n  policy.kycStatus = hasRejected ? "Action Required" : allVerified ? "Verified" : "Pending";\n  policy.kycVerifiedAt = allVerified ? (policy.kycVerifiedAt || new Date()) : null;\n  await policy.save();\n  return policy.kycStatus;\n};\n\nconst normalizeText = (value, maxLength) =>
+const REQUIRED_KYC_TYPES = ["Aadhaar", "PAN", "Customer Photo", "Address Proof"];
+
+const syncPolicyKycStatus = async (policyNumber) => {
+  if (!policyNumber || String(policyNumber).startsWith("PENDING-")) return null;
+  const policy = await Policy.findOne({ policyNumber });
+  if (!policy) return null;
+  const documents = await Document.find({ policyNumber }).select("documentType status");
+  const latestByType = new Map();
+  for (const doc of documents) {
+    if (!latestByType.has(doc.documentType)) latestByType.set(doc.documentType, doc.status);
+  }
+  const requiredStatuses = REQUIRED_KYC_TYPES.map((type) => latestByType.get(type));
+  const hasRejected = requiredStatuses.some((status) => status === "Rejected");
+  const allVerified = requiredStatuses.every((status) => status === "Verified");
+  policy.kycStatus = hasRejected ? "Action Required" : allVerified ? "Verified" : "Pending";
+  policy.kycVerifiedAt = allVerified ? (policy.kycVerifiedAt || new Date()) : null;
+  await policy.save();
+  return policy.kycStatus;
+};
+
+const normalizeText = (value, maxLength) =>
   typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 
 const pickDocumentUpdateFields = (body = {}) => {
@@ -345,7 +365,8 @@ router.get("/:id/file", auth(), async (req, res) => {
       }
     }
 
-    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r\n]/g, "");
+    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r
+]/g, "");
     if (document.storageProvider === "cloudinary" && document.storageKey) {
       const url = signedDownloadUrl(document.storageKey);
       const upstream = await fetch(url, { redirect: "follow" });
