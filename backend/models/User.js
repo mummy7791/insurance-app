@@ -21,6 +21,9 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    advisorCode: { type: String, default: "", index: true },
+    address: { type: String, default: "" },
+
     password: {
       type: String,
       required: true,
