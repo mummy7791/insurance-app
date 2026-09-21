@@ -3,6 +3,7 @@ const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
+const Notification = require("../models/Notification");
 
 const STAFF_ROLES = [
   "admin",
@@ -192,8 +193,23 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
         String(payload.remarks || "").trim() || "Claim settled successfully";
     }
 
+    const previousStatus = claim.status;
     Object.assign(claim, payload);
     await claim.save();
+
+    if (claim.customerId && previousStatus !== claim.status) {
+      const notification = await Notification.create({
+        recipientId: claim.customerId,
+        title: `Claim ${claim.status}`,
+        message: `Claim ${claim.claimNumber || claim._id} for policy ${claim.policyNumber} is now ${claim.status}.${claim.remarks ? ` Remarks: ${claim.remarks}` : ""}`,
+        type: "Claim Update",
+        date: new Date().toISOString().split("T")[0],
+        reference: claim.claimNumber || String(claim._id),
+        actionLabel: "View claim",
+        actionUrl: "/claims",
+      });
+      req.app.get("io").to(`user:${String(claim.customerId)}`).emit("newNotification", notification);
+    }
 
     res.json(claim);
   } catch (error) {
