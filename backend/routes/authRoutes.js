@@ -437,6 +437,9 @@ router.post("/verify-otp", authRateLimit, async (req, res) => {
         email: user.email,
         role: user.role,
         branch: user.branch || "",
+        phone: user.phone || "",
+        advisorCode: user.advisorCode || "",
+        address: user.address || "",
         permissions: user.permissions || getPermissionsByRole(user.role),
       },
     });
@@ -485,6 +488,9 @@ router.post("/login", authRateLimit, async (req, res) => {
         email: user.email,
         role: user.role,
         branch: user.branch || "",
+        phone: user.phone || "",
+        advisorCode: user.advisorCode || "",
+        address: user.address || "",
         permissions: user.permissions || getPermissionsByRole(user.role),
       },
     });
