@@ -259,8 +259,17 @@ export default function Documents() {
         <button className="btn small-btn" onClick={uploadDocument}>Upload securely</button>
       </div>
 
-      <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">KYC STATUS</span><h2>My Documents</h2></div><span className="secure-chip">🔒 Private vault</span></div>
+      <div className="section kyc-documents-section">
+        <div className="section-heading-row">
+          <div>
+            <span className="eyebrow">KYC STATUS</span>
+            <h2>My Documents</h2>
+            <p className="kyc-status-note">
+              KYC documents linked to an active online policy are securely stored here. <strong>Pending verification</strong> means the document is waiting for admin review.
+            </p>
+          </div>
+          <span className="secure-chip">🔒 Private vault</span>
+        </div>
 
         <button className="mini-btn" onClick={loadDocuments}>
           Refresh
@@ -315,7 +324,7 @@ export default function Documents() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </MainLayout>
