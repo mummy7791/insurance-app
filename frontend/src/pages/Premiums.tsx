@@ -384,6 +384,7 @@ export default function Premiums() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </MainLayout>
