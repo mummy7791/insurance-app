@@ -365,8 +365,7 @@ router.get("/:id/file", auth(), async (req, res) => {
       }
     }
 
-    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\r
-]/g, "");
+    const downloadName = path.basename(String(document.fileName || "document")).replace(/["\\r\\n]/g, "");
     if (document.storageProvider === "cloudinary" && document.storageKey) {
       const url = signedDownloadUrl(document.storageKey);
       const upstream = await fetch(url, { redirect: "follow" });
