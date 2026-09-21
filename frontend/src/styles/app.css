@@ -1450,3 +1450,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
   .kyc-documents-table{min-width:1050px}
   .kyc-documents-table th,.kyc-documents-table td{padding:11px 10px!important}
 }
+
+
+/* ===== TOPBAR NOTIFICATION BELL ===== */
+.topbar-actions{display:flex;align-items:center;gap:12px;min-width:0}
+.notification-bell{position:relative;width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border:1px solid #fee2e2;border-radius:14px;background:#fff;color:#991b1b;font-size:20px;cursor:pointer;box-shadow:0 7px 18px rgba(127,29,29,.08);transition:transform .18s ease,box-shadow .18s ease}
+.notification-bell:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(127,29,29,.14)}
+.notification-count{position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;padding:0 6px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;border-radius:999px;background:linear-gradient(135deg,#dc2626,#f97316);color:#fff;font-size:10px;font-weight:900;line-height:1}
+.notification-reference{margin-top:10px;color:#64748b;font-size:11px;font-weight:700;overflow-wrap:anywhere}
+@media(max-width:650px){.topbar-actions{gap:7px}.notification-bell{width:40px;height:40px;flex-basis:40px;border-radius:12px}.topbar .user-box{min-width:0}.topbar .user-box strong{display:inline-block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
