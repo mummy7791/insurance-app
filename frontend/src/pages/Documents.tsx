@@ -35,6 +35,7 @@ export default function Documents() {
   const [form, setForm] = useState<DocumentForm>(initialForm);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reviewRemarks, setReviewRemarks] = useState<Record<string, string>>({});
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("insuranceUser") || "{}");
@@ -103,18 +104,35 @@ export default function Documents() {
     }
   };
 
-  const updateStatus = async (id: string, status: VerifyStatus) => {
+  const reviewDocument = async (doc: DocumentItem, status: "Verified" | "Rejected") => {
+    const remarks = (reviewRemarks[doc._id] || "").trim();
+    if (status === "Rejected" && !remarks) {
+      alert("Please enter rejection reason first");
+      return;
+    }
     try {
-      const res = await api.put<DocumentItem>(`/documents/${id}`, {
-        status,
-      });
-
-      setDocuments((prev) =>
-        prev.map((doc) => (doc._id === id ? res.data : doc))
-      );
+      const res = await api.patch<DocumentItem>(`/documents/${doc._id}/review`, { status, remarks });
+      setDocuments((prev) => prev.map((item) => item._id === doc._id ? res.data : item));
+      setReviewRemarks((prev) => ({ ...prev, [doc._id]: "" }));
     } catch (error) {
-      console.error("Document status update error:", error);
-      alert("Status update failed");
+      console.error("Document review error:", error);
+      alert("KYC review update failed");
+    }
+  };
+
+  const reuploadDocument = async (doc: DocumentItem, replacement: File | null) => {
+    if (!replacement) return;
+    try {
+      const data = new FormData();
+      data.append("file", replacement);
+      const res = await api.post<DocumentItem>(`/documents/${doc._id}/reupload`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setDocuments((prev) => prev.map((item) => item._id === doc._id ? res.data : item));
+      alert("Document re-uploaded. Verification is pending.");
+    } catch (error) {
+      console.error("Document re-upload error:", error);
+      alert("Document re-upload failed");
     }
   };
 
@@ -218,6 +236,9 @@ export default function Documents() {
             <option value="Income Proof">Income Proof</option>
             <option value="Address Proof">Address Proof</option>
             <option value="Policy Document">Policy Document</option>
+            <option value="Nominee Photo">Nominee Photo</option>
+            <option value="Nominee Aadhaar">Nominee Aadhaar</option>
+            <option value="Nominee PAN">Nominee PAN</option>
           </select>
 
           <input
@@ -280,13 +301,17 @@ export default function Documents() {
                     </button>
                   </td>
                   <td>{doc.uploadedDate}</td>
-                  <td>{isCustomer ? <span className={`status-pill ${doc.status === "Verified" ? "active" : doc.status === "Rejected" ? "overdue" : "due"}`}>{doc.status}</span> : (
-                    <select className="status-select" value={doc.status} onChange={(e) => updateStatus(doc._id, e.target.value as VerifyStatus)}>
-                      <option value="Pending">Pending</option><option value="Verified">Verified</option><option value="Rejected">Rejected</option>
-                    </select>
-                  )}</td>
-                  <td>{doc.remarks}</td>
-                  {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deleteDocument(doc._id)}>Delete</button></td>}
+                  <td><span className={`status-pill ${doc.status === "Verified" ? "active" : doc.status === "Rejected" ? "overdue" : "due"}`}>{doc.status}</span></td>
+                  <td>
+                    <div>{doc.remarks}</div>
+                    {!isCustomer && <input className="status-select" placeholder="Review / rejection remarks" value={reviewRemarks[doc._id] || ""} onChange={(e) => setReviewRemarks((prev) => ({...prev,[doc._id]:e.target.value}))} />}
+                    {isCustomer && doc.status === "Rejected" && <label className="mini-btn">Re-upload<input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" hidden onChange={(e)=>void reuploadDocument(doc,e.target.files?.[0]||null)} /></label>}
+                  </td>
+                  {!isCustomer && <td>
+                    <button className="mini-btn" onClick={() => void reviewDocument(doc,"Verified")}>Verify</button>{" "}
+                    <button className="mini-btn danger-btn" onClick={() => void reviewDocument(doc,"Rejected")}>Reject</button>{" "}
+                    <button className="mini-btn danger-btn" onClick={() => deleteDocument(doc._id)}>Delete</button>
+                  </td>}
                 </tr>
               ))}
             </tbody>
