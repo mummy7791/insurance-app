@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
-type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "agent" | "customer";
+type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "advisor" | "agent" | "customer";
 
 type ProtectedRouteProps = {
   children: ReactNode;
@@ -31,7 +31,7 @@ export default function ProtectedRoute({
   }
 
   if (allowedRoles && (!user.role || !allowedRoles.includes(user.role))) {
-    return <Navigate to={user.role === "customer" ? "/customer-dashboard" : "/dashboard"} replace />;
+    return <Navigate to={user.role === "customer" ? "/customer-dashboard" : user.role === "advisor" ? "/insurance-plans" : "/dashboard"} replace />;
   }
 
   return children;
