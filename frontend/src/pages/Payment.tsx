@@ -56,7 +56,6 @@ export default function Payment() {
   const [loading, setLoading] = useState(false);
   const [paying, setPaying] = useState(false);
   const [confirmation, setConfirmation] = useState<{ policyNumber: string; receiptNumber: string; transactionId: string } | null>(null);
-  const [proposal, setProposal] = useState<{ customerName?: string; customerEmail?: string; customerPhone?: string } | null>(null);
   const [checkoutError, setCheckoutError] = useState("");
 
   useEffect(() => {
@@ -100,11 +99,6 @@ export default function Payment() {
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
             return;
           }
-          setProposal({
-            customerName: String(parsedProposal.customerName || ""),
-            customerEmail: String(parsedProposal.customerEmail || ""),
-            customerPhone: String(parsedProposal.customerPhone || ""),
-          });
           const res = await api.post<OrderResponse>(
             `/plan-purchases/create-order/${planId}`,
             { proposal: parsedProposal }
