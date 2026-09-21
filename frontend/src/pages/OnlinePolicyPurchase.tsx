@@ -22,13 +22,13 @@ const fileLabel=(f:File|null)=>f?f.name:"Choose file";
 
 export default function OnlinePolicyPurchase(){
  const navigate=useNavigate(); const [searchParams]=useSearchParams(); const planId=searchParams.get("plan")||"";
- const [plan,setPlan]=useState<Plan|null>(null); const [form,setForm]=useState<BuyForm>(initialForm); const [uploads,setUploads]=useState<UploadState>(initialUploads); const [loading,setLoading]=useState(true); const [restored,setRestored]=useState(false);
+ const [plan,setPlan]=useState<Plan|null>(null); const [form,setForm]=useState<BuyForm>(initialForm); const [uploads,setUploads]=useState<UploadState>(initialUploads); const [loading,setLoading]=useState(true); const [uploading,setUploading]=useState(false); const [restored,setRestored]=useState(false);
  const loadProposal=useCallback(async()=>{if(!planId){navigate("/insurance-plans",{replace:true});return;}try{setLoading(true);const [planRes,profileRes]=await Promise.all([api.get<Plan>(`/insurance-plans/${planId}`),api.get<{name?:string;email?:string;phone?:string;address?:string}>("/customer-profile")]);setPlan(planRes.data);let saved:Partial<BuyForm>={};try{const raw=sessionStorage.getItem(`proposal:${planId}`);if(raw){saved=JSON.parse(raw);delete saved.panNumber;delete saved.aadhaarNumber;delete saved.accountNumber;delete saved.nomineeAadhaar;delete saved.nomineePan;setRestored(true);}}catch{sessionStorage.removeItem(`proposal:${planId}`);}setForm(p=>({...p,...saved,customerName:saved.customerName||profileRes.data?.name||"",customerEmail:profileRes.data?.email||"",customerPhone:saved.customerPhone||profileRes.data?.phone||"",address:saved.address||profileRes.data?.address||""}));}catch(e){alert(errorMessage(e,"Unable to open this insurance plan"));navigate("/insurance-plans",{replace:true});}finally{setLoading(false);}},[navigate,planId]);
  useEffect(()=>{void loadProposal();},[loadProposal]);
  const update=(field:keyof BuyForm,value:string|boolean)=>setForm(p=>({...p,[field]:value}));
  const pick=(key:UploadKey,file:File|null)=>setUploads(p=>({...p,[key]:file}));
  const FileBox=({field,label,accept=".pdf,.jpg,.jpeg,.png"}:{field:UploadKey;label:string;accept?:string})=><label className="kyc-upload"><span>{label}</span><strong>{fileLabel(uploads[field])}</strong><input type="file" accept={accept} onChange={e=>pick(field,e.target.files?.[0]||null)}/><em>PDF/JPG/PNG • max 5 MB</em></label>;
- const continueToPayment=()=>{
+ const continueToPayment=async()=>{
   const required=[form.customerName,form.customerEmail,form.customerPhone,form.address,form.dateOfBirth,form.aadhaarNumber,form.panNumber,form.accountHolderName,form.bankName,form.accountNumber,form.ifscCode,form.nomineeName,form.nomineeRelation,form.nomineeDateOfBirth,form.nomineePhone,form.nomineeEmail,form.nomineeAddress,form.nomineeAadhaar,form.nomineePan];
   if(required.some(v=>!String(v).trim())||!form.proposalConsent){alert("Please complete policyholder, Aadhaar/PAN KYC, bank, nominee and consent details");return;}
   if(!validAadhaar(form.aadhaarNumber)||!validAadhaar(form.nomineeAadhaar)||!validPan(form.panNumber)||!validPan(form.nomineePan)){alert("Enter valid 12-digit Aadhaar and PAN details");return;}
@@ -36,8 +36,24 @@ export default function OnlinePolicyPurchase(){
   if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(form.ifscCode.trim().toUpperCase())){alert("Enter a valid IFSC code");return;}
   if(Object.values(uploads).some(f=>!f)){alert("Please upload policyholder and nominee KYC documents");return;}
   if(Object.values(uploads).some(f=>f&&f.size>5*1024*1024)){alert("Each KYC file must be 5 MB or smaller");return;}
-  const safe={...form,aadhaarNumber:`XXXXXXXX${digits(form.aadhaarNumber).slice(-4)}`,panNumber:`${form.panNumber.slice(0,2).toUpperCase()}******${form.panNumber.slice(-2).toUpperCase()}`,accountNumber:`XXXXXX${form.accountNumber.slice(-4)}`,nomineeAadhaar:`XXXXXXXX${digits(form.nomineeAadhaar).slice(-4)}`,nomineePan:`${form.nomineePan.slice(0,2).toUpperCase()}******${form.nomineePan.slice(-2).toUpperCase()}`,kycDocuments:Object.fromEntries(Object.entries(uploads).map(([k,v])=>[k,v?.name||""]))};
-  sessionStorage.setItem(`proposal:${planId}`,JSON.stringify({...safe,planId,savedAt:new Date().toISOString()})); navigate(`/payment/${planId}`);
+  const typeMap:Record<UploadKey,string>={policyholderPhoto:"Customer Photo",aadhaarDocument:"Aadhaar",panDocument:"PAN",addressProof:"Address Proof",nomineePhoto:"Nominee Photo",nomineeAadhaarDocument:"Nominee Aadhaar",nomineePanDocument:"Nominee PAN"};
+  try{
+   setUploading(true);
+   let uploadRef="";
+   for(const [key,selected] of Object.entries(uploads) as [UploadKey,File|null][]){
+    if(!selected) continue;
+    const body=new FormData();
+    body.append("customerName",form.customerName);
+    body.append("documentType",typeMap[key]);
+    body.append("file",selected);
+    const result=await api.post<{uploadRef:string}>(`/documents/proposal-kyc/${planId}`,body,{headers:{"Content-Type":"multipart/form-data"}});
+    uploadRef=result.data.uploadRef;
+   }
+   if(!uploadRef) throw new Error("KYC upload reference was not created");
+   const safe={...form,aadhaarNumber:`XXXXXXXX${digits(form.aadhaarNumber).slice(-4)}`,panNumber:form.panNumber.trim().toUpperCase(),accountNumber:`XXXXXX${form.accountNumber.slice(-4)}`,nomineeAadhaar:`XXXXXXXX${digits(form.nomineeAadhaar).slice(-4)}`,nomineePan:`${form.nomineePan.slice(0,2).toUpperCase()}******${form.nomineePan.slice(-2).toUpperCase()}`,kycUploadRef:uploadRef,kycDocuments:Object.fromEntries(Object.entries(uploads).map(([k,v])=>[k,v?.name||""]))};
+   sessionStorage.setItem(`proposal:${planId}`,JSON.stringify({...safe,planId,savedAt:new Date().toISOString()}));
+   navigate(`/payment/${planId}`);
+  }catch(e){alert(errorMessage(e,"Secure KYC upload failed. Please try again."));}finally{setUploading(false);}
  };
  if(loading)return <MainLayout title="Insurance Proposal" subtitle="Preparing your application"><div className="section"><p>Loading plan and profile...</p></div></MainLayout>; if(!plan)return null;
  const premium=Number(plan.yearlyPremium||plan.yearlyAmount||0); const benefits=Array.isArray(plan.benefits)?plan.benefits.join(" • "):plan.benefits||plan.coverage||"Protection benefits as per plan terms.";
@@ -64,6 +80,6 @@ export default function OnlinePolicyPurchase(){
     <div className="kyc-upload-grid"><FileBox field="nomineePhoto" label="Nominee Photo" accept=".jpg,.jpeg,.png"/><FileBox field="nomineeAadhaarDocument" label="Nominee Aadhaar"/><FileBox field="nomineePanDocument" label="Nominee PAN"/></div>
     <label className="proposal-consent"><input type="checkbox" checked={form.proposalConsent} onChange={e=>update("proposalConsent",e.target.checked)}/><span>I confirm the information is correct and consent to KYC/proposal processing and nominee verification.</span></label>
    </div>
-  </div><aside className="proposal-summary"><span className="eyebrow">PLAN SUMMARY</span><h2>{plan.planName}</h2><p>{plan.category}</p><div><span>Life / Benefit Cover</span><strong>₹{Number(plan.coverageAmount||0).toLocaleString("en-IN")}</strong></div><div><span>Annual Premium</span><strong>₹{premium.toLocaleString("en-IN")}</strong></div><div><span>Payment Years</span><strong>{plan.paymentYears||1}</strong></div><small>{benefits}</small><button className="btn small-btn" onClick={continueToPayment}>Review & continue to payment →</button><button className="mini-btn" onClick={()=>navigate("/insurance-plans")}>Change plan</button></aside></div>
+  </div><aside className="proposal-summary"><span className="eyebrow">PLAN SUMMARY</span><h2>{plan.planName}</h2><p>{plan.category}</p><div><span>Life / Benefit Cover</span><strong>₹{Number(plan.coverageAmount||0).toLocaleString("en-IN")}</strong></div><div><span>Annual Premium</span><strong>₹{premium.toLocaleString("en-IN")}</strong></div><div><span>Payment Years</span><strong>{plan.paymentYears||1}</strong></div><small>{benefits}</small><button className="btn small-btn" onClick={()=>void continueToPayment()} disabled={uploading}>{uploading?"Uploading KYC securely...":"Review & continue to payment →"}</button><button className="mini-btn" onClick={()=>navigate("/insurance-plans")}>Change plan</button></aside></div>
  </MainLayout>;
 }
