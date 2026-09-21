@@ -192,3 +192,26 @@
 .modern-auth-card .password-field > .auth-input {
   padding-right: 82px;
 }
+
+
+.login-method-note{
+  margin:-12px 0 18px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#fff7ed;
+  color:#7c2d12;
+  font-size:13px;
+  font-weight:750;
+  border:1px solid #fed7aa;
+}
+@media(max-width:480px){
+  .modern-auth-card .password-field > button{
+    min-width:52px;
+    right:8px;
+    padding:0 9px;
+    font-size:12px;
+  }
+  .modern-auth-card .password-field > .auth-input{
+    padding-right:72px;
+  }
+}
