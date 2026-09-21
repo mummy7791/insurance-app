@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
-type UserRole = "admin" | "bm" | "unit_manager" | "agency_manager" | "agent";
+type UserRole = "advisor";
 type UserStatus = "active" | "blocked";
 
 type UserItem = {
@@ -11,6 +11,9 @@ type UserItem = {
   email: string;
   role: UserRole;
   status?: UserStatus;
+  phone?: string;
+  advisorCode?: string;
+  address?: string;
   createdAt?: string;
 };
 
@@ -19,13 +22,21 @@ type UserForm = {
   email: string;
   role: UserRole;
   status: UserStatus;
+  phone: string;
+  advisorCode: string;
+  address: string;
+  password: string;
 };
 
 const initialForm: UserForm = {
   name: "",
   email: "",
-  role: "agent",
+  role: "advisor",
   status: "active",
+  phone: "",
+  advisorCode: "",
+  address: "",
+  password: "",
 };
 
 export default function UserManagement() {
@@ -61,8 +72,8 @@ export default function UserManagement() {
   }, [loadUsers]);
 
   const createUser = async () => {
-    if (!form.name || !form.email || !form.role) {
-      alert("Name, Email and Role required");
+    if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
+      alert("Name, Email, Phone, Advisor Code and Password required");
       return;
     }
 
@@ -74,6 +85,10 @@ export default function UserManagement() {
         email: form.email,
         role: form.role,
         status: form.status,
+        phone: form.phone,
+        advisorCode: form.advisorCode,
+        address: form.address,
+        password: form.password,
       });
 
       setUsers((prev) => [res.data, ...prev]);
@@ -132,6 +147,7 @@ export default function UserManagement() {
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
+      if (user.role !== "advisor") return false;
       const text = `${user.name} ${user.email} ${user.role}`.toLowerCase();
       return text.includes(search.toLowerCase());
     });
@@ -139,25 +155,25 @@ export default function UserManagement() {
 
   return (
     <MainLayout
-      title="User Role Management"
-      subtitle="Create users and assign admin, BM, unit manager, agency manager and agent roles"
+      title="Advisor Access"
+      subtitle="Admin creates advisor login access, profile and account status"
     >
-      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create operational users, review roles and control account access from one secure screen.</p></div><div className="admin-summary-metrics"><div><span>Total</span><strong>{users.length}</strong></div><div><span>Admins</span><strong>{users.filter((u) => u.role === "admin").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
+      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create advisor accounts with email/password login and secure email OTP access.</p></div><div className="admin-summary-metrics"><div><span>Total Advisors</span><strong>{users.filter((u) => u.role === "advisor").length}</strong></div><div><span>Active</span><strong>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
 
       <div className="cards admin-kpi-grid">
         <div className="card">
-          <h3>Total Users</h3>
-          <h1>{users.length}</h1>
+          <h3>Total Advisors</h3>
+          <h1>{users.filter((u) => u.role === "advisor").length}</h1>
         </div>
 
         <div className="card">
-          <h3>Admins</h3>
-          <h1>{users.filter((u) => u.role === "admin").length}</h1>
+          <h3>Active</h3>
+          <h1>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</h1>
         </div>
 
         <div className="card">
-          <h3>Agents</h3>
-          <h1>{users.filter((u) => u.role === "agent").length}</h1>
+          <h3>Advisor Access</h3>
+          <h1>Plans + Commission</h1>
         </div>
 
         <div className="card">
@@ -167,7 +183,7 @@ export default function UserManagement() {
       </div>
 
       <div className="section">
-        <span className="eyebrow">NEW STAFF ACCOUNT</span><h2>Create new user</h2><p className="section-copy">Create a staff profile and assign only the access level required for their role.</p>
+        <span className="eyebrow">NEW ADVISOR ACCOUNT</span><h2>Create advisor login</h2><p className="section-copy">Advisor can access only Plans, Commission and their Profile.</p>
 
         <div className="form-grid">
           <input
@@ -187,21 +203,12 @@ export default function UserManagement() {
             }
           />
 
-          <select
-            value={form.role}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                role: e.target.value as UserRole,
-              }))
-            }
-          >
-            <option value="admin">Admin</option>
-            <option value="bm">Branch Manager</option>
-            <option value="unit_manager">Unit Manager</option>
-            <option value="agency_manager">Agency Manager</option>
-            <option value="agent">Agent</option>
-          </select>
+          <input value="Advisor" disabled />
+
+          <input placeholder="Phone Number" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
+          <input placeholder="Advisor Code" value={form.advisorCode} onChange={(e) => setForm((prev) => ({ ...prev, advisorCode: e.target.value }))} />
+          <input placeholder="Address" value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
+          <input type="password" placeholder="Temporary Password (min 8 characters)" value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} />
 
           <select
             value={form.status}
@@ -218,7 +225,7 @@ export default function UserManagement() {
         </div>
 
         <button className="btn small-btn" onClick={createUser} disabled={creating}>
-          {creating ? "Creating..." : "Create User"}
+          {creating ? "Creating..." : "Create Advisor"}
         </button>
       </div>
 
@@ -249,7 +256,8 @@ export default function UserManagement() {
               <tr>
                 <th>User</th>
                 <th>Email</th>
-                <th>Role</th>
+                <th>Code</th>
+                <th>Phone</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Action</th>
@@ -262,21 +270,8 @@ export default function UserManagement() {
                   <td>{user.name || "N/A"}</td>
                   <td>{user.email}</td>
 
-                  <td>
-                    <select
-                      className="status-select"
-                      value={user.role}
-                      onChange={(e) =>
-                        updateRole(user._id, e.target.value as UserRole)
-                      }
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="bm">Branch Manager</option>
-                      <option value="unit_manager">Unit Manager</option>
-                      <option value="agency_manager">Agency Manager</option>
-                      <option value="agent">Agent</option>
-                    </select>
-                  </td>
+                  <td>{user.advisorCode || "—"}</td>
+                  <td>{user.phone || "—"}</td>
 
                   <td>
                     <select
