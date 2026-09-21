@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import MainLayout from "../layouts/MainLayout";
 
-type User = { id?: string; name?: string; role?: string; email?: string; branch?: string; };
+type User = { id?: string; name?: string; role?: string; email?: string; branch?: string; phone?: string; advisorCode?: string; address?: string; };
 
 export default function Profile() {
   const user: User = useMemo(() => {
@@ -18,7 +18,7 @@ export default function Profile() {
       <div className="cards admin-kpi-grid">
         <div className="card"><h3>Name</h3><h1>{user.name || "N/A"}</h1></div>
         <div className="card"><h3>Role</h3><h1>{user.role || "N/A"}</h1></div>
-        <div className="card"><h3>Branch</h3><h1>{user.branch || "Not assigned"}</h1></div>
+        <div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode || "N/A"}</h1></div>
         <div className="card"><h3>Status</h3><h1>Active</h1></div>
       </div>
       <div className="section">
@@ -27,7 +27,9 @@ export default function Profile() {
           <div><span>Full name</span><strong>{user.name || "N/A"}</strong></div>
           <div><span>Email address</span><strong>{user.email || "N/A"}</strong></div>
           <div><span>Role</span><strong>{user.role || "N/A"}</strong></div>
-          <div><span>Branch</span><strong>{user.branch || "Not assigned"}</strong></div>
+          <div><span>Phone</span><strong>{user.phone || "N/A"}</strong></div>
+          <div><span>Advisor code</span><strong>{user.advisorCode || "N/A"}</strong></div>
+          <div><span>Address</span><strong>{user.address || "N/A"}</strong></div>
         </div>
         <p className="section-copy">For security, credential or access changes must be completed through authorized admin account management.</p>
       </div>
