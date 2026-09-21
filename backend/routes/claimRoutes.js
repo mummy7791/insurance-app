@@ -89,7 +89,14 @@ router.get("/", auth(), async (req, res) => {
   try {
     let query = {};
     if (req.user.role === "customer") {
-      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");\n      const purchases = await PlanPurchase.find({ customerId: req.user.id, paymentStatus: "Paid" }).select("policyNumber");\n      const policyNumbers = [...policies, ...purchases].map((policy) => policy.policyNumber).filter(Boolean);
+      const policies = await Policy.find({ customerId: req.user.id }).select("policyNumber");
+      const purchases = await PlanPurchase.find({
+        customerId: req.user.id,
+        paymentStatus: "Paid",
+      }).select("policyNumber");
+      const policyNumbers = [...policies, ...purchases]
+        .map((policy) => policy.policyNumber)
+        .filter(Boolean);
       query = {
         $or: [
           { customerId: req.user.id },
