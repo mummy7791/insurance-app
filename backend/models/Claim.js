@@ -44,6 +44,11 @@ const claimSchema = new mongoose.Schema(
       default: "No remarks",
     },
 
+    claimNumber: { type: String, index: true },
+    settlementAmount: { type: Number },
+    settlementDate: { type: String },
+    settlementReference: { type: String },
+
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
