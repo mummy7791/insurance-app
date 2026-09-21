@@ -32,7 +32,7 @@ export default function Login() {
       localStorage.setItem("insuranceToken", res.data.token);
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
       const hasEstimate = Boolean(sessionStorage.getItem("premiumEstimate"));
-      navigate(res.data.user.role === "customer" && hasEstimate ? "/insurance-plans" : res.data.user.role === "customer" ? "/customer-dashboard" : "/dashboard");
+      navigate(res.data.user.role === "customer" && hasEstimate ? "/insurance-plans" : res.data.user.role === "customer" ? "/customer-dashboard" : res.data.user.role === "advisor" ? "/insurance-plans" : "/dashboard");
     } catch (error: unknown) {
       const message = getMessage(error);
       setError(message);
