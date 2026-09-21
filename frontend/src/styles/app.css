@@ -1325,3 +1325,15 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 @media(max-width:650px){
   .policy-download-btn{white-space:normal}
 }
+
+
+/* ===== CORPORATE KYC PROPOSAL ===== */
+.kyc-note{margin:0 0 16px;color:#64748b;font-size:13px;line-height:1.55}
+.kyc-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+.kyc-upload{position:relative;display:flex;min-width:0;min-height:104px;box-sizing:border-box;flex-direction:column;justify-content:center;gap:5px;padding:16px;border:1.5px dashed #fdba74;border-radius:14px;background:linear-gradient(135deg,#fff,#fff7ed);cursor:pointer;transition:.2s ease}
+.kyc-upload:hover{border-color:#f97316;box-shadow:0 8px 20px rgba(249,115,22,.08)}
+.kyc-upload span{font-size:12px;font-weight:800;color:#9f1239;text-transform:uppercase;letter-spacing:.35px}
+.kyc-upload strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;font-size:13px}
+.kyc-upload em{font-style:normal;font-size:10px;color:#94a3b8}
+.kyc-upload input{position:absolute;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
+@media(max-width:650px){.kyc-upload-grid{grid-template-columns:1fr}}
