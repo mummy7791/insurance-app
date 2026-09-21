@@ -20,6 +20,10 @@ const notificationSchema = new mongoose.Schema(
         "Policy Expiry",
         "Claim Update",
         "KYC Pending",
+        "KYC Verified",
+        "KYC Action Required",
+        "Payment Successful",
+        "Policy Issued",
         "Target Alert",
       ],
       default: "Premium Due",
@@ -46,6 +50,10 @@ const notificationSchema = new mongoose.Schema(
       ref: "User",
       index: true,
     },
+
+    actionLabel: { type: String, default: "" },
+    actionUrl: { type: String, default: "" },
+    reference: { type: String, default: "" },
   },
   { timestamps: true }
 );
