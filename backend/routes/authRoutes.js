@@ -67,7 +67,7 @@ const getPermissionsByRole = (role) => {
     bm: ["dashboard", "customers", "leads", "policies", "premiums", "claims", "reports", "ai"],
     unit_manager: ["dashboard", "customers", "leads", "policies", "premiums", "followups"],
     agency_manager: ["dashboard", "customers", "leads", "policies", "followups"],
-    advisor: ["dashboard", "customers", "leads", "policies", "followups"],
+    advisor: ["plans", "commission", "profile"],
     agent: ["dashboard", "customers", "leads"],
     customer: ["customer_dashboard", "policies", "premiums", "claims"],
   };
@@ -268,7 +268,7 @@ router.post("/send-login-otp", authRateLimit, async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const user = await User.findOne({ email, role: "customer" });
+    const user = await User.findOne({ email, role: { $in: ["customer", "advisor"] } });
 
     // Keep the public response generic so this endpoint does not reveal
     // whether a customer account exists.
@@ -324,7 +324,7 @@ router.post("/login-with-otp", authRateLimit, async (req, res) => {
       return res.status(400).json({ message: "Invalid email or OTP" });
     }
 
-    const user = await User.findOne({ email, role: "customer" });
+    const user = await User.findOne({ email, role: { $in: ["customer", "advisor"] } });
 
     if (!user || (user.status && user.status !== "active")) {
       return res.status(401).json({ message: "Invalid email or OTP" });
