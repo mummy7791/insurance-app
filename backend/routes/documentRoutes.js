@@ -27,6 +27,9 @@ const DOCUMENT_TYPES = new Set([
   "Income Proof",
   "Address Proof",
   "Policy Document",
+  "Nominee Photo",
+  "Nominee Aadhaar",
+  "Nominee PAN",
 ]);
 
 const DOCUMENT_STATUSES = new Set([
@@ -146,6 +149,78 @@ const removeUploadedFile = async (filePath) => {
     if (error.code !== "ENOENT") throw error;
   }
 };
+
+router.post("/proposal-kyc/:planId", auth(["customer"]), (req, res, next) => {
+  upload.single("file")(req, res, (error) => {
+    if (!error) return next();
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File size must be 5 MB or less" });
+    }
+    return res.status(400).json({ message: error.message || "Invalid file upload" });
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "KYC file required" });
+
+    const detectedMimeType = await detectFileType(req.file.path);
+    if (!detectedMimeType || detectedMimeType !== req.file.mimetype) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "File content does not match the allowed document type" });
+    }
+
+    const documentType = normalizeText(req.body.documentType, 50);
+    const customerName = normalizeText(req.body.customerName, 120);
+    if (!DOCUMENT_TYPES.has(documentType) || !customerName) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "Invalid KYC document details" });
+    }
+
+    const planId = normalizeText(req.params.planId, 80);
+    if (!/^[a-f\d]{24}$/i.test(planId)) {
+      await removeUploadedFile(req.file.path);
+      return res.status(400).json({ message: "Invalid plan reference" });
+    }
+
+    const pendingPolicyNumber = `PENDING-${req.user.id}-${planId}`;
+    const previous = await Document.findOne({
+      customerId: req.user.id,
+      policyNumber: pendingPolicyNumber,
+      documentType,
+    });
+    if (previous?.filePath) {
+      const previousPath = path.join(__dirname, "..", "uploads", path.basename(previous.filePath));
+      await removeUploadedFile(previousPath);
+      await previous.deleteOne();
+    }
+
+    const document = await Document.create({
+      customerName,
+      policyNumber: pendingPolicyNumber,
+      documentType,
+      fileName: normalizeText(req.file.originalname, 255) || "document",
+      filePath: `/uploads/${req.file.filename}`,
+      uploadedDate: new Date().toISOString().split("T")[0],
+      status: "Pending",
+      remarks: "Uploaded with online proposal - awaiting policy activation",
+      customerId: req.user.id,
+      createdBy: req.user.id,
+    });
+
+    return res.status(201).json({
+      id: document._id,
+      documentType: document.documentType,
+      fileName: document.fileName,
+      status: document.status,
+      uploadRef: pendingPolicyNumber,
+    });
+  } catch (error) {
+    if (req.file?.path) {
+      try { await removeUploadedFile(req.file.path); } catch {}
+    }
+    console.error("Proposal KYC upload error:", error);
+    return res.status(500).json({ message: "KYC document upload failed" });
+  }
+});
 
 router.post("/", auth(), (req, res, next) => {
   upload.single("file")(req, res, (error) => {
