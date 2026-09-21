@@ -196,23 +196,90 @@ export default function Premiums() {
   };
 
   const downloadReceipt = (premium: Premium) => {
-    const doc = new jsPDF();
-    doc.setFontSize(20); doc.text("SecureLife Insurance", 20, 24);
-    doc.setFontSize(13); doc.text("Premium Payment Receipt", 20, 36);
-    doc.setFontSize(11);
-    const rows = [
-      `Receipt Number: ${premium.receiptNumber || "N/A"}`,
-      `Policy Number: ${premium.policyNumber}`,
-      `Policyholder: ${premium.customerName}`,
-      `Amount Paid: INR ${Number(premium.amount || 0).toLocaleString("en-IN")}`,
-      `Payment Mode: ${premium.paymentMode}`,
-      `Paid Date: ${premium.paidDate || "N/A"}`,
-      `Status: ${premium.status}`,
-    ];
-    rows.forEach((row, i) => doc.text(row, 20, 54 + i * 9));
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const receiptNo = premium.receiptNumber || "N/A";
+    const amount = Number(premium.amount || 0).toLocaleString("en-IN");
+
+    // Professional branded header
+    doc.setFillColor(176, 15, 28);
+    doc.rect(0, 0, 210, 38, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("SecureLife Insurance", 16, 17);
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Digitally generated receipt from your SecureLife customer account.", 20, 126);
-    doc.save(`${premium.receiptNumber || premium.policyNumber}-receipt.pdf`);
+    doc.text("Premium Payment Receipt", 16, 25);
+    doc.text("Customer Payment Acknowledgement", 16, 31);
+
+    // Receipt reference
+    doc.setTextColor(40, 40, 40);
+    doc.setFillColor(248, 248, 248);
+    doc.roundedRect(15, 48, 180, 25, 3, 3, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("RECEIPT NUMBER", 21, 57);
+    doc.text("PAYMENT STATUS", 138, 57);
+    doc.setFontSize(11);
+    doc.text(receiptNo, 21, 66);
+    doc.setTextColor(20, 130, 70);
+    doc.text(premium.status.toUpperCase(), 138, 66);
+
+    doc.setTextColor(35, 35, 35);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Payment Details", 16, 88);
+    doc.setDrawColor(220, 220, 220);
+    doc.line(16, 92, 194, 92);
+
+    const details: Array<[string, string]> = [
+      ["Policyholder", premium.customerName],
+      ["Policy Number", premium.policyNumber],
+      ["Premium Amount", `INR ${amount}`],
+      ["Payment Mode", premium.paymentMode],
+      ["Payment Date", premium.paidDate || "N/A"],
+      ["Receipt Number", receiptNo],
+    ];
+    let y = 103;
+    details.forEach(([label, value]) => {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(9);
+      doc.text(label, 20, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(35, 35, 35);
+      doc.setFontSize(10);
+      doc.text(String(value), 75, y);
+      doc.setDrawColor(238, 238, 238);
+      doc.line(20, y + 4, 190, y + 4);
+      y += 13;
+    });
+
+    doc.setFillColor(250, 244, 235);
+    doc.roundedRect(16, 188, 178, 30, 3, 3, "F");
+    doc.setTextColor(65, 65, 65);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Important", 22, 198);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    const note = "This receipt acknowledges the premium payment recorded against the policy shown above. Please retain it with your policy records. Policy benefits remain subject to the policy terms and conditions.";
+    doc.text(doc.splitTextToSize(note, 164), 22, 205);
+
+    doc.setTextColor(90, 90, 90);
+    doc.setFontSize(8);
+    doc.text("This is a system-generated receipt and does not require a physical signature.", 16, 238);
+    doc.text("Generated from the SecureLife Insurance customer portal.", 16, 244);
+
+    doc.setDrawColor(176, 15, 28);
+    doc.setLineWidth(0.7);
+    doc.line(16, 265, 194, 265);
+    doc.setTextColor(70, 70, 70);
+    doc.setFontSize(8);
+    doc.text("SecureLife Insurance | Premium Payment Receipt", 16, 273);
+    doc.text("Page 1 of 1", 174, 273);
+
+    doc.save(`${receiptNo}-Premium-Receipt.pdf`);
   };
 
   const totalCollected = premiums
