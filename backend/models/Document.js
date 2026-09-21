@@ -27,6 +27,22 @@ const documentSchema = new mongoose.Schema(
       required: true,
     },
 
+    storageProvider: {
+      type: String,
+      enum: ["local", "cloudinary"],
+      default: "local",
+    },
+
+    storageKey: {
+      type: String,
+      default: "",
+    },
+
+    resourceType: {
+      type: String,
+      default: "raw",
+    },
+
     uploadedDate: {
       type: String,
       required: true,
