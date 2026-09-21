@@ -392,9 +392,9 @@ export default function Notifications() {
                 <p className="notification-message">{item.message}</p>
 
                 <span className="badge">{item.status}</span>
-                {item.reference && <div className="notification-reference">Ref: {item.reference}</div>}
+                {item.reference && <div className="notification-reference">Reference <span>{item.reference.replace(/^kyc:/, "KYC-").toUpperCase()}</span></div>}
 
-                <div style={{ marginTop: 12 }}>
+                <div className="notification-actions">
                   {item.actionUrl && (
                     <button className="mini-btn" onClick={() => { window.location.href = item.actionUrl || "/notifications"; }}>
                       {item.actionLabel || "View details"}
