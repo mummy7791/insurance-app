@@ -8,6 +8,7 @@ type UserRole =
   | "bm"
   | "unit_manager"
   | "agency_manager"
+  | "advisor"
   | "agent"
   | "customer";
 
@@ -45,6 +46,9 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { name: "Dashboard", path: "/dashboard", icon: "⌂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Plans", path: "/insurance-plans", icon: "◇", roles: ["advisor"] },
+  { name: "Commission", path: "/commission", icon: "%", roles: ["advisor"] },
+  { name: "My Profile", path: "/profile", icon: "◉", roles: ["advisor"] },
   { name: "Customers", path: "/customers", icon: "◉", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Policies", path: "/policies", icon: "▣", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Policy Purchases", path: "/policy-purchases", icon: "◇", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
