@@ -56,6 +56,7 @@ export default function Login() {
           <div className="brand-mark">S</div>
           <h1 className="auth-title">SecureLife</h1>
           <p className="auth-kicker">Welcome back, policyholder</p>
+          <div className="login-method-note">Use your password, or choose email OTP below.</div>
 
           {error && <div className="auth-error">{error}</div>}
 
@@ -67,14 +68,14 @@ export default function Login() {
             <button type="button" onClick={() => setShowPassword((v) => !v)}>{showPassword ? "Hide" : "Show"}</button>
           </div>
 
-          <button className="auth-btn" onClick={() => void login()} disabled={loading}>{loading ? "Signing in securely..." : "Sign in"}</button>
+          <button className="auth-btn" onClick={() => void login()} disabled={loading}>{loading ? "Signing in securely..." : "Sign in with password"}</button>
 
           {error.toLowerCase().includes("verify") && (
             <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { email: email.trim().toLowerCase(), mode: "verify" } })}>Verify email with OTP</button>
           )}
 
           <div className="auth-divider"><span>or</span></div>
-          <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { email: email.trim().toLowerCase(), mode: "login" } })}>Login with email OTP</button>
+          <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { email: email.trim().toLowerCase(), mode: "login" } })}>Send OTP to email</button>
 
           <p className="auth-link">New to SecureLife? <Link to="/register">Create account</Link></p>
           <p className="auth-link small"><Link to="/admin-login">Staff / Admin login</Link></p>
