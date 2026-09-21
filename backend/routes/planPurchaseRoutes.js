@@ -1,5 +1,4 @@
 const express = require("express");
-const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const router = express.Router();
@@ -21,22 +20,64 @@ const Policy = require("../models/Policy");
 const Premium = require("../models/Premium");
 const User = require("../models/User");
 
-const getRazorpay = () => {
-  const keyId = String(process.env.RAZORPAY_KEY_ID || "").trim();
-  const keySecret = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
+const getCashfreeConfig = () => {
+  const appId = String(process.env.CASHFREE_APP_ID || "").trim();
+  const secretKey = String(process.env.CASHFREE_SECRET_KEY || "").trim();
+  const env = String(process.env.CASHFREE_ENV || "sandbox").trim().toLowerCase();
 
-  if (!keyId || !keySecret) {
+  if (!appId || !secretKey) {
     const error = new Error("Payment gateway is not configured");
-    error.code = "RAZORPAY_NOT_CONFIGURED";
+    error.code = "CASHFREE_NOT_CONFIGURED";
     throw error;
   }
 
-  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+  return {
+    appId,
+    secretKey,
+    baseUrl:
+      env === "production"
+        ? "https://api.cashfree.com/pg"
+        : "https://sandbox.cashfree.com/pg",
+  };
+};
+
+const cashfreeRequest = async (path, options = {}) => {
+  const { appId, secretKey, baseUrl } = getCashfreeConfig();
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: {
+      "x-client-id": appId,
+      "x-client-secret": secretKey,
+      "x-api-version": "2023-08-01",
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      data?.message ||
+        data?.type ||
+        data?.code ||
+        `Cashfree request failed with status ${response.status}`
+    );
+    error.status = response.status;
+    error.cashfree = data;
+    throw error;
+  }
+
+  return data;
 };
 
 router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
-    const razorpay = getRazorpay();
     const proposal = req.body?.proposal;
     if (!proposal || proposal.proposalConsent !== true) {
       return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
@@ -84,14 +125,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     }
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    const amountPaise = Math.round(amount * 100);
-
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0 ||
-      !Number.isSafeInteger(amountPaise) ||
-      amountPaise <= 0
-    ) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ message: "Plan premium is invalid" });
     }
 
@@ -115,20 +149,27 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
 
     if (existingPending?.orderId && Number(existingPending.yearlyPremium) === amount) {
       try {
-        const existingOrder = await razorpay.orders.fetch(existingPending.orderId);
+        const existingOrder = await cashfreeRequest(
+          `/orders/${encodeURIComponent(existingPending.orderId)}`,
+          { method: "GET" }
+        );
+
         if (
           existingOrder &&
-          Number(existingOrder.amount) === amountPaise &&
-          existingOrder.currency === "INR" &&
-          existingOrder.status === "created"
+          Number(existingOrder.order_amount) === amount &&
+          existingOrder.order_currency === "INR" &&
+          existingOrder.order_status === "ACTIVE" &&
+          existingOrder.payment_session_id
         ) {
           existingPending.proposal = { ...clean, consentedAt: new Date() };
           await existingPending.save();
+
           return res.json({
             orderId: existingPending.orderId,
+            paymentSessionId: existingOrder.payment_session_id,
             amount,
             currency: "INR",
-            razorpayKey: process.env.RAZORPAY_KEY_ID,
+            gateway: "cashfree",
             reused: true,
             plan: {
               id: plan._id,
@@ -145,17 +186,38 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
         existingPending.policyStatus = "Inactive";
         await existingPending.save();
       } catch (reuseError) {
-        console.warn("Pending Razorpay order could not be reused; creating a fresh order:", reuseError?.message || reuseError);
+        console.warn(
+          "Pending Cashfree order could not be reused; creating a fresh order:",
+          reuseError?.message || reuseError
+        );
         existingPending.paymentStatus = "Failed";
         existingPending.policyStatus = "Inactive";
         await existingPending.save();
       }
     }
 
-    const order = await razorpay.orders.create({
-      amount: amountPaise,
-      currency: "INR",
-      receipt: makeReference("PLAN"),
+    const orderId = makeReference("PLAN");
+    const customerId = `cust_${String(req.user.id)
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .slice(-40)}`;
+
+    const order = await cashfreeRequest("/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        order_id: orderId,
+        order_amount: Number(amount.toFixed(2)),
+        order_currency: "INR",
+        customer_details: {
+          customer_id: customerId,
+          customer_name: clean.customerName,
+          customer_email: clean.customerEmail,
+          customer_phone: phoneDigits.slice(-10),
+        },
+        order_meta: {
+          return_url: `${process.env.FRONTEND_URL || "https://insurance-app-rose.vercel.app"}/payment/${plan._id}?cf_order_id={order_id}`,
+        },
+        order_note: `SecureLife - ${plan.planName}`,
+      }),
     });
 
     await PlanPurchase.create({
@@ -169,15 +231,16 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       paymentStatus: "Pending",
       policyStatus: "Inactive",
       paymentMethod: "Online",
-      orderId: order.id,
+      orderId,
       proposal: { ...clean, consentedAt: new Date() },
     });
 
     res.json({
-      orderId: order.id,
+      orderId,
+      paymentSessionId: order.payment_session_id,
       amount,
       currency: "INR",
-      razorpayKey: process.env.RAZORPAY_KEY_ID,
+      gateway: "cashfree",
       plan: {
         id: plan._id,
         planName: plan.planName,
@@ -189,11 +252,13 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     });
   } catch (error) {
     console.error("Create order error:", error);
-    if (error?.code === "RAZORPAY_NOT_CONFIGURED") {
+    if (error?.code === "CASHFREE_NOT_CONFIGURED") {
       return res.status(503).json({ message: "Online payment is temporarily unavailable. Payment gateway configuration is missing." });
     }
-    const gatewayMessage = String(error?.error?.description || error?.description || error?.message || "");
-    if (/razorpay|authentication|key|order/i.test(gatewayMessage)) {
+    const gatewayMessage = String(
+      error?.cashfree?.message || error?.message || ""
+    );
+    if (/cashfree|authentication|credential|key|order|payment/i.test(gatewayMessage)) {
       return res.status(502).json({ message: "Payment gateway could not create the order. Please try again shortly." });
     }
     res.status(500).json({ message: "Unable to create payment order right now. Please try again." });
@@ -202,59 +267,31 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
 
 router.post("/verify-payment", auth(["customer"]), async (req, res) => {
   try {
-    const razorpay = getRazorpay();
-    const { planId, razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+    const { planId, orderId } = req.body;
 
-    if (!planId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!planId || !orderId) {
       return res.status(400).json({ message: "Incomplete payment verification data" });
     }
 
-    const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
-
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign)
-      .digest("hex");
-
-    const expectedBuffer = Buffer.from(expectedSign, "hex");
-    const receivedBuffer = Buffer.from(String(razorpay_signature), "hex");
-
-    if (
-      expectedBuffer.length !== receivedBuffer.length ||
-      !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
-    ) {
-      return res.status(400).json({ message: "Payment verification failed" });
-    }
-
-    // PAN is excluded from normal queries. Select it only inside this
-    // server-side verification flow so it can be masked immediately after payment.
     const purchase = await PlanPurchase.findOne({
-      orderId: razorpay_order_id,
+      orderId,
       customerId: req.user.id,
       planId,
     }).select("+proposal.panNumber");
 
     if (!purchase) {
-      return res.status(400).json({ message: "Payment order does not match this customer and plan" });
-    }
-
-    if (purchase.paymentStatus === "Failed") {
-      return res.status(400).json({ message: "Payment order expired. Please create a new order." });
+      return res.status(400).json({
+        message: "Payment order does not match this customer and plan",
+      });
     }
 
     const plan = await InsurancePlan.findById(planId);
-    if (!plan) return res.status(404).json({ message: "Plan not found" });
+    if (!plan) {
+      return res.status(404).json({ message: "Plan not found" });
+    }
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    const expectedAmountPaise = Math.round(amount * 100);
-
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0 ||
-      !Number.isSafeInteger(expectedAmountPaise) ||
-      expectedAmountPaise <= 0
-    ) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ message: "Plan premium is invalid" });
     }
 
@@ -263,36 +300,48 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
         message: "Plan premium changed. Please create a new payment order.",
       });
     }
-    const [razorpayOrder, razorpayPayment] = await Promise.all([
-      razorpay.orders.fetch(razorpay_order_id),
-      razorpay.payments.fetch(razorpay_payment_id),
+
+    const [cashfreeOrder, payments] = await Promise.all([
+      cashfreeRequest(`/orders/${encodeURIComponent(orderId)}`, {
+        method: "GET",
+      }),
+      cashfreeRequest(`/orders/${encodeURIComponent(orderId)}/payments`, {
+        method: "GET",
+      }),
     ]);
 
     if (
-      Number(razorpayOrder.amount) !== expectedAmountPaise ||
-      razorpayOrder.currency !== "INR"
-    ) {
-      return res.status(400).json({ message: "Payment amount verification failed" });
-    }
-
-    if (
-      razorpayPayment.order_id !== razorpay_order_id ||
-      Number(razorpayPayment.amount) !== expectedAmountPaise ||
-      razorpayPayment.currency !== "INR" ||
-      razorpayPayment.status !== "captured"
+      Number(cashfreeOrder.order_amount) !== amount ||
+      cashfreeOrder.order_currency !== "INR" ||
+      cashfreeOrder.order_status !== "PAID"
     ) {
       return res.status(400).json({
-        message: "Payment is not captured or does not match this order",
+        message: "Payment is not completed or does not match this order",
       });
     }
 
-    if (purchase.transactionId && purchase.transactionId !== razorpay_payment_id) {
+    const successfulPayment = Array.isArray(payments)
+      ? payments.find((payment) => payment.payment_status === "SUCCESS")
+      : null;
+
+    if (!successfulPayment?.cf_payment_id) {
+      return res.status(400).json({
+        message: "Successful payment record not found",
+      });
+    }
+
+    const transactionId = String(successfulPayment.cf_payment_id);
+
+    if (
+      purchase.transactionId &&
+      purchase.transactionId !== transactionId
+    ) {
       return res.status(409).json({ message: "Payment order already used" });
     }
 
     if (
       purchase.paymentStatus === "Paid" &&
-      purchase.transactionId === razorpay_payment_id &&
+      purchase.transactionId === transactionId &&
       purchase.policyNumber &&
       purchase.receiptNumber
     ) {
@@ -307,31 +356,40 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       });
     }
 
-
-    const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
-    const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
-    const customer = await User.findById(req.user.id).select("name email phone");
+    const policyNumber =
+      purchase.policyNumber ||
+      makeReference(`SLI-${new Date().getFullYear()}`);
+    const receiptNumber =
+      purchase.receiptNumber || makeReference("RCPT");
+    const customer = await User.findById(req.user.id).select(
+      "name email phone"
+    );
 
     purchase.paymentStatus = "Paid";
     if (purchase.proposal?.panNumber) {
       purchase.proposal.panNumber = maskPan(purchase.proposal.panNumber);
     }
     purchase.policyStatus = "Active";
-    purchase.transactionId = razorpay_payment_id;
+    purchase.transactionId = transactionId;
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
     purchase.startDate = purchase.startDate || new Date();
+
     if (!purchase.endDate) {
       const endDate = new Date();
-      endDate.setFullYear(endDate.getFullYear() + Number(plan.paymentYears || 1));
+      endDate.setFullYear(
+        endDate.getFullYear() + Number(plan.paymentYears || 1)
+      );
       purchase.endDate = endDate;
     }
+
     await purchase.save();
 
     await Policy.findOneAndUpdate(
       { policyNumber },
       {
-        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
+        customerName:
+          purchase.proposal?.customerName || customer?.name || "Customer",
         policyName: plan.planName,
         policyNumber,
         premiumAmount: amount,
@@ -350,12 +408,13 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     await Premium.findOneAndUpdate(
       { policyNumber, receiptNumber },
       {
-        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
+        customerName:
+          purchase.proposal?.customerName || customer?.name || "Customer",
         policyNumber,
         amount,
         dueDate: nextDueDate.toISOString().split("T")[0],
         paidDate: new Date().toISOString().split("T")[0],
-        paymentMode: "Card",
+        paymentMode: "Online",
         receiptNumber,
         status: "Paid",
         createdBy: req.user.id,
@@ -368,15 +427,20 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       confirmation: {
         policyNumber,
         receiptNumber,
-        transactionId: razorpay_payment_id,
+        transactionId,
       },
     });
   } catch (error) {
     console.error("Verify payment error:", error);
-    if (error?.code === "RAZORPAY_NOT_CONFIGURED") {
-      return res.status(503).json({ message: "Online payment verification is temporarily unavailable." });
+    if (error?.code === "CASHFREE_NOT_CONFIGURED") {
+      return res.status(503).json({
+        message: "Online payment verification is temporarily unavailable.",
+      });
     }
-    res.status(500).json({ message: "Payment verification could not be completed. If money was debited, do not pay again and check My Policies." });
+    res.status(500).json({
+      message:
+        "Payment verification could not be completed. If money was debited, do not pay again and check My Policies.",
+    });
   }
 });
 
