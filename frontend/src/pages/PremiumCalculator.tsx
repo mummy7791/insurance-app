@@ -1,173 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Auth.css";
 import api from "../services/api";
 
-type Category =
-  | "Life Insurance"
-  | "Health Insurance"
-  | "Medical Insurance"
-  | "Education Insurance"
-  | "Personal Accident Insurance"
-  | "Disability Insurance"
-  | "Cancer Insurance"
-  | "Maternity Insurance"
-  | "Travel Insurance"
-  | "Pension Retirement Plan";
+type Plan={_id:string;planName:string;productGroup?:string;category:string;coverageAmount?:number;paymentYears?:number;policyTermYears?:number;ageMin?:number;ageMax?:number;premiumFrequencies?:string[]};
+type Quote={planId:string;planName:string;productGroup:string;age:number;gender:string;smoker:boolean;coverageAmount:number;paymentYears:number;policyTermYears:number;frequency:string;instalmentPremium:number;annualPremium:number;totalPremium:number;schedule:{policyYear:number;annualPremium:number;frequency:string;instalmentPremium:number}[];disclaimer:string};
+const groups=["ULIPS","Traditional Products","Term / Health Products","Pension Products","iSolutions","Other"];
+const money=(n:number)=>"₹"+Number(n||0).toLocaleString("en-IN");
+const err=(e:unknown)=>typeof e==="object"&&e!==null&&"response" in e?(e as {response?:{data?:{message?:string}}}).response?.data?.message||"Quotation failed":"Quotation failed";
 
-type PremiumResponse = {
-  category: Category;
-  coverageAmount: number;
-  age: number;
-  paymentYears: number;
-  yearlyPremium: number;
-};
-
-const categories: Category[] = [
-  "Life Insurance",
-  "Health Insurance",
-  "Medical Insurance",
-  "Education Insurance",
-  "Personal Accident Insurance",
-  "Disability Insurance",
-  "Cancer Insurance",
-  "Maternity Insurance",
-  "Travel Insurance",
-  "Pension Retirement Plan",
-];
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (typeof error === "object" && error !== null && "response" in error) {
-    const err = error as { response?: { data?: { message?: string } } };
-    return err.response?.data?.message || fallback;
-  }
-
-  return fallback;
-};
-
-export default function PremiumCalculator() {
-  const [category, setCategory] = useState<Category>("Life Insurance");
-  const [coverageAmount, setCoverageAmount] = useState("3000000");
-  const [age, setAge] = useState("25");
-  const [paymentYears, setPaymentYears] = useState("1");
-  const [result, setResult] = useState<PremiumResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const continueToAccount = () => {
-    sessionStorage.setItem("premiumEstimate", JSON.stringify(result));
-  };
-
-  const calculatePremium = async () => {
-    if (!category || !coverageAmount || !age) {
-      alert("Category, coverage amount and age required");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await api.post<PremiumResponse>(
-        "/insurance-plans/calculate-premium",
-        {
-          category,
-          coverageAmount: Number(coverageAmount),
-          age: Number(age),
-          paymentYears: Number(paymentYears || 1),
-        }
-      );
-
-      setResult(res.data);
-    } catch (error: unknown) {
-      alert(getErrorMessage(error, "Premium calculation failed"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="calculator-page">
-      <div className="calculator-shell">
-        <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><Link to="/" className="mini-btn">Back to home</Link></header>
-        <div className="calculator-intro"><span className="eyebrow">PLAN AHEAD</span><h1>Estimate your protection premium.</h1><p>Choose your cover, age and payment term for an indicative annual estimate.</p></div>
-
-        <div className="form-grid">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as Category)}
-          >
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            placeholder="Coverage Amount"
-            value={coverageAmount}
-            onChange={(e) => setCoverageAmount(e.target.value)}
-          />
-
-          <input
-            type="number"
-            placeholder="Age"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-          />
-
-          <input
-            type="number"
-            placeholder="Payment Years"
-            value={paymentYears}
-            onChange={(e) => setPaymentYears(e.target.value)}
-          />
-        </div>
-
-        <button
-          className="btn small-btn"
-          onClick={() => void calculatePremium()}
-          disabled={loading}
-          style={{ marginTop: 20 }}
-        >
-          {loading ? "Calculating..." : "Calculate Premium"}
-        </button>
-
-        {result && (
-          <div className="section" style={{ marginTop: 25 }}>
-            <span className="eyebrow">YOUR ESTIMATE</span><h2>Premium Result</h2>
-
-            <div className="cards">
-              <div className="card">
-                <h3>Category</h3>
-                <h1 style={{ fontSize: 24 }}>{result.category}</h1>
-              </div>
-
-              <div className="card">
-                <h3>Coverage</h3>
-                <h1>₹{result.coverageAmount.toLocaleString("en-IN")}</h1>
-              </div>
-
-              <div className="card">
-                <h3>Age</h3>
-                <h1>{result.age}</h1>
-              </div>
-
-              <div className="card">
-                <h3>Payment Years</h3>
-                <h1>{result.paymentYears}</h1>
-              </div>
-
-              <div className="card">
-                <h3>Yearly Premium</h3>
-                <h1>₹{result.yearlyPremium.toLocaleString("en-IN")}</h1>
-              </div>
-            </div>
-            <p className="muted-copy">This is an indicative estimate. Final premium may change after proposal review and underwriting.</p>
-            <div className="calculator-actions"><Link className="btn small-btn" to="/register" onClick={continueToAccount}>Create free account</Link><Link className="mini-btn" to="/login" onClick={continueToAccount}>Already have an account</Link></div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+export default function PremiumCalculator(){
+ const [plans,setPlans]=useState<Plan[]>([]),[planId,setPlanId]=useState(""),[age,setAge]=useState("30"),[gender,setGender]=useState("Male"),[smoker,setSmoker]=useState(false),[cover,setCover]=useState(""),[frequency,setFrequency]=useState("Yearly"),[quote,setQuote]=useState<Quote|null>(null),[loading,setLoading]=useState(false);
+ const selected=plans.find(p=>p._id===planId);
+ useEffect(()=>{void api.get<Plan[]>("/insurance-plans").then(r=>{const data=Array.isArray(r.data)?r.data:[];setPlans(data);if(data[0]){setPlanId(data[0]._id);setCover(String(data[0].coverageAmount||""));}}).catch(()=>setPlans([]));},[]);
+ const choose=(id:string)=>{setPlanId(id);const p=plans.find(x=>x._id===id);if(p){setCover(String(p.coverageAmount||""));setFrequency(p.premiumFrequencies?.[0]||"Yearly");}setQuote(null);};
+ const calculate=async()=>{if(!selected)return;try{setLoading(true);const r=await api.post<Quote>(`/insurance-plans/${selected._id}/quote`,{age:Number(age),gender,smoker,coverageAmount:Number(cover),frequency});setQuote(r.data);sessionStorage.setItem("premiumEstimate",JSON.stringify({category:selected.category,coverageAmount:r.data.coverageAmount,yearlyPremium:r.data.annualPremium,planId:selected._id}));}catch(e){alert(err(e));}finally{setLoading(false);}};
+ return <div className="calculator-page"><div className="calculator-shell">
+  <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><Link to="/" className="mini-btn">Back to home</Link></header>
+  <div className="calculator-intro"><span className="eyebrow">SMART QUOTES</span><h1>Plan-specific insurance quotation</h1><p>Select a product, enter customer details and get premium by age, cover, payment frequency and plan rules.</p></div>
+  <div className="section"><h2>Select Product Category</h2>{groups.map(g=>{const items=plans.filter(p=>(p.productGroup||"Other")===g);if(!items.length)return null;return <details key={g} open={selected?.productGroup===g}><summary style={{cursor:"pointer",fontWeight:700,padding:"12px 0"}}>{g}</summary><div className="cards">{items.map(p=><button key={p._id} className={p._id===planId?"btn small-btn":"mini-btn"} onClick={()=>choose(p._id)}>{p.planName}</button>)}</div></details>;})}</div>
+  {selected&&<div className="section"><span className="eyebrow">CUSTOMER INPUT</span><h2>{selected.planName}</h2><div className="form-grid">
+   <input type="number" min={selected.ageMin||1} max={selected.ageMax||100} placeholder="Age" value={age} onChange={e=>setAge(e.target.value)}/>
+   <select value={gender} onChange={e=>setGender(e.target.value)}><option>Male</option><option>Female</option><option>Other</option></select>
+   <input type="number" placeholder="Sum Assured / Benefit Cover" value={cover} onChange={e=>setCover(e.target.value)}/>
+   <select value={frequency} onChange={e=>setFrequency(e.target.value)}>{(selected.premiumFrequencies?.length?selected.premiumFrequencies:["Yearly"]).map(x=><option key={x}>{x}</option>)}</select>
+   <label style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" checked={smoker} onChange={e=>setSmoker(e.target.checked)}/> Smoker</label>
+  </div><button className="btn small-btn" style={{marginTop:16}} onClick={()=>void calculate()} disabled={loading}>{loading?"Calculating...":"Generate Smart Quote"}</button></div>}
+  {quote&&<div className="section"><span className="eyebrow">YOUR QUOTATION</span><h2>{quote.planName}</h2><div className="cards">
+   <div className="card"><h3>You Pay</h3><h1>{money(quote.instalmentPremium)}</h1><p>{quote.frequency}</p></div>
+   <div className="card"><h3>Annual Premium</h3><h1>{money(quote.annualPremium)}</h1></div>
+   <div className="card"><h3>You Get</h3><h1>{money(quote.coverageAmount)}</h1><p>Benefit / Sum Assured</p></div>
+   <div className="card"><h3>Pay For</h3><h1>{quote.paymentYears} years</h1></div>
+   <div className="card"><h3>Policy Term</h3><h1>{quote.policyTermYears} years</h1></div>
+  </div><h3>Year-wise premium schedule</h3><div style={{overflowX:"auto"}}><table className="table"><thead><tr><th>Policy Year</th><th>Frequency</th><th>Instalment</th><th>Annual</th></tr></thead><tbody>{quote.schedule.map(x=><tr key={x.policyYear}><td>{x.policyYear}</td><td>{x.frequency}</td><td>{money(x.instalmentPremium)}</td><td>{money(x.annualPremium)}</td></tr>)}</tbody></table></div><p className="muted-copy">{quote.disclaimer}</p><Link className="btn small-btn" to="/login">Continue to plan selection →</Link></div>}
+ </div></div>;
 }
