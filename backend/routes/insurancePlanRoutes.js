@@ -37,7 +37,7 @@ const isValidAge = (value) => {
 };
 
 const customerPlanFields =
-  "_id planName category planType coverageAmount yearlyPremium yearlyAmount paymentYears ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
+  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies pricingRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
 
 const calculatePremium = ({
   category,
@@ -125,6 +125,48 @@ router.post("/calculate-premium", (req, res) => {
   }
 });
 
+/* ================= SMART PLAN QUOTATION ================= */
+
+router.post("/:id/quote", auth(), async (req, res) => {
+  try {
+    const plan = await InsurancePlan.findOne({ _id: req.params.id, status: { $in: ["Approved", "Active"] } }).lean();
+    if (!plan) return res.status(404).json({ message: "Plan not found" });
+
+    const age = Number(req.body.age);
+    const gender = String(req.body.gender || "Male");
+    const smoker = Boolean(req.body.smoker);
+    const frequency = String(req.body.frequency || "Yearly");
+    const cover = Number(req.body.coverageAmount || plan.coverageAmount || 0);
+    if (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100)) return res.status(400).json({ message: "Age is not eligible for this plan" });
+    if (!Number.isFinite(cover) || cover <= 0) return res.status(400).json({ message: "Valid coverage amount required" });
+    const allowed = Array.isArray(plan.premiumFrequencies) && plan.premiumFrequencies.length ? plan.premiumFrequencies : ["Yearly"];
+    if (!allowed.includes(frequency)) return res.status(400).json({ message: "Premium frequency is not available for this plan" });
+
+    const baseCover = Number(plan.coverageAmount || cover);
+    const basePremium = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
+    const rules = plan.pricingRules || {};
+    const baseAge = Number(rules.baseAge || 25);
+    const ageRate = Math.max(0, Number(rules.ageRatePercent || 0)) / 100;
+    const smokerLoading = Math.max(0, Number(rules.smokerLoadingPercent || 0)) / 100;
+    const femaleDiscount = Math.max(0, Number(rules.femaleDiscountPercent || 0)) / 100;
+    let annual = basePremium * (baseCover > 0 ? cover / baseCover : 1);
+    if (plan.premiumMode === "auto") annual *= 1 + Math.max(0, age - baseAge) * ageRate;
+    if (smoker) annual *= 1 + smokerLoading;
+    if (gender.toLowerCase() === "female") annual *= 1 - Math.min(femaleDiscount, 0.5);
+    annual = Math.max(1, Math.round(annual));
+    const divisors = { Yearly: 1, "Half-Yearly": 2, Quarterly: 4, Monthly: 12 };
+    const instalmentPremium = Math.round(annual / (divisors[frequency] || 1));
+    const paymentYears = Number(plan.paymentYears || 1);
+    const policyTermYears = Math.max(paymentYears, Number(plan.policyTermYears || paymentYears));
+    const schedule = Array.from({ length: paymentYears }, (_, i) => ({ policyYear: i + 1, annualPremium: annual, frequency, instalmentPremium }));
+
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+  } catch (error) {
+    console.error("Smart quote error:", error);
+    res.status(500).json({ message: "Quotation calculation failed" });
+  }
+});
+
 /* ================= CREATE PLAN - ADMIN ================= */
 
 router.post("/", auth(["admin"]), async (req, res) => {
@@ -133,6 +175,12 @@ router.post("/", auth(["admin"]), async (req, res) => {
       planName,
       category,
       planType,
+      productGroup,
+      policyTermYears,
+      premiumFrequencies,
+      firstYearPremium,
+      subsequentYearPremium,
+      pricingRules,
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
@@ -222,6 +270,12 @@ router.post("/", auth(["admin"]), async (req, res) => {
       planName,
       category,
       planType: planType || "",
+      productGroup: productGroup || "Other",
+      policyTermYears: Number(policyTermYears || paymentYears || 1),
+      premiumFrequencies: Array.isArray(premiumFrequencies) && premiumFrequencies.length ? premiumFrequencies : ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
+      firstYearPremium: Number(firstYearPremium || finalPremium || 0),
+      subsequentYearPremium: Number(subsequentYearPremium || finalPremium || 0),
+      pricingRules: pricingRules || undefined,
       coverageAmount: Number(coverageAmount || 0),
       yearlyPremium: finalPremium,
       yearlyAmount: finalPremium,
