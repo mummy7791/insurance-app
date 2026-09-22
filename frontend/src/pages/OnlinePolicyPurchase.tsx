@@ -8,11 +8,11 @@ type BuyForm = {
   customerName:string; customerEmail:string; customerPhone:string; address:string; dateOfBirth:string;
   aadhaarNumber:string; panNumber:string; accountHolderName:string; bankName:string; accountNumber:string; ifscCode:string;
   nomineeName:string; nomineeRelation:string; nomineeDateOfBirth:string; nomineePhone:string; nomineeEmail:string; nomineeAddress:string; nomineeAadhaar:string; nomineePan:string;
-  proposalConsent:boolean;
+  advisorCode:string; proposalConsent:boolean;
 };
 type UploadKey="policyholderPhoto"|"aadhaarDocument"|"panDocument"|"addressProof"|"nomineePhoto"|"nomineeAadhaarDocument"|"nomineePanDocument";
 type UploadState=Record<UploadKey,File|null>;
-const initialForm:BuyForm={customerName:"",customerEmail:"",customerPhone:"",address:"",dateOfBirth:"",aadhaarNumber:"",panNumber:"",accountHolderName:"",bankName:"",accountNumber:"",ifscCode:"",nomineeName:"",nomineeRelation:"",nomineeDateOfBirth:"",nomineePhone:"",nomineeEmail:"",nomineeAddress:"",nomineeAadhaar:"",nomineePan:"",proposalConsent:false};
+const initialForm:BuyForm={customerName:"",customerEmail:"",customerPhone:"",address:"",dateOfBirth:"",aadhaarNumber:"",panNumber:"",accountHolderName:"",bankName:"",accountNumber:"",ifscCode:"",nomineeName:"",nomineeRelation:"",nomineeDateOfBirth:"",nomineePhone:"",nomineeEmail:"",nomineeAddress:"",nomineeAadhaar:"",nomineePan:"",advisorCode:"",proposalConsent:false};
 const initialUploads:UploadState={policyholderPhoto:null,aadhaarDocument:null,panDocument:null,addressProof:null,nomineePhoto:null,nomineeAadhaarDocument:null,nomineePanDocument:null};
 const errorMessage=(error:unknown,fallback:string)=>typeof error==="object"&&error!==null&&"response" in error?(error as {response?:{data?:{message?:string}}}).response?.data?.message||fallback:fallback;
 const digits=(v:string)=>v.replace(/\D/g,"");
@@ -65,7 +65,7 @@ export default function OnlinePolicyPurchase(){
    <div className="section"><span className="eyebrow">PERSONAL DETAILS</span><h2>Policyholder details</h2><div className="form-grid">
     <input placeholder="Full Name" value={form.customerName} onChange={e=>update("customerName",e.target.value)}/><input placeholder="Verified Email" value={form.customerEmail} readOnly/>
     <input placeholder="Mobile Number" inputMode="tel" value={form.customerPhone} onChange={e=>update("customerPhone",e.target.value)}/><input type="date" aria-label="Date of Birth" value={form.dateOfBirth} onChange={e=>update("dateOfBirth",e.target.value)}/>
-    <input className="proposal-full" placeholder="Residential Address" value={form.address} onChange={e=>update("address",e.target.value)}/></div></div>
+    <input className="proposal-full" placeholder="Residential Address" value={form.address} onChange={e=>update("address",e.target.value)}/><input className="proposal-full" placeholder="Advisor Code (Optional)" value={form.advisorCode} onChange={e=>update("advisorCode",e.target.value.toUpperCase())}/></div><p className="kyc-note">Advisor code is optional. If entered, this policy business will be linked to that active advisor after successful payment.</p></div>
    <div className="section"><span className="eyebrow">AADHAAR & PAN KYC</span><h2>Identity verification</h2><p className="kyc-note">Enter KYC details and attach supporting documents. Full sensitive numbers are not stored in browser proposal history.</p><div className="form-grid">
     <input placeholder="Aadhaar Number (12 digits)" inputMode="numeric" maxLength={14} value={form.aadhaarNumber} onChange={e=>update("aadhaarNumber",digits(e.target.value).slice(0,12))}/><input placeholder="PAN Number" maxLength={10} value={form.panNumber} onChange={e=>update("panNumber",e.target.value.toUpperCase())}/></div>
     <div className="kyc-upload-grid"><FileBox field="policyholderPhoto" label="Policyholder Photo" accept=".jpg,.jpeg,.png"/><FileBox field="aadhaarDocument" label="Aadhaar Document"/><FileBox field="panDocument" label="PAN Card"/><FileBox field="addressProof" label="Address Proof"/></div>
