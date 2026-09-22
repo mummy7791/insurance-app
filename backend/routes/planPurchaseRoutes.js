@@ -100,6 +100,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       nomineeRelation: String(proposal.nomineeRelation || "").trim().slice(0, 40),
       nomineeDateOfBirth: String(proposal.nomineeDateOfBirth || "").trim(),
       kycUploadRef: String(proposal.kycUploadRef || "").trim().slice(0, 180),
+      advisorCode: String(proposal.advisorCode || "").trim().toUpperCase().slice(0, 40),
     };
 
     const phoneDigits = clean.customerPhone.replace(/\D/g, "");
@@ -140,6 +141,12 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       return res.status(400).json({ message: "This plan is not available for purchase" });
     }
 
+    let advisor = null;
+    if (clean.advisorCode) {
+      advisor = await User.findOne({ advisorCode: clean.advisorCode, role: "advisor", status: "active" }).select("_id name advisorCode");
+      if (!advisor) return res.status(400).json({ message: "Advisor code is invalid or inactive" });
+    }
+
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
     if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ message: "Plan premium is invalid" });
@@ -178,6 +185,9 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
           existingOrder.payment_session_id
         ) {
           existingPending.proposal = { ...clean, consentedAt: new Date() };
+          existingPending.advisorId = advisor?._id || null;
+          existingPending.advisorCode = advisor?.advisorCode || "";
+          existingPending.advisorCommissionRate = advisor ? Number(plan.advisorCommissionRate || 0) : 0;
           await existingPending.save();
 
           return res.json({
@@ -244,6 +254,9 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       coverageAmount: plan.coverageAmount || 0,
       yearlyPremium: amount,
       paymentYears: plan.paymentYears || 1,
+      advisorId: advisor?._id || null,
+      advisorCode: advisor?.advisorCode || "",
+      advisorCommissionRate: advisor ? Number(plan.advisorCommissionRate || 0) : 0,
       paymentStatus: "Pending",
       policyStatus: "Inactive",
       paymentMethod: "Online",
