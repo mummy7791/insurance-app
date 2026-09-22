@@ -203,6 +203,7 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
     const previousStatus = claim.status;
     Object.assign(claim, payload);
     await claim.save();
+    await writeAudit(req,{action:`CLAIM_${String(claim.status||"UPDATED").toUpperCase().replace(/\\s+/g,"_")}`,module:"Claims",description:`Claim ${claim.claimNumber || claim._id} updated for policy ${claim.policyNumber}`,targetUserId:claim.customerId});
 
     if (claim.customerId && previousStatus !== claim.status) {
       const notification = await Notification.create({
@@ -231,6 +232,7 @@ router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
     if (!claim) return res.status(404).json({ message: "Claim not found" });
 
     await claim.deleteOne();
+    await writeAudit(req,{action:"CLAIM_DELETED",module:"Claims",description:`Claim ${claim.claimNumber || claim._id} deleted for policy ${claim.policyNumber}`,targetUserId:claim.customerId});
     res.json({ message: "Claim deleted" });
   } catch (error) {
     console.error("Claim delete error:", error);
