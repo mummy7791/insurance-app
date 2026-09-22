@@ -557,7 +557,7 @@ export default function Claims() {
                     </select>
                   )}</td>
                   <td>{claim.remarks}{isCustomer && claim.status === "Settled" && <><br/><button className="mini-btn" onClick={() => downloadSettlementReceipt(claim)}>Download Receipt</button></>}</td>
-                  {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deleteClaim(claim._id)}>Delete</button></td>}
+                  {!isCustomer && <td><button className="mini-btn" onClick={() => void updateChecklist(claim)}>Documents</button> <button className="mini-btn danger-btn" onClick={() => deleteClaim(claim._id)}>Delete</button></td>}
                 </tr>
               ))}
             </tbody>
