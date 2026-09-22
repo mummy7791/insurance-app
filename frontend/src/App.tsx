@@ -35,6 +35,7 @@ const PremiumCalculator = lazy(() => import("./pages/PremiumCalculator"));
 const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
 const Payment = lazy(() => import("./pages/Payment"));
 const VerifyClaim = lazy(() => import("./pages/VerifyClaim"));
+const Quotations = lazy(() => import("./pages/Quotations"));
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
           <Route path="/user-management" element={<ProtectedRoute allowedRoles={["admin"]}><UserManagement /></ProtectedRoute>} />
           <Route path="/admin-create-staff" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreateStaff /></ProtectedRoute>} />
           <Route path="/admin-insurance-plans" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInsurancePlans /></ProtectedRoute>} />
+          <Route path="/quotations" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "customer"]}><Quotations /></ProtectedRoute>} />
           <Route path="/policy-purchases" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><PolicyPurchases /></ProtectedRoute>} />
 
           <Route path="/customer-dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
