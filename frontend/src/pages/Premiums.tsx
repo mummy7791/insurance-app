@@ -373,12 +373,12 @@ export default function Premiums() {
                   <td>{premium.paidDate || "-"}</td>
                   <td>{premium.paymentMode}</td>
                   <td>{premium.receiptNumber || "-"}</td>
-                  <td>{isCustomer ? <span className={`status-pill ${premium.status === "Overdue" ? "overdue" : premium.status === "Due" ? "due" : "active"}`}>{premium.status}</span> : (
+                  <td>{isCustomer ? <span className={`status-pill ${premium.status === "Lapsed" || premium.status === "Overdue" ? "overdue" : premium.status === "Due" || premium.status === "Grace Period" ? "due" : "active"}`}>{premium.status}</span> : (
                     <select className="status-select" value={premium.status} onChange={(e) => updateStatus(premium._id, e.target.value as PremiumStatus)}>
-                      <option value="Due">Due</option><option value="Paid">Paid</option><option value="Upcoming">Upcoming</option><option value="Due">Due</option><option value="Grace Period">Grace Period</option><option value="Overdue">Overdue</option><option value="Lapsed">Lapsed</option>
+                      <option value="Upcoming">Upcoming</option><option value="Due">Due</option><option value="Grace Period">Grace Period</option><option value="Overdue">Overdue</option><option value="Lapsed">Lapsed</option><option value="Paid">Paid</option>
                     </select>
                   )}</td>
-                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : <button className="btn small-btn" disabled={payingId === premium._id} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
+                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : premium.status === "Lapsed" ? <span className="status-pill overdue">Contact servicing</span> : <button className="btn small-btn" disabled={payingId === premium._id} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
                   {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deletePremium(premium._id)}>Delete</button></td>}
                 </tr>
               ))}
