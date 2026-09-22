@@ -20,6 +20,9 @@ const planPurchaseSchema = new mongoose.Schema(
     coverageAmount: { type: Number, default: 0 },
     yearlyPremium: { type: Number, default: 0 },
     paymentYears: { type: Number, default: 1 },
+    advisorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
+    advisorCode: { type: String, default: "", index: true },
+    advisorCommissionRate: { type: Number, default: 0 },
 
     proposal: {
       customerName: { type: String, default: "" },
@@ -31,6 +34,7 @@ const planPurchaseSchema = new mongoose.Schema(
       nomineeName: { type: String, default: "" },
       nomineeRelation: { type: String, default: "" },
       nomineeDateOfBirth: { type: String, default: "" },
+      advisorCode: { type: String, default: "" },
       consentedAt: { type: Date, default: null },
     },
 
