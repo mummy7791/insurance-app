@@ -3,6 +3,7 @@ const PolicyServiceRequest=require("../models/PolicyServiceRequest");
 const PlanPurchase=require("../models/PlanPurchase");
 const Policy=require("../models/Policy");
 const auth=require("../middleware/auth");
+const {writeAudit}=require("../services/auditService");
 const STAFF=["admin","bm","unit_manager","agency_manager","agent"];
 const clean=(v,n=500)=>String(v||"").trim().slice(0,n);
 router.get("/",auth(),async(req,res)=>{try{const q=req.user.role==="customer"?{customerId:req.user.id}:{};res.json(await PolicyServiceRequest.find(q).sort({createdAt:-1}))}catch(e){res.status(500).json({message:"Service requests load failed"})}});
@@ -14,7 +15,8 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
  const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),status:"Submitted"});
+ await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
-router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});item.status=status;item.adminRemarks=remarks;item.reviewedBy=req.user.id;item.reviewedAt=new Date();await item.save();res.json(item)}catch(e){res.status(500).json({message:"Service request review failed"})}});
+router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});item.status=status;item.adminRemarks=remarks;item.reviewedBy=req.user.id;item.reviewedAt=new Date();await item.save();await writeAudit(req,{action:`SERVICE_REQUEST_${status.toUpperCase().replace(" ","_")}`,module:"Policy Services",description:`${item.requestType} for ${item.policyNumber} changed to ${status}`,targetUserId:item.customerId});res.json(item)}catch(e){res.status(500).json({message:"Service request review failed"})}});
 module.exports=router;
