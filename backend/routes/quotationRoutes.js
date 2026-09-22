@@ -1,0 +1,21 @@
+const express=require("express");
+const crypto=require("crypto");
+const Quotation=require("../models/Quotation");
+const InsurancePlan=require("../models/InsurancePlan");
+const auth=require("../middleware/auth");
+const {writeAudit}=require("../services/auditService");
+const router=express.Router();
+const STAFF=["admin","bm","unit_manager","agency_manager","agent"];
+const safeText=(v,n=120)=>String(v||"").trim().slice(0,n);
+router.post("/",auth([...STAFF,"customer"]),async(req,res)=>{try{
+ const q=req.body||{};const plan=await InsurancePlan.findById(q.planId).lean();
+ if(!plan||!["Approved","Active"].includes(plan.status))return res.status(404).json({message:"Approved plan not found"});
+ const now=new Date();const validUntil=new Date(now.getTime()+15*86400000);
+ const quotationNumber=`QT-${now.toISOString().slice(0,10).replace(/-/g,"")}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+ const item=await Quotation.create({quotationNumber,createdBy:req.user.id,createdByRole:req.user.role,customerName:safeText(q.customerName),mobile:safeText(q.mobile,15),dob:safeText(q.dob,20),age:Number(q.age),gender:safeText(q.gender,20),smoker:Boolean(q.smoker),planId:plan._id,planName:plan.planName,productGroup:plan.productGroup||"Other",coverageAmount:Number(q.coverageAmount),paymentYears:Number(q.paymentYears),policyTermYears:Number(q.policyTermYears),frequency:safeText(q.frequency,30),instalmentPremium:Number(q.instalmentPremium),annualPremium:Number(q.annualPremium),totalPremium:Number(q.totalPremium),schedule:Array.isArray(q.schedule)?q.schedule.slice(0,100):[],benefitType:safeText(q.benefitType,80),benefitSchedule:Array.isArray(q.benefitSchedule)?q.benefitSchedule.slice(0,100):[],maturityAmount:Number(q.maturityAmount||0),deathBenefit:Number(q.deathBenefit||0),disclaimer:safeText(q.disclaimer,1000),validUntil});
+ await writeAudit(req,{action:"QUOTATION_SAVED",module:"Quotations",description:`Quotation ${quotationNumber} saved for ${plan.planName}`});
+ res.status(201).json(item);
+}catch(e){console.error("Quotation save error:",e);res.status(500).json({message:"Quotation save failed"});}});
+router.get("/",auth([...STAFF,"customer"]),async(req,res)=>{try{const filter=req.user.role==="customer"?{createdBy:req.user.id}:{};res.json(await Quotation.find(filter).sort({createdAt:-1}).limit(500).lean());}catch(e){res.status(500).json({message:"Quotation history failed"});}});
+router.get("/:id",auth([...STAFF,"customer"]),async(req,res)=>{try{const item=await Quotation.findById(req.params.id).lean();if(!item)return res.status(404).json({message:"Quotation not found"});if(req.user.role==="customer"&&String(item.createdBy)!==String(req.user.id))return res.status(403).json({message:"Access denied"});res.json(item);}catch(e){res.status(500).json({message:"Quotation fetch failed"});}});
+module.exports=router;
