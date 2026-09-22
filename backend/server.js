@@ -49,6 +49,7 @@ const planPurchaseRoutes = require("./routes/planPurchaseRoutes");
 const policyPurchaseRoutes = require("./routes/policyPurchaseRoutes");
 const customerRoutes = require("./routes/customer");
 const advisorBankRoutes = require("./routes/advisorBankRoutes");
+const policyServiceRoutes = require("./routes/policyServiceRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -184,6 +185,7 @@ useRoute("/api/insurance-plans", insurancePlanRoutes);
 useRoute("/api/plan-purchases", planPurchaseRoutes);
 useRoute("/api/policy-purchases", policyPurchaseRoutes);
 useRoute("/api/advisor-bank", advisorBankRoutes);
+useRoute("/api/policy-services", policyServiceRoutes);
 
 /* Customer policy assignment routes */
 useRoute("/api/customer", customerRoutes);
