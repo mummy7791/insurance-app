@@ -40,9 +40,12 @@ const premiumSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Due", "Paid", "Overdue"],
+      enum: ["Upcoming", "Due", "Grace Period", "Overdue", "Lapsed", "Paid"],
       default: "Due",
     },
+
+    lifecycleUpdatedAt: { type: Date, default: Date.now },
+    reminderStage: { type: String, default: "" },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
