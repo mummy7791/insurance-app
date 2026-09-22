@@ -21,6 +21,10 @@ type Plan = {
   planName: string;
   category: Category;
   planType?: string;
+  productGroup?: string;
+  policyTermYears?: number;
+  premiumFrequencies?: string[];
+  pricingRules?: { baseAge?: number; ageRatePercent?: number; smokerLoadingPercent?: number; femaleDiscountPercent?: number };
   coverageAmount?: number;
   yearlyPremium?: number;
   yearlyAmount?: number;
@@ -53,6 +57,13 @@ const initialForm = {
   planName: "",
   category: "Life Insurance" as Category,
   planType: "",
+  productGroup: "Term / Health Products",
+  policyTermYears: "10",
+  premiumFrequencies: "Yearly,Half-Yearly,Quarterly,Monthly",
+  baseAge: "25",
+  ageRatePercent: "2",
+  smokerLoadingPercent: "15",
+  femaleDiscountPercent: "0",
   coverageAmount: "3000000",
   yearlyPremium: "",
   paymentYears: "1",
@@ -163,6 +174,10 @@ function AdminInsurancePlans() {
         planName: form.planName,
         category: form.category,
         planType: form.planType,
+        productGroup: form.productGroup,
+        policyTermYears: Number(form.policyTermYears || form.paymentYears || 1),
+        premiumFrequencies: form.premiumFrequencies.split(",").map((x) => x.trim()).filter(Boolean),
+        pricingRules: { baseAge: Number(form.baseAge || 25), ageRatePercent: Number(form.ageRatePercent || 0), smokerLoadingPercent: Number(form.smokerLoadingPercent || 0), femaleDiscountPercent: Number(form.femaleDiscountPercent || 0) },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -284,6 +299,17 @@ function AdminInsurancePlans() {
             value={form.planType}
             onChange={(e) => setForm({ ...form, planType: e.target.value })}
           />
+
+          <select value={form.productGroup} onChange={(e) => setForm({ ...form, productGroup: e.target.value })}>
+            {["ULIPS","Traditional Products","Term / Health Products","Pension Products","iSolutions","Other"].map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+
+          <input placeholder="Policy Term Years" value={form.policyTermYears} onChange={(e) => setForm({ ...form, policyTermYears: e.target.value })} />
+          <input placeholder="Premium Frequencies comma separated" value={form.premiumFrequencies} onChange={(e) => setForm({ ...form, premiumFrequencies: e.target.value })} />
+          <input placeholder="Base Age" value={form.baseAge} onChange={(e) => setForm({ ...form, baseAge: e.target.value })} />
+          <input placeholder="Age Loading % per year" value={form.ageRatePercent} onChange={(e) => setForm({ ...form, ageRatePercent: e.target.value })} />
+          <input placeholder="Smoker Loading %" value={form.smokerLoadingPercent} onChange={(e) => setForm({ ...form, smokerLoadingPercent: e.target.value })} />
+          <input placeholder="Female Discount %" value={form.femaleDiscountPercent} onChange={(e) => setForm({ ...form, femaleDiscountPercent: e.target.value })} />
 
           <input
             placeholder="Coverage Amount"
@@ -416,6 +442,7 @@ function AdminInsurancePlans() {
               <tr>
                 <th>Plan</th>
                 <th>Category</th>
+                <th>Smart Quote</th>
                 <th>Coverage</th>
                 <th>Premium</th>
                 <th>Years</th>
@@ -435,6 +462,7 @@ function AdminInsurancePlans() {
                   </td>
 
                   <td>{plan.category}</td>
+                  <td><strong>{plan.productGroup || "Other"}</strong><br/><small>Term {plan.policyTermYears || plan.paymentYears || 1}y · Age load {plan.pricingRules?.ageRatePercent || 0}%</small></td>
                   <td>₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</td>
                   <td>₹{Number(plan.yearlyPremium || plan.yearlyAmount || 0).toLocaleString("en-IN")}</td>
                   <td>{plan.paymentYears || 1}</td>
