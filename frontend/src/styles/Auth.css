@@ -215,3 +215,19 @@
     padding-right:72px;
   }
 }
+
+
+/* ===== SMART QUOTE PROFESSIONAL EXPERIENCE ===== */
+.smart-quote-page{min-height:100vh;background:#f7f8fb;padding:28px 18px 60px}
+.smart-quote-shell{width:min(1180px,100%);margin:0 auto}
+.smart-quote-page .calculator-header{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:16px 20px;box-shadow:0 8px 28px rgba(15,23,42,.06)}
+.smart-quote-page .calculator-intro{padding:44px 6px 22px}.smart-quote-page .calculator-intro h1{font-size:38px;letter-spacing:-.8px;color:#1e293b;margin:8px 0}.smart-quote-page .calculator-intro p{color:#64748b;max-width:720px;line-height:1.65}
+.smart-quote-page .quote-section{border:1px solid #e5e7eb;border-top:0;border-radius:20px;box-shadow:0 12px 36px rgba(15,23,42,.06);padding:28px;margin-top:20px;background:#fff}
+.smart-quote-page .quote-section:before{content:"";display:block;height:4px;margin:-28px -28px 24px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,#9f1239,#f58220)}
+.smart-quote-page details{border:1px solid #eef2f7;border-radius:14px;margin:10px 0;background:#fff}.smart-quote-page details summary{padding:16px 18px!important;color:#334155}.smart-quote-page details .cards{padding:0 16px 16px;margin-top:4px}
+.smart-quote-page .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.smart-quote-page .form-grid input,.smart-quote-page .form-grid select{min-height:54px;background:#fff;border:1px solid #dbe2ea;border-radius:12px;padding:0 15px}.smart-quote-page .form-grid input:focus,.smart-quote-page .form-grid select:focus{border-color:#f58220;box-shadow:0 0 0 3px rgba(245,130,32,.1)}
+.smart-quote-page .quote-summary-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.smart-quote-page .quote-summary-card{border:1px solid #e5e7eb;border-top:3px solid #f58220;box-shadow:none;border-radius:16px;padding:20px}.smart-quote-page .quote-summary-card h1{font-size:26px}.smart-quote-page .quote-summary-card p{color:#64748b}
+.smart-quote-page .table{border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}.smart-quote-page .table th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.4px}.smart-quote-page .table td{color:#334155}
+.smart-quote-page .quote-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px}.smart-quote-page .quote-actions .mini-btn,.smart-quote-page .quote-actions .btn{width:auto!important;min-width:170px;min-height:46px;height:auto;margin:0;padding:12px 18px;border-radius:11px;text-decoration:none;text-align:center;font-size:14px;line-height:1.3}.smart-quote-page .quote-actions .mini-btn{box-shadow:none}.smart-quote-page .quote-actions .btn{display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:900px){.smart-quote-page .quote-summary-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.smart-quote-page{padding:12px 10px 40px}.smart-quote-page .calculator-intro{padding:28px 2px 14px}.smart-quote-page .calculator-intro h1{font-size:30px}.smart-quote-page .quote-section{padding:20px}.smart-quote-page .quote-section:before{margin:-20px -20px 20px}.smart-quote-page .form-grid,.smart-quote-page .quote-summary-grid{grid-template-columns:1fr}.smart-quote-page .quote-actions>*{width:100%!important}.smart-quote-page .quote-actions .mini-btn,.smart-quote-page .quote-actions .btn{min-width:0}}
