@@ -37,7 +37,7 @@ const isValidAge = (value) => {
 };
 
 const customerPlanFields =
-  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies pricingRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
+  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies pricingRules benefitRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
 
 const calculatePremium = ({
   category,
@@ -159,8 +159,16 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const paymentYears = Number(plan.paymentYears || 1);
     const policyTermYears = Math.max(paymentYears, Number(plan.policyTermYears || paymentYears));
     const schedule = Array.from({ length: paymentYears }, (_, i) => ({ policyYear: i + 1, annualPremium: annual, frequency, instalmentPremium }));
+    const benefitRules = plan.benefitRules || {};
+    const benefitType = String(benefitRules.benefitType || "Life Cover");
+    const payoutStartYear = Math.max(0, Number(benefitRules.payoutStartYear || 0));
+    const payoutYears = Math.max(0, Number(benefitRules.payoutYears || 0));
+    const annualPayout = Math.max(0, Number(benefitRules.annualPayout || 0));
+    const benefitSchedule = payoutYears && annualPayout ? Array.from({length:payoutYears},(_,i)=>({policyYear:payoutStartYear+i,amount:annualPayout,type:benefitType})) : [];
+    const maturityAmount = Math.max(0, Number(benefitRules.maturityAmount || 0));
+    const deathBenefit = Math.max(0, Number(benefitRules.deathBenefit || cover));
 
-    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
   } catch (error) {
     console.error("Smart quote error:", error);
     res.status(500).json({ message: "Quotation calculation failed" });
@@ -181,6 +189,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       firstYearPremium,
       subsequentYearPremium,
       pricingRules,
+      benefitRules,
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
@@ -276,6 +285,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       firstYearPremium: Number(firstYearPremium || finalPremium || 0),
       subsequentYearPremium: Number(subsequentYearPremium || finalPremium || 0),
       pricingRules: pricingRules || undefined,
+      benefitRules: benefitRules || undefined,
       coverageAmount: Number(coverageAmount || 0),
       yearlyPremium: finalPremium,
       yearlyAmount: finalPremium,
