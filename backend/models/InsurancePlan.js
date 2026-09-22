@@ -30,6 +30,23 @@ const insurancePlanSchema = new mongoose.Schema(
       default: "",
     },
 
+    productGroup: {
+      type: String,
+      enum: ["ULIPS", "Traditional Products", "Term / Health Products", "Pension Products", "iSolutions", "Other"],
+      default: "Other",
+    },
+
+    policyTermYears: { type: Number, default: 1 },
+    premiumFrequencies: { type: [String], default: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"] },
+    firstYearPremium: { type: Number, default: 0 },
+    subsequentYearPremium: { type: Number, default: 0 },
+    pricingRules: {
+      baseAge: { type: Number, default: 25 },
+      ageRatePercent: { type: Number, default: 2 },
+      smokerLoadingPercent: { type: Number, default: 15 },
+      femaleDiscountPercent: { type: Number, default: 0 },
+    },
+
     coverageAmount: {
       type: Number,
       default: 0,
