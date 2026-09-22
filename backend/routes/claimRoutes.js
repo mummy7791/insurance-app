@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Claim = require("../models/Claim");
 const auth = require("../middleware/auth");
+const {writeAudit}=require("../services/auditService");
 const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
 const Notification = require("../models/Notification");
@@ -141,6 +142,7 @@ router.post("/", auth(), async (req, res) => {
       createdBy: req.user.id,
     });
 
+    await writeAudit(req,{action:"CLAIM_SUBMITTED",module:"Claims",description:`Claim ${claim.claimNumber || claim._id} submitted for policy ${claim.policyNumber}`});
     res.status(201).json(claim);
   } catch (error) {
     console.error("Claim create error:", error);
