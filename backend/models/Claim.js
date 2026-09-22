@@ -48,6 +48,9 @@ const claimSchema = new mongoose.Schema(
     settlementAmount: { type: Number },
     settlementDate: { type: String },
     settlementReference: { type: String },
+    documentsStatus: { type: String, enum: ["Not Requested", "Required", "Received", "Verified"], default: "Not Requested" },
+    missingDocuments: { type: [String], default: [] },
+    adminChecklistRemarks: { type: String, default: "" },
 
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
