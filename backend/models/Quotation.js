@@ -1,0 +1,30 @@
+const mongoose=require("mongoose");
+const quotationSchema=new mongoose.Schema({
+ quotationNumber:{type:String,required:true,unique:true,index:true},
+ createdBy:{type:mongoose.Schema.Types.ObjectId,ref:"User",required:true,index:true},
+ createdByRole:{type:String,required:true},
+ customerName:{type:String,trim:true,default:""},
+ mobile:{type:String,trim:true,default:""},
+ dob:{type:String,default:""},
+ age:{type:Number,required:true},
+ gender:{type:String,default:"Male"},
+ smoker:{type:Boolean,default:false},
+ planId:{type:mongoose.Schema.Types.ObjectId,ref:"InsurancePlan",required:true,index:true},
+ planName:{type:String,required:true},
+ productGroup:{type:String,default:"Other"},
+ coverageAmount:{type:Number,required:true},
+ paymentYears:{type:Number,required:true},
+ policyTermYears:{type:Number,required:true},
+ frequency:{type:String,required:true},
+ instalmentPremium:{type:Number,required:true},
+ annualPremium:{type:Number,required:true},
+ totalPremium:{type:Number,required:true},
+ schedule:{type:[mongoose.Schema.Types.Mixed],default:[]},
+ benefitType:{type:String,default:""},
+ benefitSchedule:{type:[mongoose.Schema.Types.Mixed],default:[]},
+ maturityAmount:{type:Number,default:0},
+ deathBenefit:{type:Number,default:0},
+ disclaimer:{type:String,default:""},
+ validUntil:{type:Date,required:true}
+},{timestamps:true});
+module.exports=mongoose.model("Quotation",quotationSchema);
