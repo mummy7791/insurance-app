@@ -47,6 +47,15 @@ const insurancePlanSchema = new mongoose.Schema(
       femaleDiscountPercent: { type: Number, default: 0 },
     },
 
+    benefitRules: {
+      benefitType: { type: String, enum: ["Life Cover", "Guaranteed Income", "Pension Income", "Maturity Benefit", "Custom"], default: "Life Cover" },
+      payoutStartYear: { type: Number, default: 0 },
+      payoutYears: { type: Number, default: 0 },
+      annualPayout: { type: Number, default: 0 },
+      maturityAmount: { type: Number, default: 0 },
+      deathBenefit: { type: Number, default: 0 },
+    },
+
     coverageAmount: {
       type: Number,
       default: 0,
