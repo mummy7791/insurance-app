@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 
 type UserRole = "advisor";
 type UserStatus = "active" | "blocked";
+type BankSubmission={_id:string;advisorName:string;advisorCode?:string;accountHolderName:string;bankName:string;accountNumber:string;ifscCode:string;branchName?:string;documentType:string;fileName:string;status:"Submitted"|"Approved"|"Rejected";adminRemarks?:string;submittedAt?:string};
 
 type UserItem = {
   _id: string;
@@ -45,6 +46,7 @@ export default function UserManagement() {
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<UserForm>(initialForm);
+  const [bankSubmissions,setBankSubmissions]=useState<BankSubmission[]>([]);
   const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
 
   const loadUsers = useCallback(async () => {
@@ -64,13 +66,17 @@ export default function UserManagement() {
     }
   }, []);
 
+  const loadBankSubmissions=useCallback(async()=>{try{const r=await api.get<BankSubmission[]>("/advisor-bank/admin");setBankSubmissions(r.data)}catch(e){console.error("Bank submissions load error",e)}},[]);
+  const reviewBank=async(item:BankSubmission,status:"Approved"|"Rejected")=>{const remarks=status==="Rejected"?window.prompt("Enter rejection reason"):window.prompt("Approval remarks (optional)","Bank account verified");if(status==="Rejected"&&!remarks)return;try{const r=await api.patch<BankSubmission>(`/advisor-bank/${item._id}/review`,{status,remarks:remarks||""});setBankSubmissions(p=>p.map(x=>x._id===item._id?r.data:x))}catch{alert("Bank review failed")}};
+  const viewBankProof=async(item:BankSubmission)=>{try{const r=await api.get(`/advisor-bank/${item._id}/file`,{responseType:"blob"});const url=URL.createObjectURL(r.data);window.open(url,"_blank","noopener,noreferrer");setTimeout(()=>URL.revokeObjectURL(url),60000)}catch{alert("Unable to open bank proof")}};
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      void loadUsers();
+      void loadUsers(); void loadBankSubmissions();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [loadUsers]);
+  }, [loadUsers,loadBankSubmissions]);
 
   const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor email");}catch(e){console.error(e);alert("OTP send failed / email may already exist");}finally{setOtpBusy(false);}};
   const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Email verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
@@ -258,6 +264,12 @@ export default function UserManagement() {
 
           <span>{filteredUsers.length} records</span>
         </div>
+      </div>
+
+      <div className="section admin-table-section">
+        <div className="section-heading-row"><div><span className="eyebrow">PAYOUT VERIFICATION</span><h2>Advisor bank account submissions</h2></div><button className="mini-btn" onClick={loadBankSubmissions}>Refresh</button></div>
+        <p className="section-copy">Review the payout account and uploaded passbook, cancelled cheque or bank statement before approving advisor settlements.</p>
+        {bankSubmissions.length===0?<p>No bank submissions found.</p>:<div className="premium-table-wrap"><table className="table"><thead><tr><th>Advisor</th><th>Bank Account</th><th>IFSC / Branch</th><th>Proof</th><th>Status</th><th>Review</th></tr></thead><tbody>{bankSubmissions.map(item=><tr key={item._id}><td><strong>{item.advisorName}</strong><br/><small>{item.advisorCode||"—"}</small></td><td>{item.accountHolderName}<br/><small>{item.bankName} ••••{item.accountNumber.slice(-4)}</small></td><td>{item.ifscCode}<br/><small>{item.branchName||"—"}</small></td><td><button className="mini-btn" onClick={()=>void viewBankProof(item)}>{item.documentType}</button></td><td><span className="secure-chip">{item.status}</span>{item.adminRemarks&&<><br/><small>{item.adminRemarks}</small></>}</td><td>{item.status==="Submitted"?<><button className="mini-btn" onClick={()=>void reviewBank(item,"Approved")}>Approve</button> <button className="mini-btn danger-btn" onClick={()=>void reviewBank(item,"Rejected")}>Reject</button></>:<span>Reviewed</span>}</td></tr>)}</tbody></table></div>}
       </div>
 
       <div className="section admin-table-section">
