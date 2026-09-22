@@ -57,7 +57,7 @@ function App() {
           <Route path="/claims" element={<ProtectedRoute><Claims /></ProtectedRoute>} />
           <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Employees /></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute allowedRoles={["customer"]}><Notifications /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Reports /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute allowedRoles={["admin"]}><Settings /></ProtectedRoute>} />
           <Route path="/user-management" element={<ProtectedRoute allowedRoles={["admin"]}><UserManagement /></ProtectedRoute>} />

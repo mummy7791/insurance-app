@@ -58,7 +58,6 @@ const menuItems: MenuItem[] = [
   { name: "Team", path: "/employees", icon: "◌", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Commission", path: "/commission", icon: "%", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Reports", path: "/reports", icon: "▥", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
-  { name: "Notifications", path: "/notifications", icon: "○", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Plan Management", path: "/admin-insurance-plans", icon: "◆", roles: ["admin"] },
   { name: "User Access", path: "/user-management", icon: "⌘", roles: ["admin"] },
   { name: "Settings", path: "/settings", icon: "⚙", roles: ["admin"] },
@@ -77,7 +76,7 @@ export default function Sidebar() {
     } catch {
       return {};
     }
-  }, []);
+  }, [role]);
 
   const role: UserRole = user.role || "customer";
 
@@ -87,6 +86,7 @@ export default function Sidebar() {
   }, [role]);
 
   useEffect(() => {
+    if (role !== "customer") { setUnreadCount(0); return; }
     let mounted = true;
 
     const loadUnreadCount = async () => {

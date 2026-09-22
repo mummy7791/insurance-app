@@ -10,8 +10,10 @@ export default function Topbar({ title, subtitle }: Props) {
   const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
   const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  const showNotifications = user.role === "customer";
 
   useEffect(() => {
+    if (!showNotifications) { setUnread(0); return; }
     let active = true;
     const load = async () => {
       try {
@@ -41,7 +43,7 @@ export default function Topbar({ title, subtitle }: Props) {
       socket.off("notificationUpdated", onUpdated);
       socket.off("notificationDeleted", onDeleted);
     };
-  }, []);
+  }, [showNotifications]);
 
   return (
     <div className="topbar">
@@ -51,7 +53,7 @@ export default function Topbar({ title, subtitle }: Props) {
       </div>
 
       <div className="topbar-actions">
-        <button
+        {showNotifications && <button
           type="button"
           className="notification-bell"
           aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
@@ -59,7 +61,7 @@ export default function Topbar({ title, subtitle }: Props) {
         >
           <span aria-hidden="true">🔔</span>
           {unread > 0 && <span className="notification-count">{unread > 99 ? "99+" : unread}</span>}
-        </button>
+        </button>}
 
         <div className="user-box">
           <strong>{user.name}</strong>
