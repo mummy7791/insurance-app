@@ -6,6 +6,7 @@ const auth=require("../middleware/auth");
 const AdvisorBank=require("../models/AdvisorBank");
 const User=require("../models/User");
 const {uploadPrivateDocument,signedDownloadUrl,deletePrivateDocument}=require("../services/privateDocumentStorage");
+const {writeAudit}=require("../services/auditService");
 
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024},fileFilter:(_req,file,cb)=>["application/pdf","image/jpeg","image/png"].includes(file.mimetype)?cb(null,true):cb(new Error("Only PDF, JPG and PNG files are allowed"))});
 const text=(v,n)=>String(v||"").trim().slice(0,n);
@@ -25,12 +26,13 @@ router.post("/me",auth(["advisor"]),(req,res,next)=>upload.single("document")(re
   if(existing?.storageKey)try{await deletePrivateDocument(existing.storageKey)}catch(e){console.error("Old advisor bank proof cleanup failed",e.message)}
   const payload={advisorId:req.user.id,advisorName:advisor?.name||"",advisorCode:advisor?.advisorCode||"",accountHolderName,bankName,accountNumber,ifscCode,branchName,documentType,fileName:path.basename(req.file.originalname).slice(0,255)||"bank-proof",storageKey:stored.public_id,status:"Submitted",adminRemarks:"",submittedAt:new Date(),reviewedAt:null,reviewedBy:null};
   const saved=existing?await AdvisorBank.findByIdAndUpdate(existing._id,payload,{new:true,runValidators:true}):await AdvisorBank.create(payload);
+  await writeAudit(req,{action:existing?"BANK_DETAILS_RESUBMITTED":"BANK_DETAILS_SUBMITTED",module:"Advisor Payout",description:"Advisor payout bank details submitted for verification"});
   res.status(201).json({...saved.toObject(),storageKey:undefined});
  }catch(e){console.error("Advisor bank submit failed",e);res.status(500).json({message:"Bank details submission failed"})}
 });
 
 router.get("/admin",auth(["admin"]),async(_req,res)=>{try{res.json(await AdvisorBank.find().select("-storageKey").sort({updatedAt:-1}))}catch(e){res.status(500).json({message:"Advisor bank submissions load failed"})}});
-router.patch("/:id/review",auth(["admin"]),async(req,res)=>{try{const status=text(req.body.status,20),remarks=text(req.body.remarks,500);if(!["Approved","Rejected"].includes(status))return res.status(400).json({message:"Choose Approved or Rejected"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});const item=await AdvisorBank.findById(req.params.id);if(!item)return res.status(404).json({message:"Submission not found"});if(item.status!=="Submitted")return res.status(400).json({message:"Only submitted bank details can be reviewed"});item.status=status;item.adminRemarks=remarks||(status==="Approved"?"Bank details verified":"");item.reviewedAt=new Date();item.reviewedBy=req.user.id;await item.save();res.json({...item.toObject(),storageKey:undefined})}catch(e){res.status(500).json({message:"Bank review failed"})}});
+router.patch("/:id/review",auth(["admin"]),async(req,res)=>{try{const status=text(req.body.status,20),remarks=text(req.body.remarks,500);if(!["Approved","Rejected"].includes(status))return res.status(400).json({message:"Choose Approved or Rejected"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});const item=await AdvisorBank.findById(req.params.id);if(!item)return res.status(404).json({message:"Submission not found"});if(item.status!=="Submitted")return res.status(400).json({message:"Only submitted bank details can be reviewed"});item.status=status;item.adminRemarks=remarks||(status==="Approved"?"Bank details verified":"");item.reviewedAt=new Date();item.reviewedBy=req.user.id;await item.save();await writeAudit(req,{action:`BANK_${status.toUpperCase()}`,module:"Advisor Payout",description:`Advisor payout bank account ${status.toLowerCase()}`,targetUserId:item.advisorId});res.json({...item.toObject(),storageKey:undefined})}catch(e){res.status(500).json({message:"Bank review failed"})}});
 router.get("/:id/pdf",auth(["admin"]),async(req,res)=>{try{
  const item=await AdvisorBank.findById(req.params.id);if(!item)return res.status(404).json({message:"Submission not found"});
  const escapePdf=(v)=>String(v||"").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
