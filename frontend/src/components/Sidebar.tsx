@@ -46,6 +46,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { name: "Dashboard", path: "/dashboard", icon: "⌂", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Home", path: "/advisor-dashboard", icon: "⌂", roles: ["advisor"] },
   { name: "Plans", path: "/insurance-plans", icon: "◇", roles: ["advisor"] },
   { name: "Commission", path: "/commission", icon: "%", roles: ["advisor"] },
   { name: "My Profile", path: "/profile", icon: "◉", roles: ["advisor"] },
@@ -129,7 +130,7 @@ export default function Sidebar() {
       socket.off("notificationUpdated", handleNotificationUpdated);
       socket.off("notificationDeleted", handleNotificationDeleted);
     };
-  }, []);
+  }, [role]);
 
   const logout = async () => {
     try {
