@@ -29,6 +29,9 @@ type Claim = {
   settlementAmount?: number;
   settlementDate?: string;
   settlementReference?: string;
+  documentsStatus?: "Not Requested" | "Required" | "Received" | "Verified";
+  missingDocuments?: string[];
+  adminChecklistRemarks?: string;
 };
 
 type ClaimForm = {
@@ -134,6 +137,17 @@ export default function Claims() {
       console.error("Claim add error:", error);
       alert("Claim add failed");
     }
+  };
+
+  const updateChecklist = async (claim: Claim) => {
+    const documentsStatus = window.prompt("Document status: Not Requested / Required / Received / Verified", claim.documentsStatus || "Required");
+    if (!documentsStatus || !["Not Requested","Required","Received","Verified"].includes(documentsStatus)) return;
+    const missing = window.prompt("Missing documents (comma separated)", (claim.missingDocuments || []).join(", "));
+    const adminChecklistRemarks = window.prompt("Checklist remarks", claim.adminChecklistRemarks || "") || "";
+    try {
+      const res = await api.put<Claim>(`/claims/${claim._id}`, { documentsStatus, missingDocuments: (missing || "").split(",").map(x=>x.trim()).filter(Boolean), adminChecklistRemarks });
+      setClaims(prev => prev.map(x => x._id === claim._id ? res.data : x));
+    } catch { alert("Claim checklist update failed"); }
   };
 
   const updateStatus = async (id: string, status: ClaimStatus) => {
