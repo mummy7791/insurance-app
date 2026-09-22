@@ -20,7 +20,7 @@ type Premium = {
   policyNumber: string;
   amount: number;
   dueDate: string;
-  status: "Due" | "Paid" | "Overdue";
+  status: "Upcoming" | "Due" | "Grace Period" | "Overdue" | "Lapsed" | "Paid";
 };
 
 type DocumentItem = { _id: string; status: "Pending" | "Verified" | "Rejected"; documentType: string; };
@@ -94,7 +94,7 @@ export default function CustomerDashboard() {
   const activePolicyCount = standaloneActivePolicies.length + activePurchased.length;
   const totalPolicyCount = policies.filter((p) => !p.policyNumber || !allPurchasedPolicyNumbers.has(p.policyNumber)).length + purchasedPlans.length;
   const totalCoverage = standaloneActivePolicies.reduce((sum, p) => sum + Number(p.sumAssured || 0), 0) + activePurchased.reduce((sum, p) => sum + Number(p.coverageAmount || 0), 0);
-  const duePremiums = premiums.filter((p) => p.status === "Due" || p.status === "Overdue");
+  const duePremiums = premiums.filter((p) => ["Upcoming","Due","Grace Period","Overdue"].includes(p.status));
   const dueAmount = duePremiums.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const openClaims = claims.filter((c) => !["Settled", "Rejected"].includes(c.status));
   const nextDue = [...duePremiums].sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
@@ -204,6 +204,7 @@ export default function CustomerDashboard() {
                 <Link to="/premiums"><b>₹</b><span>Pay Premium</span></Link>
                 <Link to="/claims"><b>◎</b><span>File / Track Claim</span></Link>
                 <Link to="/documents"><b>▤</b><span>Documents & KYC</span></Link>
+                <Link to="/policy-services"><b>↻</b><span>Policy Services</span></Link>
                 <Link to="/customer-profile"><b>◉</b><span>Update Profile</span></Link>
                 <Link to="/notifications"><b>○</b><span>Notifications</span></Link>
               </div>
