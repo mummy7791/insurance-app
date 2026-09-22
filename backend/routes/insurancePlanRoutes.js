@@ -137,6 +137,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       yearlyPremium,
       yearlyAmount,
       paymentYears,
+      advisorCommissionRate,
       ageMin,
       ageMax,
       eligibleFrom,
@@ -225,6 +226,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       yearlyPremium: finalPremium,
       yearlyAmount: finalPremium,
       paymentYears: Number(paymentYears || 1),
+      advisorCommissionRate: Math.min(100, Math.max(0, Number(advisorCommissionRate || 0))),
       ageMin: finalAgeMin,
       ageMax: finalAgeMax,
       eligibleFrom: eligibleFrom || "",
@@ -561,6 +563,7 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
       yearlyPremium,
       yearlyAmount,
       paymentYears,
+      advisorCommissionRate,
       ageMin,
       ageMax,
       eligibleFrom,
@@ -655,6 +658,11 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
     plan.yearlyPremium = finalPremium;
     plan.yearlyAmount = finalPremium;
     plan.paymentYears = Number(paymentYears || plan.paymentYears || 1);
+    if (advisorCommissionRate !== undefined) {
+      const rate = Number(advisorCommissionRate);
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100) return res.status(400).json({ message: "Advisor commission rate must be between 0 and 100" });
+      plan.advisorCommissionRate = rate;
+    }
     plan.ageMin = finalAgeMin;
     plan.ageMax = finalAgeMax;
     plan.eligibleFrom = eligibleFrom || plan.eligibleFrom || "";
