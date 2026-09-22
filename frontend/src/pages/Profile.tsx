@@ -1,42 +1,40 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
-type User = { id?: string; name?: string; role?: string; email?: string; branch?: string; phone?: string; advisorCode?: string; address?: string; };
+type User={id?:string;name?:string;role?:string;email?:string;branch?:string;phone?:string;advisorCode?:string;address?:string};
+type Bank={_id:string;accountHolderName:string;bankName:string;accountNumber:string;ifscCode:string;branchName?:string;documentType:string;fileName:string;status:"Submitted"|"Approved"|"Rejected";adminRemarks?:string;submittedAt?:string};
 
-export default function Profile() {
-  const user: User = useMemo(() => {
-    try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}") as User; }
-    catch { return {}; }
-  }, []);
+export default function Profile(){
+ const user:User=useMemo(()=>{try{return JSON.parse(localStorage.getItem("insuranceUser")||"{}") as User}catch{return {}}},[]);
+ const [currentPassword,setCurrentPassword]=useState(""),[newPassword,setNewPassword]=useState(""),[confirmPassword,setConfirmPassword]=useState(""),[changing,setChanging]=useState(false);
+ const [bank,setBank]=useState<Bank|null>(null),[bankLoading,setBankLoading]=useState(user.role==="advisor"),[submitting,setSubmitting]=useState(false),[proof,setProof]=useState<File|null>(null);
+ const [bankForm,setBankForm]=useState({accountHolderName:"",bankName:"",accountNumber:"",ifscCode:"",branchName:"",documentType:"Bank Passbook"});
+ const loadBank=async()=>{if(user.role!=="advisor")return;try{setBankLoading(true);const r=await api.get<Bank|null>("/advisor-bank/me");setBank(r.data||null)}catch(e){console.error(e)}finally{setBankLoading(false)}};
+ useEffect(()=>{void loadBank()},[]);
+ const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully")}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.")}finally{setChanging(false)}};
+ const submitBank=async()=>{if(!bankForm.accountHolderName||!bankForm.bankName||!bankForm.accountNumber||!bankForm.ifscCode||!proof)return alert("Complete bank details and upload bank proof");const body=new FormData();Object.entries(bankForm).forEach(([k,v])=>body.append(k,v));body.append("document",proof);try{setSubmitting(true);const r=await api.post<Bank>("/advisor-bank/me",body,{headers:{"Content-Type":"multipart/form-data"}});setBank(r.data);setProof(null);alert("Bank details submitted to admin for verification")}catch(e){console.error(e);alert("Bank details submission failed. Check IFSC and document.")}finally{setSubmitting(false)}};
+ const viewProof=async()=>{if(!bank)return;try{const r=await api.get(`/advisor-bank/${bank._id}/file`,{responseType:"blob"});const url=URL.createObjectURL(r.data);window.open(url,"_blank","noopener,noreferrer");setTimeout(()=>URL.revokeObjectURL(url),60000)}catch{alert("Unable to open bank proof")}};
+ const canEnter=!bank||bank.status==="Rejected";
+ const masked=(v:string)=>v.length>4?"••••••"+v.slice(-4):v;
 
-  const [currentPassword,setCurrentPassword]=useState(""); const [newPassword,setNewPassword]=useState(""); const [confirmPassword,setConfirmPassword]=useState(""); const [changing,setChanging]=useState(false);
-  const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully");}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.");}finally{setChanging(false);}};
+ return <MainLayout title={user.role==="advisor"?"Advisor Profile":"My Profile"} subtitle={user.role==="advisor"?"Your advisor identity, payout account and account security":"Your SecureLife staff account and access details"}>
+  <div className="admin-page-summary"><div><span className="eyebrow">{user.role==="advisor"?"ADVISOR IDENTITY":"STAFF IDENTITY"}</span><h2>{user.name||"SecureLife Staff"}</h2><p>{user.role==="advisor"?"Your verified advisor account details. Keep your contact information and login credentials secure.":"Your signed-in identity is managed by the secure staff account."}</p></div><span className="secure-chip">Active session</span></div>
+  <div className="cards admin-kpi-grid"><div className="card"><h3>Name</h3><h1>{user.name||"N/A"}</h1></div><div className="card"><h3>Role</h3><h1>{user.role||"N/A"}</h1></div><div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode||"N/A"}</h1></div><div className="card"><h3>Status</h3><h1>Active</h1></div></div>
+  <div className="section"><div className="section-heading-row"><div><span className="eyebrow">ACCOUNT DETAILS</span><h2>{user.role==="advisor"?"Advisor information":"Staff profile"}</h2></div><span className="secure-chip">Read only</span></div>
+   <div className="profile-detail-grid"><div><span>Full name</span><strong>{user.name||"N/A"}</strong></div><div><span>Email address</span><strong>{user.email||"N/A"}</strong></div><div><span>Role</span><strong>{user.role||"N/A"}</strong></div><div><span>Phone</span><strong>{user.phone||"N/A"}</strong></div><div><span>Advisor code</span><strong>{user.advisorCode||"N/A"}</strong></div><div><span>Address</span><strong>{user.address||"N/A"}</strong></div></div>
+  </div>
 
-  return (
-    <MainLayout title={user.role === "advisor" ? "Advisor Profile" : "My Profile"} subtitle={user.role === "advisor" ? "Your advisor identity, contact details and account security" : "Your SecureLife staff account and access details"}>
-      <div className="admin-page-summary">
-        <div><span className="eyebrow">{user.role === "advisor" ? "ADVISOR IDENTITY" : "STAFF IDENTITY"}</span><h2>{user.name || "SecureLife Staff"}</h2><p>{user.role === "advisor" ? "Your verified advisor account details. Keep your contact information and login credentials secure." : "Your signed-in identity is managed by the secure staff account."}</p></div>
-        <span className="secure-chip">Active session</span>
-      </div>
-      <div className="cards admin-kpi-grid">
-        <div className="card"><h3>Name</h3><h1>{user.name || "N/A"}</h1></div>
-        <div className="card"><h3>Role</h3><h1>{user.role || "N/A"}</h1></div>
-        <div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode || "N/A"}</h1></div>
-        <div className="card"><h3>Status</h3><h1>Active</h1></div>
-      </div>
-      <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">ACCOUNT DETAILS</span><h2>{user.role === "advisor" ? "Advisor information" : "Staff profile"}</h2></div><span className="secure-chip">Read only</span></div>
-        <div className="profile-detail-grid">
-          <div><span>Full name</span><strong>{user.name || "N/A"}</strong></div>
-          <div><span>Email address</span><strong>{user.email || "N/A"}</strong></div>
-          <div><span>Role</span><strong>{user.role || "N/A"}</strong></div>
-          <div><span>Phone</span><strong>{user.phone || "N/A"}</strong></div>
-          <div><span>Advisor code</span><strong>{user.advisorCode || "N/A"}</strong></div>
-          <div><span>Address</span><strong>{user.address || "N/A"}</strong></div>
-        </div>
-        {user.role === "advisor" ? <div style={{marginTop:24}}><span className="eyebrow">SECURITY</span><h2>Change password</h2><div className="form-grid"><input type="password" placeholder="Current Password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/><input type="password" placeholder="New Password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div><button className="btn small-btn" disabled={changing||!currentPassword||!newPassword||!confirmPassword} onClick={changePassword}>{changing?"Changing...":"Change Password"}</button></div> : <p className="section-copy">For security, credential changes are managed through authorized account management.</p>}
-      </div>
-    </MainLayout>
-  );
+  {user.role==="advisor"&&<div className="section"><div className="section-heading-row"><div><span className="eyebrow">PAYOUT ACCOUNT</span><h2>Bank account verification</h2></div>{bank&&<span className="secure-chip">{bank.status}</span>}</div>
+   {bankLoading?<p>Loading bank details...</p>:bank&&!canEnter?<><p className="section-copy">{bank.status==="Approved"?"Your payout account is approved. Re-entry is locked.":"Submitted to admin. Editing is locked while verification is pending."}</p><div className="profile-detail-grid"><div><span>Account holder</span><strong>{bank.accountHolderName}</strong></div><div><span>Bank</span><strong>{bank.bankName}</strong></div><div><span>Account number</span><strong>{masked(bank.accountNumber)}</strong></div><div><span>IFSC</span><strong>{bank.ifscCode}</strong></div><div><span>Branch</span><strong>{bank.branchName||"—"}</strong></div><div><span>Proof</span><strong>{bank.documentType}</strong></div></div><button className="mini-btn" onClick={()=>void viewProof()}>View uploaded proof</button>{bank.adminRemarks&&<p className="section-copy"><strong>Admin remarks:</strong> {bank.adminRemarks}</p>}</>:<>
+    {bank?.status==="Rejected"&&<div className="proposal-restored"><strong>Bank details rejected — re-entry enabled</strong><span>{bank.adminRemarks||"Please correct the details and submit again."}</span></div>}
+    <p className="section-copy">Enter the bank account where advisor commission payouts should be processed. Upload one supporting proof.</p>
+    <div className="form-grid"><input placeholder="Account Holder Name" value={bankForm.accountHolderName} onChange={e=>setBankForm(p=>({...p,accountHolderName:e.target.value}))}/><input placeholder="Bank Name" value={bankForm.bankName} onChange={e=>setBankForm(p=>({...p,bankName:e.target.value}))}/><input placeholder="Account Number" value={bankForm.accountNumber} onChange={e=>setBankForm(p=>({...p,accountNumber:e.target.value.replace(/\s/g,"")}))}/><input placeholder="IFSC Code" maxLength={11} value={bankForm.ifscCode} onChange={e=>setBankForm(p=>({...p,ifscCode:e.target.value.toUpperCase()}))}/><input placeholder="Branch Name" value={bankForm.branchName} onChange={e=>setBankForm(p=>({...p,branchName:e.target.value}))}/><select value={bankForm.documentType} onChange={e=>setBankForm(p=>({...p,documentType:e.target.value}))}><option>Bank Passbook</option><option>Cancelled Cheque</option><option>Bank Statement</option></select></div>
+    <label className="kyc-upload"><span>Bank proof document</span><strong>{proof?.name||"Choose PDF / JPG / PNG"}</strong><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e=>setProof(e.target.files?.[0]||null)}/><em>Maximum 5 MB</em></label>
+    <button className="btn small-btn" disabled={submitting} onClick={()=>void submitBank()}>{submitting?"Submitting...":"Submit Bank Details"}</button>
+   </>}
+  </div>}
+
+  <div className="section">{user.role==="advisor"?<div><span className="eyebrow">SECURITY</span><h2>Change password</h2><div className="form-grid"><input type="password" placeholder="Current Password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/><input type="password" placeholder="New Password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div><button className="btn small-btn" disabled={changing||!currentPassword||!newPassword||!confirmPassword} onClick={changePassword}>{changing?"Changing...":"Change Password"}</button></div>:<p className="section-copy">For security, credential changes are managed through authorized account management.</p>}</div>
+ </MainLayout>;
 }
