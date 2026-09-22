@@ -29,7 +29,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = String(originalRequest.url || "").includes("/auth/refresh") || String(originalRequest.url || "").includes("/auth/login");
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -47,7 +48,7 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem("insuranceToken");
         localStorage.removeItem("insuranceUser");
-        window.location.href = "/login";
+        if (window.location.pathname !== "/login") window.location.replace("/login");
       }
     }
 
