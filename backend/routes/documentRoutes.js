@@ -10,6 +10,7 @@ const auth = require("../middleware/auth");
 const Policy = require("../models/Policy");
 const User = require("../models/User");
 const { sendEmail } = require("../services/gmailService");
+const {writeAudit}=require("../services/auditService");
 
 const router = express.Router();
 
@@ -342,6 +343,7 @@ router.post("/", auth(), (req, res, next) => {
       createdBy: req.user.id,
     });
 
+    await writeAudit(req,{action:"DOCUMENT_UPLOADED",module:"KYC",description:`${document.documentType} uploaded for policy ${document.policyNumber}`,targetUserId:document.customerId});
     res.status(201).json(document);
   } catch (error) {
     if (req.file?.path) {
@@ -448,6 +450,7 @@ router.patch("/:id/review", auth(STAFF_ROLES), async (req, res) => {
     document.reviewedAt = new Date();
     await document.save();
     await syncPolicyKycStatus(document.policyNumber);
+    await writeAudit(req,{action:`KYC_${status.toUpperCase()}`,module:"KYC",description:`${document.documentType} ${status.toLowerCase()} for policy ${document.policyNumber}`,targetUserId:document.customerId});
 
     return res.json(document);
   } catch (error) {
