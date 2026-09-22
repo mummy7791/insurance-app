@@ -4,6 +4,7 @@ const Commission = require("../models/Commission");
 const PlanPurchase = require("../models/PlanPurchase");
 const InsurancePlan = require("../models/InsurancePlan");
 const User = require("../models/User");
+const AdvisorBank = require("../models/AdvisorBank");
 const auth = require("../middleware/auth");
 
 const syncAdvisorBusiness = async (advisorId = null) => {
@@ -86,6 +87,7 @@ router.put("/:id/review", auth(["admin"]), async (req,res)=>{
     const item=await Commission.findById(req.params.id);
     if(!item) return res.status(404).json({message:"Commission record not found"});
     if(item.status!=="Requested") return res.status(400).json({message:"Only requested payouts can be reviewed"});
+    if(decision==="Paid"){const bank=await AdvisorBank.findOne({advisorId:item.advisorId,status:"Approved"}).select("_id");if(!bank)return res.status(409).json({message:"Advisor payout account must be approved before commission can be paid"});}
     const remarks=String(req.body.remarks||"").trim().slice(0,500);
     if(!remarks) return res.status(400).json({message:"Admin remarks are required"});
     item.status=decision;
