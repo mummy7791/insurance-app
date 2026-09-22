@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";\nimport api from "../services/api";
+import { useMemo, useState } from "react";
+import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
 type User = { id?: string; name?: string; role?: string; email?: string; branch?: string; phone?: string; advisorCode?: string; address?: string; };
@@ -9,7 +10,10 @@ export default function Profile() {
     catch { return {}; }
   }, []);
 
-  const [currentPassword,setCurrentPassword]=useState(""); const [newPassword,setNewPassword]=useState(""); const [confirmPassword,setConfirmPassword]=useState(""); const [changing,setChanging]=useState(false);\n  const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully");}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.");}finally{setChanging(false);}};\n\n  return (
+  const [currentPassword,setCurrentPassword]=useState(""); const [newPassword,setNewPassword]=useState(""); const [confirmPassword,setConfirmPassword]=useState(""); const [changing,setChanging]=useState(false);
+  const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully");}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.");}finally{setChanging(false);}};
+
+  return (
     <MainLayout title="My Profile" subtitle="Your SecureLife staff account and access details">
       <div className="admin-page-summary">
         <div><span className="eyebrow">STAFF IDENTITY</span><h2>{user.name || "SecureLife Staff"}</h2><p>Your signed-in identity is managed by the secure staff account. Login email and password are not changed from this page.</p></div>

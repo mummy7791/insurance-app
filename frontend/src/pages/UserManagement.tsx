@@ -44,7 +44,8 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState<UserForm>(initialForm);\n  const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
+  const [form, setForm] = useState<UserForm>(initialForm);
+  const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -91,7 +92,8 @@ export default function UserManagement() {
         phone: form.phone,
         advisorCode: form.advisorCode,
         address: form.address,
-        password: form.password,\n        verificationId,
+        password: form.password,
+        verificationId,
       });
 
       setUsers((prev) => [res.data, ...prev]);
