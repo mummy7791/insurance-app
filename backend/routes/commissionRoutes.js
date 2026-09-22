@@ -1,186 +1,100 @@
 const express = require("express");
 const router = express.Router();
-
 const Commission = require("../models/Commission");
+const PlanPurchase = require("../models/PlanPurchase");
+const InsurancePlan = require("../models/InsurancePlan");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 
-const pickCommissionFields = (body = {}) => {
-  const allowedFields = [
-    "advisorId",
-    "advisorCode",
-    "employeeName",
-    "employeeRole",
-    "customerName",
-    "policyNumber",
-    "premiumAmount",
-    "commissionRate",
-    "commissionAmount",
-    "month",
-    "status",
-    "remarks",
-  ];
-
-  const payload = {};
-
-  for (const field of allowedFields) {
-    if (Object.prototype.hasOwnProperty.call(body, field)) {
-      payload[field] = body[field];
-    }
-  }
-
-  return payload;
-};
-
-const parseNonNegativeNumber = (value) => {
-  const number = Number(value);
-
-  if (!Number.isFinite(number) || number < 0) {
-    return null;
-  }
-
-  return number;
-};
-
-const validateCommissionNumbers = (payload, requireAll = false) => {
-  const numericFields = [
-    "premiumAmount",
-    "commissionRate",
-    "commissionAmount",
-  ];
-
-  for (const field of numericFields) {
-    const hasField = Object.prototype.hasOwnProperty.call(payload, field);
-
-    if (requireAll && !hasField) {
-      return `${field} is required`;
-    }
-
-    if (hasField) {
-      const value = parseNonNegativeNumber(payload[field]);
-
-      if (value === null) {
-        return `${field} must be a valid non-negative number`;
-      }
-
-      payload[field] = value;
-    }
-  }
-
-  return null;
-};
-
-router.post("/", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
-  try {
-    const payload = pickCommissionFields(req.body);
-    const validationError = validateCommissionNumbers(payload, true);
-
-    if (validationError) {
-      return res.status(400).json({ message: validationError });
-    }
-
-    const commission = await Commission.create({
-      ...payload,
-      createdBy: req.user.id,
-    });
-
-    res.status(201).json(commission);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Commission create failed",
-    });
-  }
-});
-
-router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
-  try {
-    const query = ["advisor", "agent"].includes(req.user.role)
-      ? { advisorId: req.user.id }
-      : {};
-
-    const commissions = await Commission.find(query).sort({
-      createdAt: -1,
-    });
-
-    res.json(commissions);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Commission fetch failed",
-    });
-  }
-});
-
-router.get("/:id", auth(["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"]), async (req, res) => {
-  try {
-    const query = {
-      _id: req.params.id,
-      ...(["advisor", "agent"].includes(req.user.role)
-        ? { advisorId: req.user.id }
-        : {}),
-    };
-
-    const commission = await Commission.findOne(query);
-
-    if (!commission) {
-      return res.status(404).json({
-        message: "Commission not found",
-      });
-    }
-
-    res.json(commission);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Commission fetch failed",
-    });
-  }
-});
-
-router.put("/:id", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
-  try {
-    const payload = pickCommissionFields(req.body);
-    const validationError = validateCommissionNumbers(payload);
-
-    if (validationError) {
-      return res.status(400).json({ message: validationError });
-    }
-
-    const commission = await Commission.findByIdAndUpdate(
-      req.params.id,
-      payload,
-      {
-        new: true,
-        runValidators: true,
-      }
+const syncAdvisorBusiness = async (advisorId = null) => {
+  const query = { paymentStatus: "Paid", policyStatus: "Active", advisorId: { $ne: null } };
+  if (advisorId) query.advisorId = advisorId;
+  const purchases = await PlanPurchase.find(query).lean();
+  for (const purchase of purchases) {
+    if (!purchase.policyNumber) continue;
+    const advisor = await User.findById(purchase.advisorId).select("name advisorCode");
+    if (!advisor) continue;
+    const rate = Number(purchase.advisorCommissionRate || 0);
+    const amount = Number(purchase.yearlyPremium || 0);
+    await Commission.findOneAndUpdate(
+      { advisorId: purchase.advisorId, policyNumber: purchase.policyNumber },
+      { $setOnInsert: {
+        advisorId: purchase.advisorId,
+        advisorCode: purchase.advisorCode || advisor.advisorCode || "",
+        employeeName: advisor.name,
+        employeeRole: "Agent",
+        customerName: purchase.proposal?.customerName || "Customer",
+        policyNumber: purchase.policyNumber,
+        premiumAmount: amount,
+        commissionRate: rate,
+        commissionAmount: Math.round(amount * rate / 100),
+        month: new Date(purchase.startDate || purchase.createdAt).toISOString().slice(0,7),
+        status: "Eligible",
+        remarks: "Business linked through advisor code",
+        planName: purchase.planName || "",
+        policyStatus: purchase.policyStatus,
+        purchaseDate: purchase.startDate || purchase.createdAt,
+        nextPremiumDate: purchase.nextPremiumDate || null,
+      }},
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-
-    if (!commission) {
-      return res.status(404).json({ message: "Commission not found" });
-    }
-
-    res.json(commission);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Commission update failed",
-    });
   }
+};
+
+router.get("/plans", auth(["admin"]), async (_req,res)=>{
+  try {
+    const plans=await InsurancePlan.find().select("_id planName category yearlyPremium advisorCommissionRate status").sort({planName:1}).lean();
+    res.json(plans);
+  } catch(error){ console.error(error); res.status(500).json({message:"Plan commission settings load failed"}); }
 });
 
-router.delete("/:id", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
+router.put("/plans/:id", auth(["admin"]), async (req,res)=>{
   try {
-    await Commission.findByIdAndDelete(req.params.id);
+    const rate=Number(req.body.advisorCommissionRate);
+    if(!Number.isFinite(rate)||rate<0||rate>100) return res.status(400).json({message:"Commission rate must be between 0 and 100"});
+    const plan=await InsurancePlan.findByIdAndUpdate(req.params.id,{advisorCommissionRate:rate},{new:true,runValidators:true});
+    if(!plan) return res.status(404).json({message:"Plan not found"});
+    res.json(plan);
+  } catch(error){ console.error(error); res.status(500).json({message:"Plan commission update failed"}); }
+});
 
-    res.json({
-      message: "Commission deleted",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Commission delete failed",
-    });
-  }
+router.get("/", auth(["admin","bm","unit_manager","agency_manager","advisor"]), async (req,res)=>{
+  try {
+    await syncAdvisorBusiness(req.user.role==="advisor" ? req.user.id : null);
+    const query=req.user.role==="advisor"?{advisorId:req.user.id}:{};
+    res.json(await Commission.find(query).sort({createdAt:-1}));
+  } catch(error){ console.error(error); res.status(500).json({message:"Commission fetch failed"}); }
+});
+
+router.post("/:id/request", auth(["advisor"]), async (req,res)=>{
+  try {
+    const item=await Commission.findOne({_id:req.params.id,advisorId:req.user.id});
+    if(!item) return res.status(404).json({message:"Commission record not found"});
+    if(!["Eligible","Rejected"].includes(item.status)) return res.status(400).json({message:"This commission is already submitted or settled"});
+    item.status="Requested";
+    item.requestedAt=new Date();
+    item.remarks=String(req.body.remarks||"Payout requested by advisor").trim().slice(0,500);
+    await item.save();
+    res.json(item);
+  } catch(error){ console.error(error); res.status(500).json({message:"Payout request failed"}); }
+});
+
+router.put("/:id/review", auth(["admin"]), async (req,res)=>{
+  try {
+    const decision=String(req.body.status||"");
+    if(!["Paid","Rejected"].includes(decision)) return res.status(400).json({message:"Choose Paid or Rejected"});
+    const item=await Commission.findById(req.params.id);
+    if(!item) return res.status(404).json({message:"Commission record not found"});
+    if(item.status!=="Requested") return res.status(400).json({message:"Only requested payouts can be reviewed"});
+    const remarks=String(req.body.remarks||"").trim().slice(0,500);
+    if(!remarks) return res.status(400).json({message:"Admin remarks are required"});
+    item.status=decision;
+    item.remarks=remarks;
+    item.reviewedAt=new Date();
+    item.paidDate=decision==="Paid" ? (req.body.paidDate ? new Date(req.body.paidDate) : new Date()) : null;
+    await item.save();
+    res.json(item);
+  } catch(error){ console.error(error); res.status(500).json({message:"Payout review failed"}); }
 });
 
 module.exports = router;
