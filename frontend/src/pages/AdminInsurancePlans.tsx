@@ -97,6 +97,7 @@ function AdminInsurancePlans() {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const filteredPlans = useMemo(() => plans.filter((plan) => `${plan.planName} ${plan.category} ${plan.planType || ""} ${plan.status}`.toLowerCase().includes(search.toLowerCase())), [plans, search]);
 
@@ -162,6 +163,46 @@ function AdminInsurancePlans() {
     }
   };
 
+  const editPlan = (plan: InsurancePlan) => {
+    const rules = plan.pricingRules || {};
+    const benefit = (plan as InsurancePlan & { benefitRules?: Record<string, string | number> }).benefitRules || {};
+    setEditingId(plan._id);
+    setForm({
+      ...emptyForm,
+      planName: plan.planName || "",
+      category: plan.category,
+      planType: plan.planType || "",
+      productGroup: plan.productGroup || "Other",
+      policyTermYears: String(plan.policyTermYears || plan.paymentYears || 1),
+      premiumFrequencies: (plan.premiumFrequencies || ["Yearly"]).join(","),
+      baseAge: String(rules.baseAge ?? 25),
+      ageRatePercent: String(rules.ageRatePercent ?? 0),
+      smokerLoadingPercent: String(rules.smokerLoadingPercent ?? 0),
+      femaleDiscountPercent: String(rules.femaleDiscountPercent ?? 0),
+      benefitType: String(benefit.benefitType || "Life Cover"),
+      payoutStartYear: String(benefit.payoutStartYear || 0),
+      payoutYears: String(benefit.payoutYears || 0),
+      annualPayout: String(benefit.annualPayout || 0),
+      maturityAmount: String(benefit.maturityAmount || 0),
+      deathBenefit: String(benefit.deathBenefit || 0),
+      coverageAmount: String(plan.coverageAmount || 0),
+      yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
+      paymentYears: String(plan.paymentYears || 1),
+      ageMin: String(plan.ageMin ?? 0),
+      ageMax: String(plan.ageMax ?? 100),
+      eligibleFrom: plan.eligibleFrom || "",
+      eligibleTo: plan.eligibleTo || "",
+      benefits: Array.isArray(plan.benefits) ? plan.benefits.join(", ") : "",
+      coverage: plan.coverage || "",
+      description: plan.description || "",
+      premiumMode: plan.premiumMode || "auto",
+      age: String(plan.ageMin || 25),
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => { setEditingId(null); setForm(emptyForm); };
+
   const createPlan = async () => {
     if (!form.planName || !form.category || !form.coverageAmount) {
       alert("Plan name, category and coverage required");
@@ -176,7 +217,7 @@ function AdminInsurancePlans() {
         .map((item) => item.trim())
         .filter(Boolean);
 
-      await api.post("/insurance-plans", {
+      const payload = {
         planName: form.planName,
         category: form.category,
         planType: form.planType,
@@ -199,9 +240,10 @@ function AdminInsurancePlans() {
         premiumMode: form.premiumMode,
         age: Number(form.age || 25),
         status: "Approved",
-      });
+      };
+      if (editingId) await api.put(`/insurance-plans/${editingId}`, payload); else await api.post("/insurance-plans", payload);
 
-      alert("Plan created successfully");
+      alert(editingId ? "Plan updated successfully" : "Plan created successfully");
       setForm(initialForm);
       void loadPlans();
     } catch (error: unknown) {
@@ -279,7 +321,7 @@ function AdminInsurancePlans() {
       </div>
 
       <div className="section">
-        <span className="eyebrow">NEW INSURANCE PRODUCT</span><h2>Create insurance plan</h2><p className="section-copy">Configure cover, eligibility, benefits and premium before publishing the product.</p>
+        <span className="eyebrow">{editingId ? "EDIT INSURANCE PRODUCT" : "NEW INSURANCE PRODUCT"}</span><h2>{editingId ? "Edit insurance plan" : "Create insurance plan"}</h2><p className="section-copy">Configure cover, eligibility, benefits and premium before publishing the product.</p>
 
         <div className="form-grid">
           <input
@@ -430,8 +472,10 @@ function AdminInsurancePlans() {
             disabled={saving}
             style={{ marginLeft: 10 }}
           >
-            {saving ? "Saving..." : "Create Plan"}
+            {saving ? "Saving..." : editingId ? "Update Plan" : "Create Plan"}
           </button>
+
+          {editingId && <button className="mini-btn" onClick={cancelEdit} style={{ marginLeft: 10 }}>Cancel Edit</button>}
 
           <button
             className="mini-btn"
@@ -493,9 +537,12 @@ function AdminInsurancePlans() {
                   </td>
 
                   <td>
+                    <button className="mini-btn" onClick={() => editPlan(plan)}>Edit</button>
+
                     <button
                       className="mini-btn"
                       onClick={() => void updateApproval(plan._id, "Approved")}
+                      style={{ marginLeft: 5 }}
                     >
                       Approve
                     </button>
