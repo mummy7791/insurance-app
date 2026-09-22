@@ -34,6 +34,31 @@ export default function Commission(){
       <div className="card"><h3>Pending</h3><h1>₹{pending.toLocaleString("en-IN")}</h1></div>
     </div>
 
+    {isAdvisor&&<div className="section">
+      <span className="eyebrow">ADVISOR EARNINGS GUIDE</span>
+      <h2>Commission earning illustration</h2>
+      <p className="section-copy">See how first-year and renewal commission can build over time. This is an illustration only; actual commission depends on the product sold, business booked and the applicable commission structure.</p>
+
+      <div className="cards admin-kpi-grid">
+        <div className="card"><h3>First Year Commission</h3><h1>30%</h1><p>Illustrative rate</p></div>
+        <div className="card"><h3>Renewal Commission</h3><h1>3%</h1><p>Illustrative annual rate for 9 years</p></div>
+        <div className="card"><h3>Illustrated Total</h3><h1>57%</h1><p>30% + 3% × 9 years</p></div>
+        <div className="card"><h3>Investment</h3><h1>Your Time</h1><p>Business opportunity illustration</p></div>
+      </div>
+
+      <div className="premium-table-wrap">
+        <table className="table">
+          <thead><tr><th>Business Example</th><th>Premium / Business</th><th>First Year 30%</th><th>Renewal 3% × 9</th><th>Illustrated Total</th></tr></thead>
+          <tbody>
+            <tr><td>Monthly business</td><td>₹1,00,000</td><td>₹30,000</td><td>₹27,000</td><td><strong>₹57,000</strong></td></tr>
+            <tr><td>Yearly business</td><td>₹12,00,000</td><td>₹3,60,000</td><td>₹3,24,000</td><td><strong>₹6,84,000</strong></td></tr>
+            <tr><td>10-year active business</td><td>₹1,20,00,000</td><td>₹36,00,000</td><td>₹32,40,000</td><td><strong>₹68,40,000</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="section-copy"><strong>Important:</strong> These figures are sample illustrations, not a guaranteed payout. Actual earnings vary by product, premium, eligibility, persistency and the commission rules configured for your business.</p>
+    </div>}
+
     {!isAdvisor&&<div className="section"><span className="eyebrow">NEW COMMISSION</span><h2>Assign advisor commission</h2><p className="section-copy">Select the advisor, enter policy business and commission rate. Amount is calculated automatically.</p>
       <div className="form-grid">
         <select value={form.advisorId} onChange={e=>setForm(p=>({...p,advisorId:e.target.value}))}><option value="">Select Advisor</option>{advisors.map(a=><option key={a._id} value={a._id}>{a.name} — {a.advisorCode||a.email}</option>)}</select>
