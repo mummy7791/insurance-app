@@ -76,7 +76,7 @@ export default function Sidebar() {
     } catch {
       return {};
     }
-  }, [role]);
+  }, []);
 
   const role: UserRole = user.role || "customer";
 
