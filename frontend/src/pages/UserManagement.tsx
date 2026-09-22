@@ -44,7 +44,7 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState<UserForm>(initialForm);
+  const [form, setForm] = useState<UserForm>(initialForm);\n  const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -71,6 +71,9 @@ export default function UserManagement() {
     return () => clearTimeout(timer);
   }, [loadUsers]);
 
+  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor email");}catch(e){console.error(e);alert("OTP send failed / email may already exist");}finally{setOtpBusy(false);}};
+  const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Email verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
+
   const createUser = async () => {
     if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
       alert("Name, Email, Phone, Advisor Code and Password required");
@@ -88,11 +91,11 @@ export default function UserManagement() {
         phone: form.phone,
         advisorCode: form.advisorCode,
         address: form.address,
-        password: form.password,
+        password: form.password,\n        verificationId,
       });
 
       setUsers((prev) => [res.data, ...prev]);
-      setForm(initialForm);
+      setForm(initialForm); setVerificationId(""); setOtp(""); setOtpSent(false); setOtpVerified(false);
       alert("User created successfully");
     } catch (error) {
       console.error("User create error:", error);

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";\nimport api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
 type User = { id?: string; name?: string; role?: string; email?: string; branch?: string; phone?: string; advisorCode?: string; address?: string; };
@@ -9,7 +9,7 @@ export default function Profile() {
     catch { return {}; }
   }, []);
 
-  return (
+  const [currentPassword,setCurrentPassword]=useState(""); const [newPassword,setNewPassword]=useState(""); const [confirmPassword,setConfirmPassword]=useState(""); const [changing,setChanging]=useState(false);\n  const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully");}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.");}finally{setChanging(false);}};\n\n  return (
     <MainLayout title="My Profile" subtitle="Your SecureLife staff account and access details">
       <div className="admin-page-summary">
         <div><span className="eyebrow">STAFF IDENTITY</span><h2>{user.name || "SecureLife Staff"}</h2><p>Your signed-in identity is managed by the secure staff account. Login email and password are not changed from this page.</p></div>
@@ -31,7 +31,7 @@ export default function Profile() {
           <div><span>Advisor code</span><strong>{user.advisorCode || "N/A"}</strong></div>
           <div><span>Address</span><strong>{user.address || "N/A"}</strong></div>
         </div>
-        <p className="section-copy">For security, credential or access changes must be completed through authorized admin account management.</p>
+        {user.role === "advisor" ? <div style={{marginTop:24}}><span className="eyebrow">SECURITY</span><h2>Change password</h2><div className="form-grid"><input type="password" placeholder="Current Password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/><input type="password" placeholder="New Password" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div><button className="btn small-btn" disabled={changing||!currentPassword||!newPassword||!confirmPassword} onClick={changePassword}>{changing?"Changing...":"Change Password"}</button></div> : <p className="section-copy">For security, credential changes are managed through authorized account management.</p>}
       </div>
     </MainLayout>
   );
