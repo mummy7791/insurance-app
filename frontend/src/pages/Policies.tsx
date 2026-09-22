@@ -121,7 +121,7 @@ export default function Policies() {
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
     doc.text(note, 18, 278, { maxWidth: 174 });
-    doc.text(`SecureLife Insurance | Established 1990 | Page ${page}`, 18, 287);
+    doc.text(`SecureLife Insurance | Digital Policy Services | Page ${page}`, 18, 287);
   };
 
   const addPolicyTermsPage = (doc: jsPDF, plan: PurchasedPlan) => {
@@ -137,8 +137,8 @@ export default function Policies() {
     doc.text("POLICY HIGHLIGHTS", 24, y);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Claim settlement ratio: 99.8% (company-stated)", 24, y + 8);
-    doc.text("SecureLife Insurance - Established 1990", 24, y + 15);
+    doc.text("Coverage and benefits are governed by the issued policy schedule and terms.", 24, y + 8, { maxWidth: 160 });
+    doc.text("Use the customer portal for current servicing, premium and claim status.", 24, y + 15, { maxWidth: 160 });
     y += 35;
 
     doc.setTextColor(30, 41, 59);
