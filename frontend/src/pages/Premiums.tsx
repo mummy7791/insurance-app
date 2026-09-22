@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
 
 type PaymentMode = "UPI" | "Cash" | "Card" | "Net Banking";
-type PremiumStatus = "Due" | "Paid" | "Overdue";
+type PremiumStatus = "Upcoming" | "Due" | "Grace Period" | "Overdue" | "Lapsed" | "Paid";
 
 type Premium = {
   _id: string;
@@ -287,13 +287,13 @@ export default function Premiums() {
     .reduce((sum, premium) => sum + premium.amount, 0);
 
   const dueAmount = premiums
-    .filter((premium) => premium.status === "Due" || premium.status === "Overdue")
+    .filter((premium) => ["Upcoming","Due","Grace Period","Overdue"].includes(premium.status))
     .reduce((sum, premium) => sum + premium.amount, 0);
 
   return (
     <MainLayout
       title={isCustomer ? "Premiums & Payments" : "Premium Collection"}
-      subtitle={isCustomer ? "View upcoming premiums and your payment history" : "Track due, paid and overdue premium payments"}
+      subtitle={isCustomer ? "View upcoming premiums and your payment history" : "Track upcoming, due, grace-period, paid and lapsed premium payments"}
     >
       {!isCustomer && <div className="admin-page-summary"><div><span className="eyebrow">COLLECTION OPERATIONS</span><h2>Premium collection workspace</h2><p>Track upcoming dues, paid premiums and overdue collections across active policies.</p></div><div className="admin-summary-metrics"><div><span>Records</span><strong>{premiums.length}</strong></div><div><span>Paid</span><strong>{premiums.filter((p) => p.status === "Paid").length}</strong></div><div><span>Overdue</span><strong>{premiums.filter((p) => p.status === "Overdue").length}</strong></div></div></div>}
       <div className={`cards ${!isCustomer ? "admin-kpi-grid" : ""}`}>
@@ -375,7 +375,7 @@ export default function Premiums() {
                   <td>{premium.receiptNumber || "-"}</td>
                   <td>{isCustomer ? <span className={`status-pill ${premium.status === "Overdue" ? "overdue" : premium.status === "Due" ? "due" : "active"}`}>{premium.status}</span> : (
                     <select className="status-select" value={premium.status} onChange={(e) => updateStatus(premium._id, e.target.value as PremiumStatus)}>
-                      <option value="Due">Due</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option>
+                      <option value="Due">Due</option><option value="Paid">Paid</option><option value="Upcoming">Upcoming</option><option value="Due">Due</option><option value="Grace Period">Grace Period</option><option value="Overdue">Overdue</option><option value="Lapsed">Lapsed</option>
                     </select>
                   )}</td>
                   {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : <button className="btn small-btn" disabled={payingId === premium._id} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
