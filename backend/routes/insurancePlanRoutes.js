@@ -623,6 +623,11 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
       planName,
       category,
       planType,
+      productGroup,
+      policyTermYears,
+      premiumFrequencies,
+      pricingRules,
+      benefitRules,
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
@@ -717,7 +722,20 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
 
     plan.planName = planName || plan.planName;
     plan.category = category || plan.category;
-    plan.planType = planType || plan.planType;
+    plan.planType = planType ?? plan.planType;
+    if (productGroup !== undefined) plan.productGroup = productGroup;
+    if (policyTermYears !== undefined) {
+      const term = Number(policyTermYears);
+      if (!Number.isFinite(term) || term < 1) return res.status(400).json({ message: "Policy term must be a positive number" });
+      plan.policyTermYears = term;
+    }
+    if (premiumFrequencies !== undefined) {
+      const allowedFrequencies = ["Yearly", "Half-Yearly", "Quarterly", "Monthly"];
+      if (!Array.isArray(premiumFrequencies) || !premiumFrequencies.length || premiumFrequencies.some((x) => !allowedFrequencies.includes(x))) return res.status(400).json({ message: "Invalid premium frequencies" });
+      plan.premiumFrequencies = premiumFrequencies;
+    }
+    if (pricingRules !== undefined) plan.pricingRules = { ...plan.pricingRules?.toObject?.(), ...pricingRules };
+    if (benefitRules !== undefined) plan.benefitRules = { ...plan.benefitRules?.toObject?.(), ...benefitRules };
     plan.coverageAmount = Number(coverageAmount || plan.coverageAmount || 0);
     plan.yearlyPremium = finalPremium;
     plan.yearlyAmount = finalPremium;
