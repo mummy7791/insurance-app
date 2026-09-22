@@ -50,6 +50,13 @@ const insurancePlanSchema = new mongoose.Schema(
       default: 1,
     },
 
+    advisorCommissionRate: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+
     ageMin: {
       type: Number,
       default: 0,
