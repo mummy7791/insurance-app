@@ -54,14 +54,21 @@ const commissionSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Pending", "Paid"],
-      default: "Pending",
+      enum: ["Eligible", "Requested", "Paid", "Rejected"],
+      default: "Eligible",
     },
 
     remarks: {
       type: String,
       default: "",
     },
+    planName: { type: String, default: "" },
+    policyStatus: { type: String, default: "Active" },
+    purchaseDate: { type: Date, default: null },
+    nextPremiumDate: { type: Date, default: null },
+    requestedAt: { type: Date, default: null },
+    reviewedAt: { type: Date, default: null },
+    paidDate: { type: Date, default: null },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
