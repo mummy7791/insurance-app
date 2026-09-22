@@ -6,6 +6,7 @@ const InsurancePlan = require("../models/InsurancePlan");
 const User = require("../models/User");
 const AdvisorBank = require("../models/AdvisorBank");
 const auth = require("../middleware/auth");
+const {writeAudit}=require("../services/auditService");
 
 const syncAdvisorBusiness = async (advisorId = null) => {
   const query = { paymentStatus: "Paid", policyStatus: "Active", advisorId: { $ne: null } };
@@ -76,6 +77,7 @@ router.post("/:id/request", auth(["advisor"]), async (req,res)=>{
     item.requestedAt=new Date();
     item.remarks=String(req.body.remarks||"Payout requested by advisor").trim().slice(0,500);
     await item.save();
+    await writeAudit(req,{action:"PAYOUT_REQUEST",module:"Commission",description:`Payout requested for policy ${item.policyNumber}`});
     res.json(item);
   } catch(error){ console.error(error); res.status(500).json({message:"Payout request failed"}); }
 });
@@ -95,6 +97,7 @@ router.put("/:id/review", auth(["admin"]), async (req,res)=>{
     item.reviewedAt=new Date();
     item.paidDate=decision==="Paid" ? (req.body.paidDate ? new Date(req.body.paidDate) : new Date()) : null;
     await item.save();
+    await writeAudit(req,{action:`PAYOUT_${decision.toUpperCase()}`,module:"Commission",description:`${decision} advisor commission for policy ${item.policyNumber}`,targetUserId:item.advisorId});
     res.json(item);
   } catch(error){ console.error(error); res.status(500).json({message:"Payout review failed"}); }
 });
