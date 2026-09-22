@@ -14,9 +14,9 @@ export default function Profile() {
   const changePassword=async()=>{if(newPassword!==confirmPassword)return alert("New passwords do not match");try{setChanging(true);await api.post("/auth/change-password",{currentPassword,newPassword});setCurrentPassword("");setNewPassword("");setConfirmPassword("");alert("Password changed successfully");}catch(e){console.error(e);alert("Password change failed. Check current password and password rules.");}finally{setChanging(false);}};
 
   return (
-    <MainLayout title="My Profile" subtitle="Your SecureLife staff account and access details">
+    <MainLayout title={user.role === "advisor" ? "Advisor Profile" : "My Profile"} subtitle={user.role === "advisor" ? "Your advisor identity, contact details and account security" : "Your SecureLife staff account and access details"}>
       <div className="admin-page-summary">
-        <div><span className="eyebrow">STAFF IDENTITY</span><h2>{user.name || "SecureLife Staff"}</h2><p>Your signed-in identity is managed by the secure staff account. Login email and password are not changed from this page.</p></div>
+        <div><span className="eyebrow">{user.role === "advisor" ? "ADVISOR IDENTITY" : "STAFF IDENTITY"}</span><h2>{user.name || "SecureLife Staff"}</h2><p>{user.role === "advisor" ? "Your verified advisor account details. Keep your contact information and login credentials secure." : "Your signed-in identity is managed by the secure staff account."}</p></div>
         <span className="secure-chip">Active session</span>
       </div>
       <div className="cards admin-kpi-grid">
@@ -26,7 +26,7 @@ export default function Profile() {
         <div className="card"><h3>Status</h3><h1>Active</h1></div>
       </div>
       <div className="section">
-        <div className="section-heading-row"><div><span className="eyebrow">ACCOUNT DETAILS</span><h2>Staff profile</h2></div><span className="secure-chip">Read only</span></div>
+        <div className="section-heading-row"><div><span className="eyebrow">ACCOUNT DETAILS</span><h2>{user.role === "advisor" ? "Advisor information" : "Staff profile"}</h2></div><span className="secure-chip">Read only</span></div>
         <div className="profile-detail-grid">
           <div><span>Full name</span><strong>{user.name || "N/A"}</strong></div>
           <div><span>Email address</span><strong>{user.email || "N/A"}</strong></div>

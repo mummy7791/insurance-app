@@ -26,7 +26,7 @@ export default function Commission(){
   const filtered=useMemo(()=>items.filter(x=>`${x.employeeName} ${x.advisorCode||""} ${x.customerName} ${x.policyNumber}`.toLowerCase().includes(search.toLowerCase())&&(!month||x.month===month)),[items,search,month]);
   const business=filtered.reduce((s,x)=>s+x.premiumAmount,0), total=filtered.reduce((s,x)=>s+x.commissionAmount,0), paid=filtered.filter(x=>x.status==="Paid").reduce((s,x)=>s+x.commissionAmount,0), pending=total-paid;
 
-  return <MainLayout title={isAdvisor?"My Commission":"Advisor Commission"} subtitle={isAdvisor?"Your business, earned commission and settlement status":"Track advisor business and commission settlement"}>
+  return <MainLayout title={isAdvisor?"Advisor Earnings":"Advisor Commission"} subtitle={isAdvisor?"Track your business, commission earnings and settlement status":"Track advisor business and commission settlement"}>
     <div className="cards admin-kpi-grid">
       <div className="card"><h3>Total Business</h3><h1>₹{business.toLocaleString("en-IN")}</h1></div>
       <div className="card"><h3>Total Commission</h3><h1>₹{total.toLocaleString("en-IN")}</h1></div>
@@ -35,15 +35,15 @@ export default function Commission(){
     </div>
 
     {isAdvisor&&<div className="section">
-      <span className="eyebrow">ADVISOR EARNINGS GUIDE</span>
-      <h2>Commission earning illustration</h2>
+      <span className="eyebrow">EARNINGS OVERVIEW</span>
+      <h2>How your commission can build</h2>
       <p className="section-copy">See how first-year and renewal commission can build over time. This is an illustration only; actual commission depends on the product sold, business booked and the applicable commission structure.</p>
 
       <div className="cards admin-kpi-grid">
         <div className="card"><h3>First Year Commission</h3><h1>30%</h1><p>Illustrative rate</p></div>
         <div className="card"><h3>Renewal Commission</h3><h1>3%</h1><p>Illustrative annual rate for 9 years</p></div>
         <div className="card"><h3>Illustrated Total</h3><h1>57%</h1><p>30% + 3% × 9 years</p></div>
-        <div className="card"><h3>Investment</h3><h1>Your Time</h1><p>Business opportunity illustration</p></div>
+        <div className="card"><h3>Earning Basis</h3><h1>Business</h1><p>Depends on product and eligible premium</p></div>
       </div>
 
       <div className="premium-table-wrap">
@@ -73,8 +73,8 @@ export default function Commission(){
     </div>}
 
     <div className="section admin-table-section">
-      <div className="section-heading-row"><div><span className="eyebrow">SETTLEMENT REGISTER</span><h2>{isAdvisor?"My commission history":"Advisor commission list"}</h2></div><button className="mini-btn" onClick={()=>void load()}>Refresh</button></div>
-      <div className="form-grid"><input placeholder="Search advisor, code, customer or policy" value={search} onChange={e=>setSearch(e.target.value)}/><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/><button className="mini-btn" onClick={()=>setMonth("")}>Clear Month</button></div>
+      <div className="section-heading-row"><div><span className="eyebrow">SETTLEMENT REGISTER</span><h2>{isAdvisor?"My earnings & settlement history":"Advisor commission list"}</h2></div><button className="mini-btn" onClick={()=>void load()}>Refresh</button></div>
+      <div className="form-grid"><input placeholder={isAdvisor ? "Search customer or policy" : "Search advisor, code, customer or policy"} value={search} onChange={e=>setSearch(e.target.value)}/><input type="month" value={month} onChange={e=>setMonth(e.target.value)}/><button className="mini-btn" onClick={()=>setMonth("")}>Clear Month</button></div>
       {loading?<p>Loading...</p>:filtered.length===0?<p>No commission records found.</p>:<div className="premium-table-wrap"><table className="table"><thead><tr><th>Advisor</th><th>Code</th><th>Customer</th><th>Policy</th><th>Business</th><th>Rate</th><th>Commission</th><th>Month</th><th>Status</th></tr></thead>
       <tbody>{filtered.map(x=><tr key={x._id}><td><strong>{x.employeeName}</strong></td><td>{x.advisorCode||"—"}</td><td>{x.customerName}</td><td>{x.policyNumber}</td><td>₹{x.premiumAmount.toLocaleString("en-IN")}</td><td>{x.commissionRate}%</td><td><strong>₹{x.commissionAmount.toLocaleString("en-IN")}</strong></td><td>{x.month}</td><td>{isAdvisor?<span className="badge">{x.status}</span>:<select className="status-select" value={x.status} onChange={e=>void status(x._id,e.target.value as Status)}><option>Pending</option><option>Paid</option></select>}</td></tr>)}</tbody></table></div>}
     </div>
