@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/Auth.css";
 import api from "../services/api";
 import jsPDF from "jspdf";
@@ -11,6 +11,8 @@ const money=(n:number)=>"₹"+Number(n||0).toLocaleString("en-IN");
 const err=(e:unknown)=>typeof e==="object"&&e!==null&&"response" in e?(e as {response?:{data?:{message?:string}}}).response?.data?.message||"Quotation failed":"Quotation failed";
 
 export default function PremiumCalculator(){
+ const navigate=useNavigate();
+ const backToPortal=()=>{try{const u=JSON.parse(localStorage.getItem("insuranceUser")||"{}");if(u.role==="advisor")return navigate("/advisor-dashboard");if(u.role==="customer")return navigate("/customer-dashboard");if(["admin","bm","unit_manager","agency_manager","agent"].includes(u.role))return navigate("/dashboard");}catch{}navigate("/");};
  const [plans,setPlans]=useState<Plan[]>([]),[planId,setPlanId]=useState(""),[age,setAge]=useState("30"),[dob,setDob]=useState(""),[customerName,setCustomerName]=useState(""),[mobile,setMobile]=useState(""),[gender,setGender]=useState("Male"),[smoker,setSmoker]=useState(false),[cover,setCover]=useState(""),[frequency,setFrequency]=useState("Yearly"),[quote,setQuote]=useState<Quote|null>(null),[loading,setLoading]=useState(false),[savedQuoteNumber,setSavedQuoteNumber]=useState("");
  const quotationNumber=quote?`QT-${new Date().toISOString().slice(0,10).replace(/-/g,"")}-${String(quote.planId).slice(-6).toUpperCase()}`:"";
  const quoteDate=new Date();
@@ -40,7 +42,7 @@ export default function PremiumCalculator(){
  const saveQuote=async()=>{if(!quote)return;try{const r=await api.post<{quotationNumber:string}>("/quotations",{...quote,customerName,mobile,dob});setSavedQuoteNumber(r.data.quotationNumber);alert("Quotation saved: "+r.data.quotationNumber);}catch(e){alert(err(e));}};
  const calculate=async()=>{if(!selected)return;setSavedQuoteNumber("");try{setLoading(true);const r=await api.post<Quote>(`/insurance-plans/${selected._id}/quote`,{age:Number(age),gender,smoker,coverageAmount:Number(cover),frequency});setQuote(r.data);sessionStorage.setItem("premiumEstimate",JSON.stringify({category:selected.category,coverageAmount:r.data.coverageAmount,yearlyPremium:r.data.annualPremium,planId:selected._id}));}catch(e){alert(err(e));}finally{setLoading(false);}};
  return <div className="calculator-page smart-quote-page"><div className="calculator-shell smart-quote-shell">
-  <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><Link to="/" className="mini-btn">Back to home</Link></header>
+  <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><button type="button" onClick={backToPortal} className="mini-btn">Back to portal</button></header>
   <div className="calculator-intro"><span className="eyebrow">SMART QUOTES</span><h1>Plan-specific insurance quotation</h1><p>Select a product, enter customer details and get premium by age, cover, payment frequency and plan rules.</p></div>
   <div className="section quote-section"><h2>Select Product Category</h2>{groups.map(g=>{const items=plans.filter(p=>(p.productGroup||"Other")===g);if(!items.length)return null;return <details key={g} open={selected?.productGroup===g}><summary style={{cursor:"pointer",fontWeight:700,padding:"12px 0"}}>{g}</summary><div className="cards">{items.map(p=><button key={p._id} className={p._id===planId?"btn small-btn":"mini-btn"} onClick={()=>choose(p._id)}>{p.planName}</button>)}</div></details>;})}</div>
   {selected&&<div className="section quote-section quote-input-section"><span className="eyebrow">CUSTOMER INPUT</span><h2>{selected.planName}</h2><div className="form-grid">
