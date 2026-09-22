@@ -64,6 +64,12 @@ const initialForm = {
   ageRatePercent: "2",
   smokerLoadingPercent: "15",
   femaleDiscountPercent: "0",
+  benefitType: "Life Cover",
+  payoutStartYear: "0",
+  payoutYears: "0",
+  annualPayout: "0",
+  maturityAmount: "0",
+  deathBenefit: "0",
   coverageAmount: "3000000",
   yearlyPremium: "",
   paymentYears: "1",
@@ -178,6 +184,7 @@ function AdminInsurancePlans() {
         policyTermYears: Number(form.policyTermYears || form.paymentYears || 1),
         premiumFrequencies: form.premiumFrequencies.split(",").map((x) => x.trim()).filter(Boolean),
         pricingRules: { baseAge: Number(form.baseAge || 25), ageRatePercent: Number(form.ageRatePercent || 0), smokerLoadingPercent: Number(form.smokerLoadingPercent || 0), femaleDiscountPercent: Number(form.femaleDiscountPercent || 0) },
+        benefitRules: { benefitType: form.benefitType, payoutStartYear: Number(form.payoutStartYear || 0), payoutYears: Number(form.payoutYears || 0), annualPayout: Number(form.annualPayout || 0), maturityAmount: Number(form.maturityAmount || 0), deathBenefit: Number(form.deathBenefit || 0) },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -310,6 +317,14 @@ function AdminInsurancePlans() {
           <input placeholder="Age Loading % per year" value={form.ageRatePercent} onChange={(e) => setForm({ ...form, ageRatePercent: e.target.value })} />
           <input placeholder="Smoker Loading %" value={form.smokerLoadingPercent} onChange={(e) => setForm({ ...form, smokerLoadingPercent: e.target.value })} />
           <input placeholder="Female Discount %" value={form.femaleDiscountPercent} onChange={(e) => setForm({ ...form, femaleDiscountPercent: e.target.value })} />
+          <select value={form.benefitType} onChange={(e) => setForm({ ...form, benefitType: e.target.value })}>
+            {["Life Cover","Guaranteed Income","Pension Income","Maturity Benefit","Custom"].map((x)=><option key={x}>{x}</option>)}
+          </select>
+          <input placeholder="Benefit Payout Start Year" value={form.payoutStartYear} onChange={(e)=>setForm({...form,payoutStartYear:e.target.value})}/>
+          <input placeholder="Benefit Payout Years" value={form.payoutYears} onChange={(e)=>setForm({...form,payoutYears:e.target.value})}/>
+          <input placeholder="Annual Guaranteed / Pension Payout" value={form.annualPayout} onChange={(e)=>setForm({...form,annualPayout:e.target.value})}/>
+          <input placeholder="Maturity Benefit Amount" value={form.maturityAmount} onChange={(e)=>setForm({...form,maturityAmount:e.target.value})}/>
+          <input placeholder="Death Benefit Amount" value={form.deathBenefit} onChange={(e)=>setForm({...form,deathBenefit:e.target.value})}/>
 
           <input
             placeholder="Coverage Amount"
