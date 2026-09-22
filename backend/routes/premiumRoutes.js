@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Premium = require("../models/Premium");
 const auth = require("../middleware/auth");
+const {writeAudit}=require("../services/auditService");
 const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
 const Notification = require("../models/Notification");
@@ -93,6 +94,7 @@ router.post("/", auth(STAFF_ROLES), async (req, res) => {
       createdBy: req.user.id,
     });
 
+    await writeAudit(req,{action:"PREMIUM_CREATED",module:"Premiums",description:`Premium created for policy ${premium.policyNumber}`});
     res.status(201).json(premium);
   } catch (error) {
     console.error("Premium create error:", error);
@@ -254,6 +256,7 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
     Object.assign(premium, payload);
     await premium.save();
 
+    await writeAudit(req,{action:`PREMIUM_${String(premium.status||"UPDATED").toUpperCase().replace(/\\s+/g,"_")}`,module:"Premiums",description:`Premium status updated for policy ${premium.policyNumber}`});
     res.json(premium);
   } catch (error) {
     console.error("Premium update error:", error);
