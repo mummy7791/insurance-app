@@ -31,7 +31,7 @@ export default function ProtectedRoute({
   }
 
   if (allowedRoles && (!user.role || !allowedRoles.includes(user.role))) {
-    return <Navigate to={user.role === "customer" ? "/customer-dashboard" : user.role === "advisor" ? "/insurance-plans" : "/dashboard"} replace />;
+    return <Navigate to={user.role === "customer" ? "/customer-dashboard" : user.role === "advisor" ? "/advisor-dashboard" : "/dashboard"} replace />;
   }
 
   return children;
