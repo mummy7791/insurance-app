@@ -29,6 +29,8 @@ const customerMenu = [
   { name: "Home", path: "/customer-dashboard", icon: "⌂" },
   { name: "Insurance Plans", path: "/insurance-plans", icon: "◇" },
   { name: "My Policies", path: "/policies", icon: "▣" },
+  { name: "My Quotations", path: "/quotations", icon: "▧" },
+  { name: "Quotations", path: "/quotations", icon: "▧", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Policy Services", path: "/policy-services", icon: "↻" },
   { name: "Premiums", path: "/premiums", icon: "₹" },
   { name: "Claims", path: "/claims", icon: "◎" },
