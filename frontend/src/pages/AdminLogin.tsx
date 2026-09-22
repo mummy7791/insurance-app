@@ -71,7 +71,7 @@ export default function AdminLogin() {
             <button className="auth-btn" onClick={() => void login()} disabled={loading}>{loading ? "Signing in..." : "Sign in to operations"}</button>
           </div>
           <div className="staff-login-note"><strong>Existing account preserved</strong><span>Your admin email and password are not changed by this redesign.</span></div>
-          <p className="auth-links">Customer account?<Link to="/login">Customer Login</Link></p>
+          <p className="auth-links">Advisor account? <Link to="/advisor-login">Advisor Login</Link></p>\n          <p className="auth-links">Customer account? <Link to="/login">Customer Login</Link></p>
         </div>
       </section>
     </div>
