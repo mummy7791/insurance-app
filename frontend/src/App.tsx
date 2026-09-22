@@ -18,6 +18,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const CustomerDashboard = lazy(() => import("./pages/CustomerDashboard"));
 const AdvisorDashboard = lazy(() => import("./pages/AdvisorDashboard"));
+const PolicyServices = lazy(() => import("./pages/PolicyServices"));
 const OnlinePolicyPurchase = lazy(() => import("./pages/OnlinePolicyPurchase"));
 const CustomerProfile = lazy(() => import("./pages/CustomerProfile"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
@@ -57,6 +58,7 @@ function App() {
           <Route path="/commission" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "advisor"]}><Commission /></ProtectedRoute>} />
           <Route path="/claims" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "customer"]}><Claims /></ProtectedRoute>} />
           <Route path="/documents" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "customer"]}><Documents /></ProtectedRoute>} />
+          <Route path="/policy-services" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "customer"]}><PolicyServices /></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Employees /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute allowedRoles={["customer"]}><Notifications /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager"]}><Reports /></ProtectedRoute>} />
