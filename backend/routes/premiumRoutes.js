@@ -213,10 +213,11 @@ router.post("/:id/verify-payment", auth(["customer"]), async (req, res) => {
     premium.gatewayPaymentId = String(success.cf_payment_id);
     premium.receiptNumber = premium.receiptNumber || makeReference("RCPT");
     await premium.save();
+    await writeAudit(req,{action:"PREMIUM_PAYMENT_VERIFIED",module:"Premiums",description:`Renewal payment verified for policy ${premium.policyNumber}`});
 
     const nextDue = await Premium.findOne({
       policyNumber: premium.policyNumber,
-      status: { $in: ["Due", "Overdue"] },
+      status: { $in: ["Upcoming", "Due", "Grace Period", "Overdue"] },
     }).sort({ dueDate: 1 });
 
     await PlanPurchase.findOneAndUpdate(
@@ -270,6 +271,7 @@ router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
     if (!premium) return res.status(404).json({ message: "Premium not found" });
 
     await premium.deleteOne();
+    await writeAudit(req,{action:"PREMIUM_DELETED",module:"Premiums",description:`Premium record deleted for policy ${premium.policyNumber}`});
     res.json({ message: "Premium deleted" });
   } catch (error) {
     console.error("Premium delete error:", error);
