@@ -44,6 +44,9 @@ const pickClaimUpdateFields = (body = {}) => {
     "settlementAmount",
     "settlementDate",
     "settlementReference",
+    "documentsStatus",
+    "missingDocuments",
+    "adminChecklistRemarks",
   ];
 
   const payload = {};
@@ -193,6 +196,8 @@ router.put("/:id", auth(STAFF_ROLES), async (req, res) => {
         String(payload.remarks || "").trim() || "Claim settled successfully";
     }
 
+    if (payload.missingDocuments && !Array.isArray(payload.missingDocuments)) payload.missingDocuments = String(payload.missingDocuments).split(",").map((x) => x.trim()).filter(Boolean).slice(0,20);
+    if (payload.adminChecklistRemarks) payload.adminChecklistRemarks = String(payload.adminChecklistRemarks).trim().slice(0,1000);
     const previousStatus = claim.status;
     Object.assign(claim, payload);
     await claim.save();
