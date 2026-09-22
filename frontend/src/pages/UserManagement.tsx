@@ -214,8 +214,35 @@ export default function UserManagement() {
           </select>
         </div>
 
-        <button className="btn small-btn" onClick={createUser} disabled={creating}>
-          {creating ? "Creating..." : "Create Advisor"}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
+          <button className="btn small-btn" onClick={sendAdvisorOtp} disabled={otpBusy || otpVerified}>
+            {otpBusy ? "Sending..." : otpSent ? "Resend OTP" : "Send Email OTP"}
+          </button>
+          {otpSent && !otpVerified && (
+            <>
+              <input
+                style={{ maxWidth: 220 }}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              />
+              <button className="mini-btn" onClick={verifyAdvisorOtp} disabled={otpBusy || otp.length !== 6}>
+                Verify OTP
+              </button>
+            </>
+          )}
+          {otpVerified && <span className="secure-chip">✓ Email verified</span>}
+        </div>
+
+        <button
+          className="btn small-btn"
+          onClick={createUser}
+          disabled={creating || !otpVerified}
+          style={{ marginTop: 14 }}
+        >
+          {creating ? "Creating..." : otpVerified ? "Create Advisor" : "Verify Email First"}
         </button>
       </div>
 
