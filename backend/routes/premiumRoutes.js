@@ -53,6 +53,14 @@ const STAFF_ROLES = [
   "agent",
 ];
 
+const lifecycleStatus=(premium)=>{
+ if(premium.status==="Paid") return "Paid";
+ const due=new Date(String(premium.dueDate||"")+"T00:00:00"); if(Number.isNaN(due.getTime())) return premium.status||"Due";
+ const today=new Date();today.setHours(0,0,0,0);const days=Math.floor((today-due)/86400000);
+ if(days>30)return "Lapsed";if(days>0)return "Grace Period";if(days===0)return "Due";return "Upcoming";
+};
+const syncLifecycle=async(items)=>{for(const item of items){const next=lifecycleStatus(item);if(item.status!==next){item.status=next;item.lifecycleUpdatedAt=new Date();await item.save();}}return items;};
+
 const pickPremiumFields = (body = {}) => {
   const allowedFields = [
     "customerName",
@@ -102,6 +110,7 @@ router.get("/", auth(), async (req, res) => {
     }
 
     const premiums = await Premium.find(query).sort({ createdAt: -1 });
+    await syncLifecycle(premiums);
     res.json(premiums);
   } catch (error) {
     console.error("Premiums fetch error:", error);
@@ -116,6 +125,7 @@ router.post("/:id/create-payment-order", auth(["customer"]), async (req, res) =>
     const premium = await Premium.findById(req.params.id);
     if (!premium) return res.status(404).json({ message: "Premium not found" });
     if (premium.status === "Paid") return res.status(409).json({ message: "Premium is already paid" });
+    if (lifecycleStatus(premium) === "Lapsed") return res.status(409).json({ message: "Premium is beyond the configured grace period. Contact policy servicing for reinstatement." });
 
     const policy = await Policy.findOne({ policyNumber: premium.policyNumber, customerId: req.user.id });
     if (!policy) return res.status(403).json({ message: "This premium does not belong to your policy" });
