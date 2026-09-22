@@ -17,6 +17,7 @@ type Category =
 type PlanStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Inactive";
 
 type Plan = {
+  benefitRules?: { benefitType?: string; payoutStartYear?: number; payoutYears?: number; annualPayout?: number; maturityAmount?: number; deathBenefit?: number };
   _id: string;
   planName: string;
   category: Category;
@@ -163,12 +164,12 @@ function AdminInsurancePlans() {
     }
   };
 
-  const editPlan = (plan: InsurancePlan) => {
+  const editPlan = (plan: Plan) => {
     const rules = plan.pricingRules || {};
-    const benefit = (plan as InsurancePlan & { benefitRules?: Record<string, string | number> }).benefitRules || {};
+    const benefit = plan.benefitRules || {};
     setEditingId(plan._id);
     setForm({
-      ...emptyForm,
+      ...initialForm,
       planName: plan.planName || "",
       category: plan.category,
       planType: plan.planType || "",
@@ -201,7 +202,7 @@ function AdminInsurancePlans() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const cancelEdit = () => { setEditingId(null); setForm(emptyForm); };
+  const cancelEdit = () => { setEditingId(null); setForm(initialForm); };
 
   const createPlan = async () => {
     if (!form.planName || !form.category || !form.coverageAmount) {
