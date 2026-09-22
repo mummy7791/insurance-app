@@ -10,7 +10,9 @@ type Customer = {
   city?: string;
   occupation?: string;
   income?: number;
-  status: "new" | "followup" | "converted" | "rejected";
+  status: "new" | "followup" | "converted" | "rejected" | "active" | "blocked";
+  source?: "registered" | "lead";
+  isEmailVerified?: boolean;
 };
 
 type CustomerForm = {
@@ -43,10 +45,13 @@ export default function Customers() {
     try {
       setTimeout(() => setLoading(true), 0);
 
-      const res = await api.get<Customer[]>("/leads");
-
+      const [leadRes,userRes] = await Promise.all([api.get<Customer[]>("/leads"),api.get<Array<{_id:string;name:string;phone?:string;email?:string;role:string;status?:string;isEmailVerified?:boolean}>>("/users")]);
+      const leads=(Array.isArray(leadRes.data)?leadRes.data:[]).map(x=>({...x,source:"lead" as const}));
+      const registered=(Array.isArray(userRes.data)?userRes.data:[]).filter(x=>x.role==="customer").map(x=>({_id:x._id,name:x.name,phone:x.phone||"",email:x.email||"",city:"",occupation:"",income:0,status:(x.status==="blocked"?"blocked":"active") as Customer["status"],source:"registered" as const,isEmailVerified:Boolean(x.isEmailVerified)}));
+      const registeredKeys=new Set(registered.flatMap(x=>[x.email?.toLowerCase(),x.phone].filter(Boolean)));
+      const merged=[...registered,...leads.filter(x=>!registeredKeys.has(x.email?.toLowerCase())&&!registeredKeys.has(x.phone))];
       setTimeout(() => {
-        setCustomers(Array.isArray(res.data) ? res.data : []);
+        setCustomers(merged);
         setLoading(false);
       }, 0);
     } catch (error) {
@@ -85,14 +90,14 @@ export default function Customers() {
     }
   };
 
-  const updateStatus = async (
-    id: string,
-    status: Customer["status"]
-  ) => {
+  const updateStatus = async (id: string,status: Customer["status"],source?: Customer["source"]) => {
     try {
-      const res = await api.put<Customer>(`/leads/${id}`, {
-        status,
-      });
+      if(source==="registered"){
+        const accountStatus=status==="blocked"?"blocked":"active";
+        const res=await api.put<Customer>(`/user-management/${id}/status`,{status:accountStatus});
+        setCustomers(prev=>prev.map(c=>c._id===id?{...c,status:accountStatus}:c));return;
+      }
+      const res = await api.put<Customer>(`/leads/${id}`, { status });
 
       setCustomers((prev) =>
         prev.map((customer) => (customer._id === id ? res.data : customer))
@@ -202,30 +207,20 @@ export default function Customers() {
                 <h3>{customer.name}</h3>
                 <div className="admin-detail-list"><p><span>Phone</span><strong>{customer.phone}</strong></p><p><span>Email</span><strong>{customer.email || "N/A"}</strong></p><p><span>City</span><strong>{customer.city || "N/A"}</strong></p><p><span>Occupation</span><strong>{customer.occupation || "N/A"}</strong></p><p><span>Income</span><strong>₹{Number(customer.income || 0).toLocaleString("en-IN")}</strong></p></div>
 
-                <span className="badge">{customer.status}</span>
+                <span className="badge">{customer.source==="registered"?"Registered Customer":"Lead"} · {customer.status}</span>
+                {customer.source==="registered" ? <div className="admin-detail-list"><p><span>Email Verification</span><strong>{customer.isEmailVerified?"Verified":"Pending"}</strong></p></div> : null}
 
                 <select
                   className="status-select"
                   value={customer.status}
                   onChange={(e) =>
-                    updateStatus(
-                      customer._id,
-                      e.target.value as Customer["status"]
-                    )
+                    updateStatus(customer._id,e.target.value as Customer["status"],customer.source)
                   }
                 >
-                  <option value="new">New</option>
-                  <option value="followup">Follow Up</option>
-                  <option value="converted">Converted</option>
-                  <option value="rejected">Rejected</option>
+                  {customer.source==="registered" ? <><option value="active">Active</option><option value="blocked">Blocked</option></> : <><option value="new">New</option><option value="followup">Follow Up</option><option value="converted">Converted</option><option value="rejected">Rejected</option></>}
                 </select>
 
-                <button
-                  className="mini-btn danger-btn"
-                  onClick={() => deleteCustomer(customer._id)}
-                >
-                  Delete
-                </button>
+                {customer.source==="lead" ? <button className="mini-btn danger-btn" onClick={() => deleteCustomer(customer._id)}>Delete</button> : null}
               </div>
             ))}
           </div>
