@@ -48,8 +48,8 @@ export default function Customers() {
       const [leadRes,userRes] = await Promise.all([api.get<Customer[]>("/leads"),api.get<Array<{_id:string;name:string;phone?:string;email?:string;role:string;status?:string;isEmailVerified?:boolean}>>("/users")]);
       const leads=(Array.isArray(leadRes.data)?leadRes.data:[]).map(x=>({...x,source:"lead" as const}));
       const registered=(Array.isArray(userRes.data)?userRes.data:[]).filter(x=>x.role==="customer").map(x=>({_id:x._id,name:x.name,phone:x.phone||"",email:x.email||"",city:"",occupation:"",income:0,status:(x.status==="blocked"?"blocked":"active") as Customer["status"],source:"registered" as const,isEmailVerified:Boolean(x.isEmailVerified)}));
-      const registeredKeys=new Set(registered.flatMap(x=>[x.email?.toLowerCase(),x.phone].filter(Boolean)));
-      const merged=[...registered,...leads.filter(x=>!registeredKeys.has(x.email?.toLowerCase())&&!registeredKeys.has(x.phone))];
+      const registeredKeys=new Set<string>(registered.flatMap(x=>[x.email?.toLowerCase()||"",x.phone||""].filter((v):v is string=>Boolean(v))));
+      const merged=[...registered,...leads.filter(x=>{const email=(x.email||"").toLowerCase();const phone=x.phone||"";return (!email||!registeredKeys.has(email))&&(!phone||!registeredKeys.has(phone));})];
       setTimeout(() => {
         setCustomers(merged);
         setLoading(false);
@@ -94,7 +94,7 @@ export default function Customers() {
     try {
       if(source==="registered"){
         const accountStatus=status==="blocked"?"blocked":"active";
-        const res=await api.put<Customer>(`/user-management/${id}/status`,{status:accountStatus});
+        await api.put<Customer>(`/user-management/${id}/status`,{status:accountStatus});
         setCustomers(prev=>prev.map(c=>c._id===id?{...c,status:accountStatus}:c));return;
       }
       const res = await api.put<Customer>(`/leads/${id}`, { status });
