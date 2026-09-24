@@ -15,6 +15,7 @@ const quotationSchema=new mongoose.Schema({
  coverageAmount:{type:Number,required:true},
  paymentYears:{type:Number,required:true},
  policyTermYears:{type:Number,required:true},
+ coverTillAge:{type:Number,default:0},
  frequency:{type:String,required:true},
  instalmentPremium:{type:Number,required:true},
  annualPremium:{type:Number,required:true},
