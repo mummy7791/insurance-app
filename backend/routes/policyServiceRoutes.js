@@ -7,6 +7,7 @@ const PlanPurchase=require("../models/PlanPurchase");
 const Policy=require("../models/Policy");
 const InsurancePlan=require("../models/InsurancePlan");
 const Premium=require("../models/Premium");
+const User=require("../models/User");
 const auth=require("../middleware/auth");
 const {writeAudit}=require("../services/auditService");
 const STAFF=["admin","bm","unit_manager","agency_manager","agent"];
@@ -17,7 +18,17 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Policy Revival","Free-Look Cancellation","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
  const [purchase,policy]=await Promise.all([PlanPurchase.findOne({customerId:req.user.id,policyNumber}),Policy.findOne({customerId:req.user.id,policyNumber})]);
  if(!purchase&&!policy)return res.status(403).json({message:"Policy does not belong to this customer"});
- let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined,nomineeChange=undefined,cancellationRequest=undefined;
+ let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined,nomineeChange=undefined,cancellationRequest=undefined,profileChange=undefined;
+ if(["Address Change","Contact Update","Bank Update"].includes(requestType)){
+   if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Profile changes are available only for active purchased policies"});
+   const customer=await User.findById(req.user.id).select("address phone email").lean();
+   if(requestType==="Address Change"){const fullAddress=clean(req.body.address?.fullAddress,500),pinCode=clean(req.body.address?.pinCode,10);if(!fullAddress||!/^[1-9][0-9]{5}$/.test(pinCode))return res.status(400).json({message:"Enter complete address and valid 6 digit PIN code"});profileChange={address:{fullAddress,pinCode}};}
+   if(requestType==="Contact Update"){const phone=clean(req.body.contact?.phone,20),email=clean(req.body.contact?.email,160).toLowerCase();if(!/^[6-9][0-9]{9}$/.test(phone)||!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({message:"Enter valid mobile number and email"});profileChange={contact:{phone,email}};}
+   if(requestType==="Bank Update"){const accountHolder=clean(req.body.bank?.accountHolder,120),bankName=clean(req.body.bank?.bankName,120),accountNumber=clean(req.body.bank?.accountNumber,30).replace(/\s/g,""),ifsc=clean(req.body.bank?.ifsc,20).toUpperCase();if(!accountHolder||!bankName||!/^[0-9]{6,20}$/.test(accountNumber)||!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))return res.status(400).json({message:"Enter valid bank account and IFSC details"});profileChange={bank:{accountHolder,bankName,accountNumber,accountLast4:accountNumber.slice(-4),ifsc}};}
+   if(requestType==="Address Change")req.body.currentValue=`${customer?.address||purchase.proposal?.address||"Not available"}`;
+   if(requestType==="Contact Update")req.body.currentValue=`${customer?.phone||purchase.proposal?.customerPhone||"—"} / ${customer?.email||purchase.proposal?.customerEmail||"—"}`;
+   if(requestType==="Bank Update")req.body.currentValue=purchase.serviceProfile?.bank?.accountLast4?`Bank account ending ${purchase.serviceProfile.bank.accountLast4}`:"No bank account on servicing profile";
+ }
  if(requestType==="Nominee Change"){
    if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Nominee changes are available only for active purchased policies"});
    const nominees=Array.isArray(req.body.nominees)?req.body.nominees.slice(0,5).map(n=>({name:clean(n.name,100),relation:clean(n.relation,60),dateOfBirth:clean(n.dateOfBirth,20),sharePercent:Number(n.sharePercent||0),appointeeName:clean(n.appointeeName,100),appointeeRelation:clean(n.appointeeRelation,60)})):[];
@@ -95,11 +106,20 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  }
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
- const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,cancellationRequest,status:"Submitted"});
+ const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,cancellationRequest,profileChange,status:"Submitted"});
  await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
-router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});if(["Approved","Rejected"].includes(item.status))return res.status(409).json({message:"This service request is already closed"}); if(status==="Approved"&&item.requestType==="Nominee Change"){
+router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});if(["Approved","Rejected"].includes(item.status))return res.status(409).json({message:"This service request is already closed"}); if(status==="Approved"&&["Address Change","Contact Update","Bank Update"].includes(item.requestType)){
+   if(!req.body.documentVerified)return res.status(400).json({message:"Supporting documents must be verified before approval"});
+   const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber).select("+serviceProfile.bank.accountNumber");if(!purchase||purchase.policyStatus!=="Active")return res.status(409).json({message:"Active purchased policy not found"});
+   const customer=await User.findById(item.customerId);const p=item.profileChange||{};
+   if(item.requestType==="Address Change"){const previous={address:customer?.address||purchase.proposal.address,pinCode:purchase.serviceProfile?.pinCode||""};purchase.serviceHistory.push({requestType:item.requestType,previousValue:previous,serviceRequestId:item._id});purchase.proposal.address=p.address.fullAddress;purchase.serviceProfile.pinCode=p.address.pinCode;if(customer)customer.address=p.address.fullAddress;item.requestedValue=`${p.address.fullAddress}, PIN ${p.address.pinCode}`;}
+   if(item.requestType==="Contact Update"){const previous={phone:customer?.phone||purchase.proposal.customerPhone,email:customer?.email||purchase.proposal.customerEmail};purchase.serviceHistory.push({requestType:item.requestType,previousValue:previous,serviceRequestId:item._id});purchase.proposal.customerPhone=p.contact.phone;purchase.proposal.customerEmail=p.contact.email;if(customer){customer.phone=p.contact.phone;customer.email=p.contact.email;}item.requestedValue=`${p.contact.phone} / ${p.contact.email}`;}
+   if(item.requestType==="Bank Update"){const previous={accountHolder:purchase.serviceProfile?.bank?.accountHolder||"",bankName:purchase.serviceProfile?.bank?.bankName||"",accountLast4:purchase.serviceProfile?.bank?.accountLast4||"",ifsc:purchase.serviceProfile?.bank?.ifsc||""};purchase.serviceHistory.push({requestType:item.requestType,previousValue:previous,serviceRequestId:item._id});purchase.serviceProfile.bank=p.bank;item.requestedValue=`${p.bank.bankName} / A/c ending ${p.bank.accountLast4} / ${p.bank.ifsc}`;}
+   await purchase.save();if(customer)await customer.save();item.profileChange.documentVerified=true;item.profileChange.effectiveDate=new Date();
+ }
+ if(status==="Approved"&&item.requestType==="Nominee Change"){
    if(!req.body.documentVerified)return res.status(400).json({message:"Nominee documents must be verified before approval"});
    const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase||purchase.policyStatus!=="Active")return res.status(409).json({message:"Active purchased policy not found"});
    const nextNominees=item.nomineeChange?.nominees||[];if(!nextNominees.length)return res.status(409).json({message:"Nominee request details are missing"});
