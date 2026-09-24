@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
+import { Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+ChartJS.register(CategoryScale,LinearScale,BarElement,Title,Tooltip,Legend);
 
 type PaymentMode = "UPI" | "Cash" | "Card" | "Net Banking";
 type PremiumStatus = "Upcoming" | "Due" | "Grace Period" | "Overdue" | "Lapsed" | "Paid";
@@ -25,6 +28,14 @@ type RenewalRow = {
 };
 
 const renewalStatuses: PremiumStatus[] = ["Upcoming","Due","Grace Period","Overdue","Lapsed"];
+
+type Analytics = {
+ summary:{thisMonthDueAmount:number;collectedAmount:number;pendingAmount:number;collectionPercent:number;graceAmount:number;lapsedAmount:number};
+ months:Array<{month:string;due:number;collected:number}>;
+ advisorPerformance:Array<{advisorCode:string;advisorName:string;due:number;collected:number;pending:number;collectionPercent:number}>;
+ timeline:Array<{premiumId:string;customerName:string;policyNumber:string;dueDate:string;status:string;events:Array<{label:string;date:string;remarks?:string}>}>;
+ todayList:Premium[]; next7Days:Premium[];
+};
 
 type CashfreeInstance = {
   checkout: (options: { paymentSessionId: string; redirectTarget: "_self" }) => Promise<{ error?: { message?: string } }>;
@@ -66,8 +77,12 @@ export default function Premiums() {
   const [followupDate,setFollowupDate]=useState("");
   const [followupRemarks,setFollowupRemarks]=useState("");
   const [followupSummary,setFollowupSummary]=useState({today:0,tomorrow:0,missed:0,promiseToPay:0});
+  const [analytics,setAnalytics]=useState<Analytics|null>(null);
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
+
+  const loadAnalytics=useCallback(async()=>{if(isCustomer)return;try{const r=await api.get<Analytics>("/premiums/analytics");setAnalytics(r.data);}catch(e){console.error("Premium analytics error:",e);}},[isCustomer]);
+  const downloadCollectionList=(title:string,rows:Premium[])=>{const headers=["Customer Name","Policy Number","Premium Amount","Due Date","Status"];const lines=[headers.map(csvCell).join(","),...rows.map(r=>[r.customerName,r.policyNumber,r.amount,r.dueDate,r.status].map(csvCell).join(","))];const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`SecureLife-${title}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);};
 
   const loadFollowupSummary=useCallback(async()=>{if(isCustomer)return;try{const r=await api.get<{today:number;tomorrow:number;missed:number;promiseToPay:number}>("/followups/summary");setFollowupSummary(r.data);}catch(e){console.error("Follow-up summary error:",e);}},[isCustomer]);
   const saveFollowup=async()=>{
@@ -110,7 +125,7 @@ export default function Premiums() {
     }
   }, []);
 
-  useEffect(()=>{void loadRenewalReport();void loadFollowupSummary();},[loadRenewalReport,loadFollowupSummary]);
+  useEffect(()=>{void loadRenewalReport();void loadFollowupSummary();void loadAnalytics();},[loadRenewalReport,loadFollowupSummary,loadAnalytics]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -358,6 +373,15 @@ export default function Premiums() {
           <h1>{premiums.length}</h1>
         </div>
       </div>
+
+{!isCustomer && analytics && <div className="section">
+        <div className="section-heading-row"><div><span className="eyebrow">COLLECTION ANALYTICS</span><h2>Premium Renewal Dashboard V3</h2><p className="section-copy">Collection performance, upcoming dues and renewal activity.</p></div><button className="mini-btn" onClick={()=>void loadAnalytics()}>Refresh analytics</button></div>
+        <div className="cards admin-kpi-grid"><div className="card"><h3>This Month Due</h3><h1>₹{analytics.summary.thisMonthDueAmount.toLocaleString("en-IN")}</h1></div><div className="card"><h3>Collected</h3><h1>₹{analytics.summary.collectedAmount.toLocaleString("en-IN")}</h1></div><div className="card"><h3>Pending</h3><h1>₹{analytics.summary.pendingAmount.toLocaleString("en-IN")}</h1></div><div className="card"><h3>Collection %</h3><h1>{analytics.summary.collectionPercent}%</h1></div><div className="card"><h3>Grace Period</h3><h1>₹{analytics.summary.graceAmount.toLocaleString("en-IN")}</h1></div><div className="card"><h3>Lapsed</h3><h1>₹{analytics.summary.lapsedAmount.toLocaleString("en-IN")}</h1></div></div>
+        <div style={{maxWidth:900,margin:"22px auto"}}><Bar data={{labels:analytics.months.map(x=>x.month),datasets:[{label:"Due",data:analytics.months.map(x=>x.due)},{label:"Collected",data:analytics.months.map(x=>x.collected)}]}} options={{responsive:true,plugins:{title:{display:true,text:"6-Month Premium Collection"}}}}/></div>
+        <h3>Advisor-wise Renewal Performance</h3><div className="table-wrap"><table className="table"><thead><tr><th>Advisor</th><th>Code</th><th>Due</th><th>Collected</th><th>Pending</th><th>Collection %</th></tr></thead><tbody>{analytics.advisorPerformance.map(a=><tr key={a.advisorCode}><td>{a.advisorName}</td><td>{a.advisorCode}</td><td>₹{a.due.toLocaleString("en-IN")}</td><td>₹{a.collected.toLocaleString("en-IN")}</td><td>₹{a.pending.toLocaleString("en-IN")}</td><td>{a.collectionPercent}%</td></tr>)}</tbody></table></div>
+        <div className="cards" style={{marginTop:18}}><div className="card"><h3>Today Collection List</h3><h1>{analytics.todayList.length}</h1><button className="mini-btn" disabled={!analytics.todayList.length} onClick={()=>downloadCollectionList("Today-Collection",analytics.todayList)}>Download Excel</button></div><div className="card"><h3>Next 7 Days Due</h3><h1>{analytics.next7Days.length}</h1><button className="mini-btn" disabled={!analytics.next7Days.length} onClick={()=>downloadCollectionList("Next-7-Days-Due",analytics.next7Days)}>Download Excel</button></div></div>
+        <h3 style={{marginTop:22}}>Renewal Timeline</h3><div className="table-wrap"><table className="table"><thead><tr><th>Customer</th><th>Policy</th><th>Due</th><th>Current Status</th><th>Activity Timeline</th></tr></thead><tbody>{analytics.timeline.map(t=><tr key={t.premiumId}><td>{t.customerName}</td><td>{t.policyNumber}</td><td>{t.dueDate}</td><td>{t.status}</td><td>{t.events.map((e,i)=><div key={i}><strong>{e.label}</strong> · {e.date}{e.remarks?` · ${e.remarks}`:""}</div>)}</td></tr>)}</tbody></table></div>
+      </div>}
 
 {!isCustomer && (
       <div className="section">
