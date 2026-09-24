@@ -631,6 +631,8 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
+      firstYearPremium,
+      subsequentYearPremium,
       paymentYears,
       advisorCommissionRate,
       ageMin,
