@@ -193,6 +193,8 @@ router.post("/", auth(["admin"]), async (req, res) => {
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
+      firstYearPremium,
+      subsequentYearPremium,
       paymentYears,
       advisorCommissionRate,
       ageMin,
