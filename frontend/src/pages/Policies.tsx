@@ -202,8 +202,8 @@ export default function Policies() {
     y=bondRows(doc,[["Life / Benefit Cover",`INR ${Number(plan.coverageAmount||0).toLocaleString("en-IN")}`],["Annual Premium",`INR ${Number(plan.yearlyPremium||0).toLocaleString("en-IN")}`],["Premium Payment Term",`${plan.paymentYears||1} year(s)`],["Total Premium Payable",`INR ${Number(plan.totalPremiumPayable||(plan.yearlyPremium*(plan.paymentYears||1))).toLocaleString("en-IN")}`]],y);
     y=bondSection(doc,"Nominee & Validity",y+2);
     y=bondRows(doc,[["Nominee",plan.proposal?.nomineeName||"N/A"],["Relationship",plan.proposal?.nomineeRelation||"N/A"],["Commencement Date",plan.startDate?new Date(plan.startDate).toLocaleDateString("en-IN"):"N/A"],["Policy Valid Until",plan.endDate?new Date(plan.endDate).toLocaleDateString("en-IN"):"N/A"],["Next Premium Due",plan.nextPremiumDate?new Date(plan.nextPremiumDate).toLocaleDateString("en-IN"):"No further premium due"]],y);
-    if(y>220){doc.addPage();addBondHeader(doc,"Policy Bond / Policy Schedule",plan.policyNumber);y=49;}
-    doc.setFillColor(236,253,245);doc.roundedRect(15,Math.max(y+5,230),180,25,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(10);const verifiedY=Math.max(y+5,230);doc.text("POLICY ISSUED - PAYMENT VERIFIED",20,verifiedY+11);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,verifiedY+19,{maxWidth:165});
+    const verifiedY=Math.min(Math.max(y+5,218),246);
+    doc.setFillColor(236,253,245);doc.roundedRect(15,verifiedY,180,24,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text("POLICY ISSUED - PAYMENT VERIFIED",20,verifiedY+10);doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,verifiedY+17,{maxWidth:165});
     bondFooter(doc,plan.policyNumber);addPolicySchedulePage(doc,plan);addPolicyTermsPage(doc,plan);
     doc.save(`${plan.policyNumber}-SecureLife-Policy-Bond.pdf`);
   };
