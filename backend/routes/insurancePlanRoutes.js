@@ -193,6 +193,8 @@ router.post("/", auth(["admin"]), async (req, res) => {
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
+      firstYearPremium,
+      subsequentYearPremium,
       paymentYears,
       advisorCommissionRate,
       ageMin,
@@ -739,6 +741,16 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
     plan.coverageAmount = Number(coverageAmount || plan.coverageAmount || 0);
     plan.yearlyPremium = finalPremium;
     plan.yearlyAmount = finalPremium;
+    if (firstYearPremium !== undefined && firstYearPremium !== "") {
+      const value = Number(firstYearPremium);
+      if (!Number.isFinite(value) || value <= 0) return res.status(400).json({ message: "First year premium must be a positive number" });
+      plan.firstYearPremium = value;
+    } else if (!plan.firstYearPremium) plan.firstYearPremium = finalPremium;
+    if (subsequentYearPremium !== undefined && subsequentYearPremium !== "") {
+      const value = Number(subsequentYearPremium);
+      if (!Number.isFinite(value) || value <= 0) return res.status(400).json({ message: "Subsequent year premium must be a positive number" });
+      plan.subsequentYearPremium = value;
+    } else if (!plan.subsequentYearPremium) plan.subsequentYearPremium = finalPremium;
     plan.paymentYears = Number(paymentYears || plan.paymentYears || 1);
     if (advisorCommissionRate !== undefined) {
       const rate = Number(advisorCommissionRate);
