@@ -26,6 +26,9 @@ type Plan = {
   policyTermYears?: number;
   premiumFrequencies?: string[];
   pricingRules?: { baseAge?: number; ageRatePercent?: number; smokerLoadingPercent?: number; femaleDiscountPercent?: number };
+  maturityAges?: number[];
+  premiumPayingTerms?: number[];
+  pptPremiumFactors?: Record<string,number>;
   coverageAmount?: number;
   yearlyPremium?: number;
   yearlyAmount?: number;
@@ -63,6 +66,9 @@ const initialForm = {
   productGroup: "Term / Health Products",
   policyTermYears: "10",
   premiumFrequencies: "Yearly,Half-Yearly,Quarterly,Monthly",
+  maturityAges: "40,50,60",
+  premiumPayingTerms: "5,10",
+  pptPremiumFactors: "5:1.4,10:1",
   baseAge: "25",
   ageRatePercent: "2",
   smokerLoadingPercent: "15",
@@ -180,6 +186,9 @@ function AdminInsurancePlans() {
       productGroup: plan.productGroup || "Other",
       policyTermYears: String(plan.policyTermYears || plan.paymentYears || 1),
       premiumFrequencies: (plan.premiumFrequencies || ["Yearly"]).join(","),
+      maturityAges: (plan.maturityAges||[]).join(","),
+      premiumPayingTerms: (plan.premiumPayingTerms||[]).join(","),
+      pptPremiumFactors: Object.entries(plan.pptPremiumFactors||{}).map(([k,v])=>`${k}:${v}`).join(","),
       baseAge: String(rules.baseAge ?? 25),
       ageRatePercent: String(rules.ageRatePercent ?? 0),
       smokerLoadingPercent: String(rules.smokerLoadingPercent ?? 0),
@@ -231,6 +240,9 @@ function AdminInsurancePlans() {
         productGroup: form.productGroup,
         policyTermYears: Number(form.policyTermYears || form.paymentYears || 1),
         premiumFrequencies: form.premiumFrequencies.split(",").map((x) => x.trim()).filter(Boolean),
+        maturityAges: form.maturityAges.split(",").map(Number).filter((x)=>Number.isFinite(x)&&x>0),
+        premiumPayingTerms: form.premiumPayingTerms.split(",").map(Number).filter((x)=>Number.isFinite(x)&&x>0),
+        pptPremiumFactors: Object.fromEntries(form.pptPremiumFactors.split(",").map(x=>x.trim().split(":")).filter(x=>x.length===2&&Number.isFinite(Number(x[1]))).map(([k,v])=>[k,Number(v)])),
         pricingRules: { baseAge: Number(form.baseAge || 25), ageRatePercent: Number(form.ageRatePercent || 0), smokerLoadingPercent: Number(form.smokerLoadingPercent || 0), femaleDiscountPercent: Number(form.femaleDiscountPercent || 0) },
         benefitRules: { benefitType: form.benefitType, payoutStartYear: Number(form.payoutStartYear || 0), payoutYears: Number(form.payoutYears || 0), annualPayout: Number(form.annualPayout || 0), maturityAmount: Number(form.maturityAmount || 0), deathBenefit: Number(form.deathBenefit || 0) },
         coverageAmount: Number(form.coverageAmount),
@@ -363,6 +375,9 @@ function AdminInsurancePlans() {
             {["ULIPS","Traditional Products","Term / Health Products","Pension Products","iSolutions","Other"].map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
 
+          <input placeholder="Cover Till Ages e.g. 40,50,60" value={form.maturityAges} onChange={(e) => setForm({ ...form, maturityAges: e.target.value })} />
+          <input placeholder="Premium Paying Terms e.g. 5,10" value={form.premiumPayingTerms} onChange={(e) => setForm({ ...form, premiumPayingTerms: e.target.value })} />
+          <input placeholder="PPT Premium Factors e.g. 5:1.4,10:1" value={form.pptPremiumFactors} onChange={(e) => setForm({ ...form, pptPremiumFactors: e.target.value })} />
           <input placeholder="Policy Term Years" value={form.policyTermYears} onChange={(e) => setForm({ ...form, policyTermYears: e.target.value })} />
           <input placeholder="Premium Frequencies comma separated" value={form.premiumFrequencies} onChange={(e) => setForm({ ...form, premiumFrequencies: e.target.value })} />
           <input placeholder="Base Age" value={form.baseAge} onChange={(e) => setForm({ ...form, baseAge: e.target.value })} />
