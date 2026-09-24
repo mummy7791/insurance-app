@@ -11,10 +11,10 @@ const clean=(v,n=500)=>String(v||"").trim().slice(0,n);
 router.get("/",auth([...STAFF,"customer"]),async(req,res)=>{try{const q=req.user.role==="customer"?{customerId:req.user.id}:{};res.json(await PolicyServiceRequest.find(q).sort({createdAt:-1}))}catch(e){res.status(500).json({message:"Service requests load failed"})}});
 router.post("/",auth(["customer"]),async(req,res)=>{try{
  const policyNumber=clean(req.body.policyNumber,80),requestType=clean(req.body.requestType,40),requestedValue=clean(req.body.requestedValue,1000);
- if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
+ if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Policy Revival","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
  const [purchase,policy]=await Promise.all([PlanPurchase.findOne({customerId:req.user.id,policyNumber}),Policy.findOne({customerId:req.user.id,policyNumber})]);
  if(!purchase&&!policy)return res.status(403).json({message:"Policy does not belong to this customer"});
- let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined;
+ let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined;
  if(requestType==="Cover Enhancement"){
    if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Cover enhancement is available only for active purchased policies"});
    const requestedCover=Number(req.body.requestedCover||requestedValue);
@@ -61,9 +61,21 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
    if(estimatedValue<=0)return res.status(400).json({message:"No surrender value is available under the configured plan rules"});
    surrenderRequest={paidPremiumAmount,policyYear,estimatedValue,approvedValue:0,eligibleFromPolicyYear:eligibleFrom,settlementStatus:"Pending"};
  }
+ if(requestType==="Policy Revival"){
+   if(!purchase||purchase.policyStatus==="Active"||purchase.policyStatus==="Surrendered"||purchase.policyStatus==="Cancelled")return res.status(400).json({message:"Only inactive/lapsed policies can be revived"});
+   const plan=await InsurancePlan.findById(purchase.planId).lean(),rules=plan?.revivalRules||{};
+   if(!rules.enabled)return res.status(400).json({message:"Revival is not enabled for this plan"});
+   const unpaid=await Premium.find({policyNumber,status:{$in:["Due","Grace Period","Overdue","Lapsed"]}}).sort({dueDate:1}).lean();
+   if(!unpaid.length)return res.status(400).json({message:"No outstanding premium found for revival"});
+   const outstandingPremium=unpaid.reduce((n,x)=>n+Number(x.amount||0),0);
+   const lapsedSince=new Date(unpaid[0].dueDate),now=new Date(),lapseDays=Math.max(0,Math.floor((now-lapsedSince)/86400000));
+   const maxLapseDays=Math.max(1,Number(rules.maxLapseDays||730));if(lapseDays>maxLapseDays)return res.status(400).json({message:"Policy is outside the configured revival period"});
+   const lateFee=Math.round(outstandingPremium*Math.max(0,Number(rules.lateFeePercent||0))/100);
+   revivalRequest={outstandingPremium,lateFee,totalRevivalAmount:outstandingPremium+lateFee,lapsedSince,lapseDays,medicalReviewRequired:Boolean(rules.medicalReviewRequired),kycReviewRequired:Boolean(rules.kycReviewRequired),paymentStatus:"Pending"};
+ }
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
- const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,status:"Submitted"});
+ const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,status:"Submitted"});
  await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
@@ -96,6 +108,7 @@ router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await Pol
    item.surrenderRequest.approvedValue=approvedValue;item.surrenderRequest.settlementStatus="Approved";
  }
  if(status==="Rejected"&&item.requestType==="Surrender Policy")item.surrenderRequest.settlementStatus="Rejected";
+ if(status==="Rejected"&&item.requestType==="Policy Revival")item.revivalRequest.paymentStatus="Rejected";
  item.status=status;item.adminRemarks=remarks;item.reviewedBy=req.user.id;item.reviewedAt=new Date();await item.save();await writeAudit(req,{action:`SERVICE_REQUEST_${status.toUpperCase().replace(" ","_")}`,module:"Policy Services",description:`${item.requestType} for ${item.policyNumber} changed to ${status}`,targetUserId:item.customerId});res.json(item)}catch(e){res.status(500).json({message:"Service request review failed"})}});
 router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
  const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});
@@ -114,4 +127,16 @@ router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
  await item.save();
  await writeAudit(req,{action:"POLICY_FINANCIAL_SETTLEMENT",module:"Policy Services",description:`${item.requestType} ${settlementStatus} for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
 }catch(e){res.status(500).json({message:"Settlement update failed"})}});
+router.patch("/:id/revival-payment",auth(STAFF),async(req,res)=>{try{
+ const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});
+ if(item.requestType!=="Policy Revival"||item.status!=="Approved")return res.status(409).json({message:"Revival request must be approved before payment"});
+ if(item.revivalRequest?.paymentStatus==="Paid")return res.status(409).json({message:"Revival payment is already completed"});
+ const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase||["Surrendered","Cancelled"].includes(purchase.policyStatus))return res.status(409).json({message:"Policy cannot be revived"});
+ const unpaid=await Premium.find({policyNumber:item.policyNumber,status:{$in:["Due","Grace Period","Overdue","Lapsed"]}}).sort({dueDate:1});
+ const paidAt=new Date(),paidDate=paidAt.toISOString().slice(0,10);for(const p of unpaid){p.status="Paid";p.paidDate=paidDate;p.paymentMode="Net Banking";p.lifecycleUpdatedAt=paidAt;await p.save();}
+ purchase.policyStatus="Active";const next=new Date(paidAt);next.setFullYear(next.getFullYear()+1);purchase.nextPremiumDate=next;await purchase.save();
+ await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{$set:{status:"active"}});
+ item.revivalRequest.paymentStatus="Paid";item.revivalRequest.paidAt=paidAt;await item.save();
+ await writeAudit(req,{action:"POLICY_REVIVED",module:"Policy Services",description:`Policy ${item.policyNumber} revived after approved payment`,targetUserId:item.customerId});res.json(item);
+}catch(e){console.error(e);res.status(500).json({message:"Revival payment update failed"})}});
 module.exports=router;
