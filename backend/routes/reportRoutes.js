@@ -7,6 +7,7 @@ const Premium = require("../models/Premium");
 const Claim = require("../models/Claim");
 const Employee = require("../models/Employee");
 const Commission = require("../models/Commission");
+const PlanPurchase = require("../models/PlanPurchase");
 const auth = require("../middleware/auth");
 
 router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"]), async (req, res) => {
@@ -130,6 +131,55 @@ router.get("/", auth(["admin", "bm", "unit_manager", "agency_manager", "agent"])
   } catch (error) {
     console.error("Reports error:", error);
     res.status(500).json({ message: "Reports fetch failed" });
+  }
+});
+
+router.get("/business", auth(["admin", "bm", "unit_manager", "agency_manager"]), async (req, res) => {
+  try {
+    const { from = "", to = "", plan = "", advisor = "", status = "" } = req.query;
+    const match = {};
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(String(from) + "T00:00:00.000Z");
+      if (to) match.createdAt.$lte = new Date(String(to) + "T23:59:59.999Z");
+    }
+    if (plan) match.planName = { $regex: String(plan).trim(), $options: "i" };
+    if (advisor) match.advisorCode = { $regex: String(advisor).trim(), $options: "i" };
+    if (status) match.policyStatus = String(status);
+
+    const purchases = await PlanPurchase.find(match)
+      .select("customerId planName category coverageAmount yearlyPremium paymentYears policyTermYears premiumFrequency advisorId advisorCode proposal paymentStatus policyStatus policyNumber startDate endDate nextPremiumDate createdAt")
+      .populate("customerId", "name email phone address")
+      .populate("advisorId", "name advisorCode")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const rows = purchases.map((item) => ({
+      id: String(item._id),
+      customerName: item.proposal?.customerName || item.customerId?.name || "",
+      customerPhone: item.proposal?.customerPhone || item.customerId?.phone || "",
+      customerEmail: item.proposal?.customerEmail || item.customerId?.email || "",
+      address: item.proposal?.address || item.customerId?.address || "",
+      policyNumber: item.policyNumber || "",
+      planName: item.planName || "",
+      category: item.category || "",
+      coverageAmount: Number(item.coverageAmount || 0),
+      yearlyPremium: Number(item.yearlyPremium || 0),
+      paymentStatus: item.paymentStatus || "",
+      policyStatus: item.policyStatus || "",
+      advisorName: item.advisorId?.name || "",
+      advisorCode: item.advisorCode || item.advisorId?.advisorCode || "",
+      purchaseDate: item.createdAt,
+      nextPremiumDate: item.nextPremiumDate,
+      premiumFrequency: item.premiumFrequency || "Yearly",
+      paymentYears: Number(item.paymentYears || 0),
+      policyTermYears: Number(item.policyTermYears || 0),
+    }));
+
+    res.json({ rows, total: rows.length });
+  } catch (error) {
+    console.error("Business report error:", error);
+    res.status(500).json({ message: "Business report fetch failed" });
   }
 });
 
