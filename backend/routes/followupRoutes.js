@@ -22,6 +22,10 @@ const pickFollowupFields = (body = {}) => {
     "time",
     "status",
     "remarks",
+    "policyNumber",
+    "premiumId",
+    "advisorCode",
+    "nextFollowupDate",
   ];
 
   const payload = {};
@@ -49,6 +53,21 @@ router.post("/", auth(STAFF_ROLES), async (req, res) => {
     console.error("Followup create error:", error);
     res.status(500).json({ message: "Followup create failed" });
   }
+});
+
+router.get("/summary", auth(STAFF_ROLES), async (req, res) => {
+  try {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+    const todayKey = today.toISOString().slice(0,10), tomorrowKey = tomorrow.toISOString().slice(0,10);
+    const [todayCount,tomorrowCount,missed,promiseToPay] = await Promise.all([
+      Followup.countDocuments({ nextFollowupDate: todayKey }),
+      Followup.countDocuments({ nextFollowupDate: tomorrowKey }),
+      Followup.countDocuments({ $or:[{status:"Missed"},{nextFollowupDate:{$lt:todayKey,$ne:""},status:{$nin:["Completed","Customer Will Pay","Not Interested"]}}] }),
+      Followup.countDocuments({ status:"Customer Will Pay" }),
+    ]);
+    res.json({today:todayCount,tomorrow:tomorrowCount,missed,promiseToPay});
+  } catch(error){ console.error("Followup summary error:",error); res.status(500).json({message:"Followup summary failed"}); }
 });
 
 router.get("/", auth(STAFF_ROLES), async (req, res) => {
