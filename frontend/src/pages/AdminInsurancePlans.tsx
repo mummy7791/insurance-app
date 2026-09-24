@@ -29,6 +29,8 @@ type Plan = {
   coverageAmount?: number;
   yearlyPremium?: number;
   yearlyAmount?: number;
+  firstYearPremium?: number;
+  subsequentYearPremium?: number;
   paymentYears?: number;
   ageMin?: number;
   ageMax?: number;
@@ -73,6 +75,8 @@ const initialForm = {
   deathBenefit: "0",
   coverageAmount: "3000000",
   yearlyPremium: "",
+  firstYearPremium: "",
+  subsequentYearPremium: "",
   paymentYears: "1",
   ageMin: "18",
   ageMax: "60",
@@ -188,6 +192,8 @@ function AdminInsurancePlans() {
       deathBenefit: String(benefit.deathBenefit || 0),
       coverageAmount: String(plan.coverageAmount || 0),
       yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
+      firstYearPremium: String(plan.firstYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
+      subsequentYearPremium: String(plan.subsequentYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
       paymentYears: String(plan.paymentYears || 1),
       ageMin: String(plan.ageMin ?? 0),
       ageMax: String(plan.ageMax ?? 100),
@@ -230,6 +236,8 @@ function AdminInsurancePlans() {
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
+        firstYearPremium: Number(form.firstYearPremium || form.yearlyPremium || 0),
+        subsequentYearPremium: Number(form.subsequentYearPremium || form.yearlyPremium || 0),
         paymentYears: Number(form.paymentYears || 1),
         ageMin: Number(form.ageMin || 0),
         ageMax: Number(form.ageMax || 100),
@@ -244,7 +252,8 @@ function AdminInsurancePlans() {
       };
       if (editingId) await api.put(`/insurance-plans/${editingId}`, payload); else await api.post("/insurance-plans", payload);
 
-      alert(editingId ? "Plan updated successfully" : "Plan created successfully");
+      alert(editingId ? "Plan updated successfully. Existing issued customer policies keep their original policy values." : "Plan created successfully");
+      setEditingId(null);
       setForm(initialForm);
       void loadPlans();
     } catch (error: unknown) {
@@ -257,7 +266,7 @@ function AdminInsurancePlans() {
   const seedDefaultPlans = async () => {
     if (
       !window.confirm(
-        "Default plans create cheyyala? Existing plans delete avuthayi."
+        "Default plans create cheyyala? Existing plans delete avvavu; missing default plans matrame create avuthayi."
       )
     ) {
       return;
@@ -404,6 +413,9 @@ function AdminInsurancePlans() {
             }
             disabled={form.premiumMode === "auto"}
           />
+
+          <input placeholder="First Year Premium (optional)" value={form.firstYearPremium} onChange={(e)=>setForm({...form,firstYearPremium:e.target.value})} />
+          <input placeholder="Subsequent Year Premium (optional)" value={form.subsequentYearPremium} onChange={(e)=>setForm({...form,subsequentYearPremium:e.target.value})} />
 
           <input
             placeholder="Payment Years"
