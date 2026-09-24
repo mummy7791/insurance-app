@@ -1,3 +1,6 @@
+const PDFDocument=require("pdfkit");
+const QRCode=require("qrcode");
+const crypto=require("crypto");
 const router=require("express").Router();
 const PolicyServiceRequest=require("../models/PolicyServiceRequest");
 const PlanPurchase=require("../models/PlanPurchase");
@@ -126,6 +129,7 @@ if(status==="Approved"&&item.requestType==="Cover Enhancement"){
  }
  if(status==="Rejected"&&item.requestType==="Surrender Policy")item.surrenderRequest.settlementStatus="Rejected";
  if(status==="Rejected"&&item.requestType==="Policy Revival")item.revivalRequest.paymentStatus="Rejected";
+ if(status==="Approved"&&!item.endorsementNumber){item.endorsementNumber=`END-${new Date().getFullYear()}-${String(item._id).slice(-8).toUpperCase()}`;item.endorsementIssuedAt=new Date();item.verificationToken=crypto.randomBytes(18).toString("hex");}
  item.status=status;item.adminRemarks=remarks;item.reviewedBy=req.user.id;item.reviewedAt=new Date();await item.save();await writeAudit(req,{action:`SERVICE_REQUEST_${status.toUpperCase().replace(" ","_")}`,module:"Policy Services",description:`${item.requestType} for ${item.policyNumber} changed to ${status}`,targetUserId:item.customerId});res.json(item)}catch(e){res.status(500).json({message:"Service request review failed"})}});
 router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
  const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});
@@ -156,4 +160,23 @@ router.patch("/:id/revival-payment",auth(STAFF),async(req,res)=>{try{
  item.revivalRequest.paymentStatus="Paid";item.revivalRequest.paidAt=paidAt;await item.save();
  await writeAudit(req,{action:"POLICY_REVIVED",module:"Policy Services",description:`Policy ${item.policyNumber} revived after approved payment`,targetUserId:item.customerId});res.json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Revival payment update failed"})}});
+
+router.get("/:id/endorsement",auth([...STAFF,"customer"]),async(req,res)=>{try{
+ const item=await PolicyServiceRequest.findById(req.params.id).lean();if(!item)return res.status(404).json({message:"Request not found"});
+ if(req.user.role==="customer"&&String(item.customerId)!==String(req.user.id))return res.status(403).json({message:"Not authorized"});
+ if(item.status!=="Approved"||!item.endorsementNumber)return res.status(409).json({message:"Endorsement certificate is available only for approved requests"});
+ const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber}).lean();
+ const verifyUrl=`${req.protocol}://${req.get("host")}/api/policy-services/verify/${item.verificationToken}`;
+ const qr=await QRCode.toDataURL(verifyUrl,{margin:1,width:180});
+ const doc=new PDFDocument({size:"A4",margin:48});res.setHeader("Content-Type","application/pdf");res.setHeader("Content-Disposition",`attachment; filename="${item.endorsementNumber}.pdf"`);doc.pipe(res);
+ doc.fontSize(20).text("SecureLife Insurance",{align:"center"});doc.fontSize(15).text("POLICY ENDORSEMENT CERTIFICATE",{align:"center"});doc.moveDown();doc.fontSize(9).fillColor("#555").text("This certificate records an approved servicing change to the referenced policy. It does not replace the original policy contract.",{align:"center"});doc.fillColor("#000").moveDown();
+ const row=(a,b)=>{doc.font("Helvetica-Bold").text(a,{continued:true,width:170});doc.font("Helvetica").text(b||"—");};
+ row("Endorsement No.:",item.endorsementNumber);row("Policy Number:",item.policyNumber);row("Customer Name:",purchase?.proposal?.customerName||"—");row("Plan Name:",purchase?.planName||"—");row("Service Request:",item.requestType);row("Approval Date:",item.reviewedAt?new Date(item.reviewedAt).toLocaleDateString("en-IN"):"—");row("Effective Date:",item.nomineeChange?.effectiveDate?new Date(item.nomineeChange.effectiveDate).toLocaleDateString("en-IN"):item.coverEnhancement?.effectiveDate?new Date(item.coverEnhancement.effectiveDate).toLocaleDateString("en-IN"):item.reviewedAt?new Date(item.reviewedAt).toLocaleDateString("en-IN"):"—");
+ doc.moveDown().font("Helvetica-Bold").fontSize(12).text("Approved Change");doc.font("Helvetica").fontSize(10);
+ if(item.requestType==="Nominee Change"&&item.nomineeChange?.nominees?.length){item.nomineeChange.nominees.forEach((n,i)=>doc.text(`${i+1}. ${n.name} | ${n.relation} | Share ${n.sharePercent}% | DOB ${n.dateOfBirth}${n.appointeeName?` | Appointee: ${n.appointeeName} (${n.appointeeRelation})`:""}`));}
+ else if(item.requestType==="Cover Enhancement"&&item.coverEnhancement){doc.text(`Cover: INR ${item.coverEnhancement.currentCover} -> INR ${item.coverEnhancement.requestedCover}`);doc.text(`Premium: INR ${item.coverEnhancement.currentPremium} -> INR ${item.coverEnhancement.estimatedPremium}`);}
+ else{doc.text(`Previous details: ${item.currentValue||"—"}`);doc.text(`Approved details: ${item.requestedValue||"—"}`);}
+ doc.moveDown();if(item.adminRemarks)row("Admin Remarks:",item.adminRemarks);doc.image(qr,{fit:[95,95],align:"center"});doc.fontSize(8).fillColor("#555").text(`Verification token: ${item.verificationToken}`,{align:"center"});doc.text("Scan the QR code to verify this endorsement against the application record.",{align:"center"});doc.end();
+}catch(e){console.error(e);if(!res.headersSent)res.status(500).json({message:"Endorsement PDF generation failed"})}});
+router.get("/verify/:token",async(req,res)=>{try{const item=await PolicyServiceRequest.findOne({verificationToken:req.params.token,status:"Approved"}).select("endorsementNumber policyNumber requestType reviewedAt endorsementIssuedAt").lean();if(!item)return res.status(404).json({valid:false,message:"Endorsement not found"});res.json({valid:true,endorsementNumber:item.endorsementNumber,policyNumber:item.policyNumber,requestType:item.requestType,approvedAt:item.reviewedAt,issuedAt:item.endorsementIssuedAt})}catch(e){res.status(500).json({valid:false,message:"Verification failed"})}});
 module.exports=router;
