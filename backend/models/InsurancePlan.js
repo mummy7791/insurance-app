@@ -56,6 +56,14 @@ const insurancePlanSchema = new mongoose.Schema(
       valuePercentOfPaidPremium: { type: Number, default: 0 },
     },
 
+    revivalRules: {
+      enabled: { type: Boolean, default: false },
+      maxLapseDays: { type: Number, default: 730 },
+      lateFeePercent: { type: Number, default: 0 },
+      medicalReviewRequired: { type: Boolean, default: false },
+      kycReviewRequired: { type: Boolean, default: false },
+    },
+
     pricingRules: {
       baseAge: { type: Number, default: 25 },
       ageRatePercent: { type: Number, default: 2 },
