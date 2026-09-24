@@ -58,7 +58,7 @@ const planPurchaseSchema = new mongoose.Schema(
 
     policyStatus: {
       type: String,
-      enum: ["Active", "Inactive", "Cancelled"],
+      enum: ["Active", "Inactive", "Cancelled", "Surrendered"],
       default: "Inactive",
     },
 
