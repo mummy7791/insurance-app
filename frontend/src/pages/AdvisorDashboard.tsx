@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
 type Commission={_id:string;policyNumber:string;planName?:string;premiumAmount:number;commissionAmount:number;status:"Eligible"|"Requested"|"Paid"|"Rejected";nextPremiumDate?:string;customerName:string};
 type Bank={status?:"Submitted"|"Approved"|"Rejected";adminRemarks?:string};
-const money=(v:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v||0);
+const money=(v:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",minimumFractionDigits:0,maximumFractionDigits:2}).format(v||0);
 export default function AdvisorDashboard(){
  const [items,setItems]=useState<Commission[]>([]);const [bank,setBank]=useState<Bank|null>(null);const [loading,setLoading]=useState(true);
  const user=useMemo(()=>{try{return JSON.parse(localStorage.getItem("insuranceUser")||"{}")}catch{return {}}},[]);
@@ -14,7 +14,7 @@ export default function AdvisorDashboard(){
  return <MainLayout title={`Welcome, ${user.name||"Advisor"}`} subtitle="Advisor business, earnings and payout readiness">
   <div className="admin-command-hero"><div><span className="eyebrow">SECURELIFE ADVISOR PORTAL</span><h2>Your business workspace</h2><p>Track advisor-code business, policy activity, commissions and payout verification from one place.</p></div><div className="admin-command-actions"><Link className="btn small-btn" to="/insurance-plans">View plans</Link><Link className="mini-btn" to="/commission">Commission</Link></div></div>
   {loading?<div className="section"><p>Loading advisor business...</p></div>:<>
-   <div className="admin-kpi-grid"><div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode||"—"}</h1></div><div className="card"><h3>Active Business</h3><h1>{items.length}</h1></div><div className="card"><h3>Total Business</h3><h1>{money(business)}</h1></div><div className="card"><h3>Total Commission</h3><h1>{money(earned)}</h1></div><div className="card"><h3>Paid Commission</h3><h1>{money(paid)}</h1></div><div className="card"><h3>Pending Payout</h3><h1>{money(pending)}</h1></div></div>
+   <div className="admin-kpi-grid"><div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode||"—"}</h1></div><div className="card"><h3>Active Policies</h3><h1>{items.length}</h1></div><div className="card"><h3>Total Premium Business</h3><h1>{money(business)}</h1></div><div className="card"><h3>Earned Commission</h3><h1>{money(earned)}</h1></div><div className="card"><h3>Paid Commission</h3><h1>{money(paid)}</h1></div><div className="card"><h3>Pending Commission</h3><h1>{money(pending)}</h1></div></div>
    <div className="customer-health-grid">
     <Link to="/profile" className="customer-health-card"><div><span className="eyebrow">PAYOUT ACCOUNT</span><h3>{bank?.status||"Not submitted"}</h3><p>{bank?.status==="Rejected"?(bank.adminRemarks||"Update your bank details"):"Bank verification for commission settlement"}</p></div><span className="health-arrow">→</span></Link>
     <Link to="/commission" className="customer-health-card"><div><span className="eyebrow">EARNINGS</span><h3>{money(pending)}</h3><p>Commission awaiting settlement</p></div><span className="health-arrow">→</span></Link>
