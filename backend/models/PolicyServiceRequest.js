@@ -10,6 +10,7 @@ const schema=new mongoose.Schema({
  surrenderRequest:{paidPremiumAmount:{type:Number,default:0},policyYear:{type:Number,default:0},estimatedValue:{type:Number,default:0},approvedValue:{type:Number,default:0},eligibleFromPolicyYear:{type:Number,default:0},settlementStatus:{type:String,enum:["Not Applicable","Pending","Approved","Paid","Rejected"],default:"Not Applicable"},settledAt:{type:Date,default:null}},
  revivalRequest:{outstandingPremium:{type:Number,default:0},lateFee:{type:Number,default:0},totalRevivalAmount:{type:Number,default:0},lapsedSince:{type:Date,default:null},lapseDays:{type:Number,default:0},medicalReviewRequired:{type:Boolean,default:false},kycReviewRequired:{type:Boolean,default:false},paymentStatus:{type:String,enum:["Not Applicable","Pending","Paid","Rejected"],default:"Not Applicable"},paidAt:{type:Date,default:null}},
  customerRemarks:{type:String,default:""}, status:{type:String,enum:["Submitted","Under Review","Approved","Rejected"],default:"Submitted",index:true},
+ endorsementNumber:{type:String,default:"",index:true}, endorsementIssuedAt:{type:Date,default:null}, verificationToken:{type:String,default:"",index:true},
  adminRemarks:{type:String,default:""}, reviewedBy:{type:mongoose.Schema.Types.ObjectId,ref:"User",default:null}, reviewedAt:{type:Date,default:null}
 },{timestamps:true});
 module.exports=mongoose.models.PolicyServiceRequest||mongoose.model("PolicyServiceRequest",schema);
