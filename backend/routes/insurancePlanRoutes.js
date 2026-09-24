@@ -37,7 +37,7 @@ const isValidAge = (value) => {
 };
 
 const customerPlanFields =
-  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies maturityAges premiumPayingTerms pptPremiumFactors pricingRules benefitRules loanRules surrenderRules revivalRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
+  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies maturityAges premiumPayingTerms pptPremiumFactors pricingRules benefitRules loanRules surrenderRules revivalRules freeLookRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
 
 const calculatePremium = ({
   category,
@@ -204,6 +204,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       loanRules,
       surrenderRules,
       revivalRules,
+      freeLookRules,
       maturityAges,
       premiumPayingTerms,
       pptPremiumFactors,
@@ -306,6 +307,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       loanRules: loanRules || undefined,
       surrenderRules: surrenderRules || undefined,
       revivalRules: revivalRules || undefined,
+      freeLookRules: freeLookRules || undefined,
       maturityAges: Array.isArray(maturityAges) ? maturityAges.map(Number).filter(Number.isFinite) : [],
       premiumPayingTerms: Array.isArray(premiumPayingTerms) ? premiumPayingTerms.map(Number).filter(x=>Number.isFinite(x)&&x>0) : [],
       pptPremiumFactors: pptPremiumFactors && typeof pptPremiumFactors === "object" ? pptPremiumFactors : {},
@@ -767,6 +769,7 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
     if (loanRules !== undefined) plan.loanRules = { ...plan.loanRules?.toObject?.(), ...loanRules };
     if (surrenderRules !== undefined) plan.surrenderRules = { ...plan.surrenderRules?.toObject?.(), ...surrenderRules };
     if (revivalRules !== undefined) plan.revivalRules = { ...plan.revivalRules?.toObject?.(), ...revivalRules };
+    if (freeLookRules !== undefined) plan.freeLookRules = { ...plan.freeLookRules?.toObject?.(), ...freeLookRules };
     if (maturityAges !== undefined) plan.maturityAges = Array.isArray(maturityAges) ? maturityAges.map(Number).filter(Number.isFinite) : [];
     if (premiumPayingTerms !== undefined) plan.premiumPayingTerms = Array.isArray(premiumPayingTerms) ? premiumPayingTerms.map(Number).filter(x=>Number.isFinite(x)&&x>0) : [];
     if (pptPremiumFactors !== undefined && pptPremiumFactors && typeof pptPremiumFactors === "object") plan.pptPremiumFactors = pptPremiumFactors;
