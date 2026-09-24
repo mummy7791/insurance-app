@@ -172,7 +172,7 @@ export default function Sidebar() {
 
       <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
         <div className="sidebar-brand">
-          <img src="/ic_launcher.png" alt="SecureLife Insurance" className="sidebar-logo" />
+          <img src="/securelife-logo.jpg" alt="SecureLife Insurance" className="sidebar-logo" />
 
           <div className="sidebar-title">
             <h2>SecureLife</h2>
