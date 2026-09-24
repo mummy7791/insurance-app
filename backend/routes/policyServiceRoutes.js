@@ -14,10 +14,10 @@ const clean=(v,n=500)=>String(v||"").trim().slice(0,n);
 router.get("/",auth([...STAFF,"customer"]),async(req,res)=>{try{const q=req.user.role==="customer"?{customerId:req.user.id}:{};res.json(await PolicyServiceRequest.find(q).sort({createdAt:-1}))}catch(e){res.status(500).json({message:"Service requests load failed"})}});
 router.post("/",auth(["customer"]),async(req,res)=>{try{
  const policyNumber=clean(req.body.policyNumber,80),requestType=clean(req.body.requestType,40),requestedValue=clean(req.body.requestedValue,1000);
- if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Policy Revival","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
+ if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Policy Revival","Free-Look Cancellation","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
  const [purchase,policy]=await Promise.all([PlanPurchase.findOne({customerId:req.user.id,policyNumber}),Policy.findOne({customerId:req.user.id,policyNumber})]);
  if(!purchase&&!policy)return res.status(403).json({message:"Policy does not belong to this customer"});
- let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined,nomineeChange=undefined;
+ let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined,nomineeChange=undefined,cancellationRequest=undefined;
  if(requestType==="Nominee Change"){
    if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Nominee changes are available only for active purchased policies"});
    const nominees=Array.isArray(req.body.nominees)?req.body.nominees.slice(0,5).map(n=>({name:clean(n.name,100),relation:clean(n.relation,60),dateOfBirth:clean(n.dateOfBirth,20),sharePercent:Number(n.sharePercent||0),appointeeName:clean(n.appointeeName,100),appointeeRelation:clean(n.appointeeRelation,60)})):[];
@@ -84,9 +84,18 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
    const lateFee=Math.round(outstandingPremium*Math.max(0,Number(rules.lateFeePercent||0))/100);
    revivalRequest={outstandingPremium,lateFee,totalRevivalAmount:outstandingPremium+lateFee,lapsedSince,lapseDays,medicalReviewRequired:Boolean(rules.medicalReviewRequired),kycReviewRequired:Boolean(rules.kycReviewRequired),paymentStatus:"Pending"};
  }
+ if(requestType==="Free-Look Cancellation"){
+   if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Only active purchased policies can be cancelled during free-look"});
+   const plan=await InsurancePlan.findById(purchase.planId).lean(),rules=plan?.freeLookRules||{};
+   if(!rules.enabled||Number(rules.days||0)<=0)return res.status(400).json({message:"Free-look cancellation is not enabled for this plan"});
+   const policyStartDate=new Date(purchase.startDate||purchase.createdAt),freeLookDays=Math.max(1,Number(rules.days)),freeLookLastDate=new Date(policyStartDate);freeLookLastDate.setDate(freeLookLastDate.getDate()+freeLookDays);
+   if(new Date()>freeLookLastDate)return res.status(400).json({message:`Free-look period ended on ${freeLookLastDate.toLocaleDateString("en-IN")}`});
+   const paid=await Premium.find({policyNumber,status:"Paid"}).select("amount").lean(),paidPremiumAmount=paid.reduce((n,x)=>n+Number(x.amount||0),0);
+   cancellationRequest={policyStartDate,freeLookLastDate,freeLookDays,paidPremiumAmount,approvedRefundAmount:0,refundStatus:"Pending"};
+ }
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
- const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,status:"Submitted"});
+ const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,cancellationRequest,status:"Submitted"});
  await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
@@ -129,6 +138,13 @@ if(status==="Approved"&&item.requestType==="Cover Enhancement"){
  }
  if(status==="Rejected"&&item.requestType==="Surrender Policy")item.surrenderRequest.settlementStatus="Rejected";
  if(status==="Rejected"&&item.requestType==="Policy Revival")item.revivalRequest.paymentStatus="Rejected";
+ if(status==="Approved"&&item.requestType==="Free-Look Cancellation"){
+   const approvedRefundAmount=Number(req.body.approvedAmount??item.cancellationRequest?.paidPremiumAmount??0);
+   if(!Number.isFinite(approvedRefundAmount)||approvedRefundAmount<0||approvedRefundAmount>Number(item.cancellationRequest?.paidPremiumAmount||0))return res.status(400).json({message:"Refund amount must be between zero and paid premium amount"});
+   item.cancellationRequest.approvedRefundAmount=approvedRefundAmount;item.cancellationRequest.refundStatus="Approved";
+ }
+ if(status==="Rejected"&&item.requestType==="Free-Look Cancellation")item.cancellationRequest.refundStatus="Rejected";
+
  if(status==="Approved"&&!item.endorsementNumber){item.endorsementNumber=`END-${new Date().getFullYear()}-${String(item._id).slice(-8).toUpperCase()}`;item.endorsementIssuedAt=new Date();item.verificationToken=crypto.randomBytes(18).toString("hex");}
  item.status=status;item.adminRemarks=remarks;item.reviewedBy=req.user.id;item.reviewedAt=new Date();await item.save();await writeAudit(req,{action:`SERVICE_REQUEST_${status.toUpperCase().replace(" ","_")}`,module:"Policy Services",description:`${item.requestType} for ${item.policyNumber} changed to ${status}`,targetUserId:item.customerId});res.json(item)}catch(e){res.status(500).json({message:"Service request review failed"})}});
 router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
@@ -148,6 +164,15 @@ router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
  await item.save();
  await writeAudit(req,{action:"POLICY_FINANCIAL_SETTLEMENT",module:"Policy Services",description:`${item.requestType} ${settlementStatus} for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
 }catch(e){res.status(500).json({message:"Settlement update failed"})}});
+router.patch("/:id/refund",auth(STAFF),async(req,res)=>{try{
+ const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});
+ if(item.requestType!=="Free-Look Cancellation"||item.status!=="Approved"||item.cancellationRequest?.refundStatus!=="Approved")return res.status(409).json({message:"Approved free-look cancellation is required before refund"});
+ const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase)return res.status(404).json({message:"Policy purchase not found"});
+ purchase.policyStatus="Cancelled";purchase.nextPremiumDate=null;await purchase.save();
+ await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{\$set:{status:"closed"}});
+ item.cancellationRequest.refundStatus="Refunded";item.cancellationRequest.refundedAt=new Date();await item.save();
+ await writeAudit(req,{action:"FREE_LOOK_REFUNDED",module:"Policy Services",description:`Free-look cancellation refunded for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
+}catch(e){console.error(e);res.status(500).json({message:"Refund update failed"})}});
 router.patch("/:id/revival-payment",auth(STAFF),async(req,res)=>{try{
  const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});
  if(item.requestType!=="Policy Revival"||item.status!=="Approved")return res.status(409).json({message:"Revival request must be approved before payment"});
