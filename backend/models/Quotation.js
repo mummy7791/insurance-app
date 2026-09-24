@@ -25,6 +25,10 @@ const quotationSchema=new mongoose.Schema({
  maturityAmount:{type:Number,default:0},
  deathBenefit:{type:Number,default:0},
  disclaimer:{type:String,default:""},
+ status:{type:String,enum:["Generated","Shared","Accepted","Converted","Expired"],default:"Generated",index:true},
+ convertedPurchaseId:{type:mongoose.Schema.Types.ObjectId,ref:"PlanPurchase",default:null},
+ acceptedAt:{type:Date,default:null},
+ convertedAt:{type:Date,default:null},
  validUntil:{type:Date,required:true}
 },{timestamps:true});
 module.exports=mongoose.model("Quotation",quotationSchema);
