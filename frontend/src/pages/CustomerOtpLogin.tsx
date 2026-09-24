@@ -70,7 +70,7 @@ export default function CustomerOtpLogin() {
   return (
     <div className="auth-page">
       <div className="otp-card">
-        <div className="brand-mark brand-mark-logo"><img src="/ic_launcher.png" alt="SecureLife Insurance" /></div>
+        <div className="brand-mark brand-mark-logo"><img src="/securelife-logo.jpg" alt="SecureLife Insurance" /></div>
         <span className="auth-badge">EMAIL VERIFICATION</span>
         <h1>{mode === "verify" ? "Verify your account" : "Login with OTP"}</h1>
         <p className="otp-copy">{sent ? <>Enter the 6-digit code sent to <strong>{email}</strong>.</> : "Enter your registered email and we will send a secure login code."}</p>
