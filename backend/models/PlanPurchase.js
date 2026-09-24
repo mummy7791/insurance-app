@@ -50,6 +50,9 @@ const planPurchaseSchema = new mongoose.Schema(
       consentedAt: { type: Date, default: null },
     },
 
+    nominees: [{ name:{type:String,default:""}, relation:{type:String,default:""}, dateOfBirth:{type:String,default:""}, sharePercent:{type:Number,default:0}, appointeeName:{type:String,default:""}, appointeeRelation:{type:String,default:""} }],
+    nomineeHistory: [{ nominees:{type:[mongoose.Schema.Types.Mixed],default:[]}, changedAt:{type:Date,default:Date.now}, serviceRequestId:{type:mongoose.Schema.Types.ObjectId,ref:"PolicyServiceRequest",default:null} }],
+
     paymentStatus: {
       type: String,
       enum: ["Pending", "Paid", "Failed"],
