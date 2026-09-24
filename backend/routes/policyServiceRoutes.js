@@ -169,7 +169,7 @@ router.patch("/:id/refund",auth(STAFF),async(req,res)=>{try{
  if(item.requestType!=="Free-Look Cancellation"||item.status!=="Approved"||item.cancellationRequest?.refundStatus!=="Approved")return res.status(409).json({message:"Approved free-look cancellation is required before refund"});
  const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase)return res.status(404).json({message:"Policy purchase not found"});
  purchase.policyStatus="Cancelled";purchase.nextPremiumDate=null;await purchase.save();
- await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{\$set:{status:"closed"}});
+ await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{$set:{status:"closed"}});
  item.cancellationRequest.refundStatus="Refunded";item.cancellationRequest.refundedAt=new Date();await item.save();
  await writeAudit(req,{action:"FREE_LOOK_REFUNDED",module:"Policy Services",description:`Free-look cancellation refunded for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Refund update failed"})}});
