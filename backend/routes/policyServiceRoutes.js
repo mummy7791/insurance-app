@@ -8,10 +8,12 @@ const Policy=require("../models/Policy");
 const InsurancePlan=require("../models/InsurancePlan");
 const Premium=require("../models/Premium");
 const User=require("../models/User");
+const Notification=require("../models/Notification");
 const auth=require("../middleware/auth");
 const {writeAudit}=require("../services/auditService");
 const STAFF=["admin","bm","unit_manager","agency_manager","agent"];
 const clean=(v,n=500)=>String(v||"").trim().slice(0,n);
+const notifyService=async(req,item,title,message)=>{const n=await Notification.create({title,message,type:"Policy Service Update",date:new Date().toISOString().split("T")[0],recipientId:item.customerId,actionLabel:"View request",actionUrl:"/policy-services",reference:`service:${item._id}:${Date.now()}`});req.app.get("io")?.to(`user:${String(item.customerId)}`).emit("newNotification",n);};
 router.get("/",auth([...STAFF,"customer"]),async(req,res)=>{try{const q=req.user.role==="customer"?{customerId:req.user.id}:{};res.json(await PolicyServiceRequest.find(q).sort({createdAt:-1}))}catch(e){res.status(500).json({message:"Service requests load failed"})}});
 router.post("/",auth(["customer"]),async(req,res)=>{try{
  const policyNumber=clean(req.body.policyNumber,80),requestType=clean(req.body.requestType,40),requestedValue=clean(req.body.requestedValue,1000);
@@ -107,6 +109,7 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
  const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,cancellationRequest,profileChange,status:"Submitted"});
+ await notifyService(req,item,"Service request submitted",`${requestType} request for policy ${policyNumber} has been submitted.`);
  await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
@@ -182,6 +185,7 @@ router.patch("/:id/settlement",auth(STAFF),async(req,res)=>{try{
    }
  }else{item.financialRequest.settlementStatus=settlementStatus;if(settlementStatus==="Paid")item.financialRequest.settledAt=new Date();}
  await item.save();
+ await notifyService(req,item,"Policy service settlement updated",`${item.requestType} for policy ${item.policyNumber} settlement is ${settlementStatus}.`);
  await writeAudit(req,{action:"POLICY_FINANCIAL_SETTLEMENT",module:"Policy Services",description:`${item.requestType} ${settlementStatus} for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
 }catch(e){res.status(500).json({message:"Settlement update failed"})}});
 router.patch("/:id/refund",auth(STAFF),async(req,res)=>{try{
@@ -190,7 +194,7 @@ router.patch("/:id/refund",auth(STAFF),async(req,res)=>{try{
  const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase)return res.status(404).json({message:"Policy purchase not found"});
  purchase.policyStatus="Cancelled";purchase.nextPremiumDate=null;await purchase.save();
  await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{$set:{status:"closed"}});
- item.cancellationRequest.refundStatus="Refunded";item.cancellationRequest.refundedAt=new Date();await item.save();
+ item.cancellationRequest.refundStatus="Refunded";item.cancellationRequest.refundedAt=new Date();await item.save();await notifyService(req,item,"Policy cancellation refund completed",`Refund for policy ${item.policyNumber} has been marked completed and the policy is cancelled.`);
  await writeAudit(req,{action:"FREE_LOOK_REFUNDED",module:"Policy Services",description:`Free-look cancellation refunded for ${item.policyNumber}`,targetUserId:item.customerId});res.json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Refund update failed"})}});
 router.patch("/:id/revival-payment",auth(STAFF),async(req,res)=>{try{
@@ -202,7 +206,7 @@ router.patch("/:id/revival-payment",auth(STAFF),async(req,res)=>{try{
  const paidAt=new Date(),paidDate=paidAt.toISOString().slice(0,10);for(const p of unpaid){p.status="Paid";p.paidDate=paidDate;p.paymentMode="Net Banking";p.lifecycleUpdatedAt=paidAt;await p.save();}
  purchase.policyStatus="Active";const next=new Date(paidAt);next.setFullYear(next.getFullYear()+1);purchase.nextPremiumDate=next;await purchase.save();
  await Policy.findOneAndUpdate({customerId:item.customerId,policyNumber:item.policyNumber},{$set:{status:"active"}});
- item.revivalRequest.paymentStatus="Paid";item.revivalRequest.paidAt=paidAt;await item.save();
+ item.revivalRequest.paymentStatus="Paid";item.revivalRequest.paidAt=paidAt;await item.save();await notifyService(req,item,"Policy revival completed",`Policy ${item.policyNumber} has been revived after payment confirmation.`);
  await writeAudit(req,{action:"POLICY_REVIVED",module:"Policy Services",description:`Policy ${item.policyNumber} revived after approved payment`,targetUserId:item.customerId});res.json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Revival payment update failed"})}});
 
