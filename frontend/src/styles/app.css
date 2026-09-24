@@ -1470,3 +1470,19 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 .notification-actions .mini-btn{width:auto!important;min-width:0!important;min-height:38px;margin:0!important;padding:8px 13px!important;border-radius:10px;font-size:12px;line-height:1.15;white-space:nowrap}
 .notification-actions .danger-btn{margin:0!important}
 @media(max-width:650px){.notification-card{padding:18px!important}.notification-actions{align-items:stretch;flex-direction:column}.notification-actions .mini-btn{width:100%!important}.notification-reference{align-items:flex-start;flex-direction:column}.notification-reference span{width:100%;box-sizing:border-box}}
+
+
+/* Keep the full SecureLife logo contained inside the landing-page navbar. */
+.public-nav .public-brand .brand-logo-img{
+  width:56px;
+  height:56px;
+  flex:0 0 56px;
+  object-fit:contain;
+  object-position:center;
+  border-radius:12px;
+  margin:0;
+  display:block;
+}
+@media(max-width:800px){
+  .public-nav .public-brand .brand-logo-img{width:48px;height:48px;flex-basis:48px}
+}
