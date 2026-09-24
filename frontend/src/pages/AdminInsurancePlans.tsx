@@ -17,6 +17,7 @@ type Category =
 type PlanStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Inactive";
 
 type Plan = {
+  loanRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; maxPercentOfPaidPremium?:number; partialWithdrawalEnabled?:boolean };
   benefitRules?: { benefitType?: string; payoutStartYear?: number; payoutYears?: number; annualPayout?: number; maturityAmount?: number; deathBenefit?: number };
   _id: string;
   planName: string;
@@ -79,6 +80,10 @@ const initialForm = {
   annualPayout: "0",
   maturityAmount: "0",
   deathBenefit: "0",
+  loanEnabled: false,
+  loanEligibleFromPolicyYear: "3",
+  loanMaxPercent: "50",
+  partialWithdrawalEnabled: false,
   coverageAmount: "3000000",
   yearlyPremium: "",
   firstYearPremium: "",
@@ -199,6 +204,10 @@ function AdminInsurancePlans() {
       annualPayout: String(benefit.annualPayout || 0),
       maturityAmount: String(benefit.maturityAmount || 0),
       deathBenefit: String(benefit.deathBenefit || 0),
+      loanEnabled: Boolean(plan.loanRules?.enabled),
+      loanEligibleFromPolicyYear: String(plan.loanRules?.eligibleFromPolicyYear || 3),
+      loanMaxPercent: String(plan.loanRules?.maxPercentOfPaidPremium || 0),
+      partialWithdrawalEnabled: Boolean(plan.loanRules?.partialWithdrawalEnabled),
       coverageAmount: String(plan.coverageAmount || 0),
       yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
       firstYearPremium: String(plan.firstYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
@@ -245,6 +254,7 @@ function AdminInsurancePlans() {
         pptPremiumFactors: Object.fromEntries(form.pptPremiumFactors.split(",").map(x=>x.trim().split(":")).filter(x=>x.length===2&&Number.isFinite(Number(x[1]))).map(([k,v])=>[k,Number(v)])),
         pricingRules: { baseAge: Number(form.baseAge || 25), ageRatePercent: Number(form.ageRatePercent || 0), smokerLoadingPercent: Number(form.smokerLoadingPercent || 0), femaleDiscountPercent: Number(form.femaleDiscountPercent || 0) },
         benefitRules: { benefitType: form.benefitType, payoutStartYear: Number(form.payoutStartYear || 0), payoutYears: Number(form.payoutYears || 0), annualPayout: Number(form.annualPayout || 0), maturityAmount: Number(form.maturityAmount || 0), deathBenefit: Number(form.deathBenefit || 0) },
+        loanRules: { enabled: form.loanEnabled, eligibleFromPolicyYear: Number(form.loanEligibleFromPolicyYear || 0), maxPercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.loanMaxPercent || 0))), partialWithdrawalEnabled: form.partialWithdrawalEnabled },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -392,6 +402,10 @@ function AdminInsurancePlans() {
           <input placeholder="Annual Guaranteed / Pension Payout" value={form.annualPayout} onChange={(e)=>setForm({...form,annualPayout:e.target.value})}/>
           <input placeholder="Maturity Benefit Amount" value={form.maturityAmount} onChange={(e)=>setForm({...form,maturityAmount:e.target.value})}/>
           <input placeholder="Death Benefit Amount" value={form.deathBenefit} onChange={(e)=>setForm({...form,deathBenefit:e.target.value})}/>
+          <label><input type="checkbox" checked={form.loanEnabled} onChange={(e)=>setForm({...form,loanEnabled:e.target.checked})}/> Policy Loan Eligible</label>
+          <input placeholder="Loan Eligible From Policy Year" value={form.loanEligibleFromPolicyYear} onChange={(e)=>setForm({...form,loanEligibleFromPolicyYear:e.target.value})}/>
+          <input placeholder="Max Loan % of Paid Premium" value={form.loanMaxPercent} onChange={(e)=>setForm({...form,loanMaxPercent:e.target.value})}/>
+          <label><input type="checkbox" checked={form.partialWithdrawalEnabled} onChange={(e)=>setForm({...form,partialWithdrawalEnabled:e.target.checked})}/> Partial Withdrawal Eligible</label>
 
           <input
             placeholder="Coverage Amount"
