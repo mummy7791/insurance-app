@@ -30,9 +30,14 @@ const followupSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Scheduled", "Completed", "Missed"],
+      enum: ["Scheduled", "Completed", "Missed", "Called", "No Answer", "Customer Will Pay", "Payment Link Sent", "Follow-up Later", "Not Interested"],
       default: "Scheduled",
     },
+
+    policyNumber: { type: String, default: "", index: true },
+    premiumId: { type: mongoose.Schema.Types.ObjectId, ref: "Premium", default: null, index: true },
+    advisorCode: { type: String, default: "" },
+    nextFollowupDate: { type: String, default: "" },
 
     remarks: {
       type: String,
