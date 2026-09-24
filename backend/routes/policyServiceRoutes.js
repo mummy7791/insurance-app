@@ -14,7 +14,15 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  if(!policyNumber||!requestedValue||!["Nominee Change","Address Change","Contact Update","Bank Update","Cover Enhancement","Policy Loan","Partial Withdrawal","Surrender Policy","Policy Revival","Other"].includes(requestType))return res.status(400).json({message:"Complete valid service request details"});
  const [purchase,policy]=await Promise.all([PlanPurchase.findOne({customerId:req.user.id,policyNumber}),Policy.findOne({customerId:req.user.id,policyNumber})]);
  if(!purchase&&!policy)return res.status(403).json({message:"Policy does not belong to this customer"});
- let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined;
+ let coverEnhancement=undefined,financialRequest=undefined,surrenderRequest=undefined,revivalRequest=undefined,nomineeChange=undefined;
+ if(requestType==="Nominee Change"){
+   if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Nominee changes are available only for active purchased policies"});
+   const nominees=Array.isArray(req.body.nominees)?req.body.nominees.slice(0,5).map(n=>({name:clean(n.name,100),relation:clean(n.relation,60),dateOfBirth:clean(n.dateOfBirth,20),sharePercent:Number(n.sharePercent||0),appointeeName:clean(n.appointeeName,100),appointeeRelation:clean(n.appointeeRelation,60)})):[];
+   if(!nominees.length||nominees.some(n=>!n.name||!n.relation||!n.dateOfBirth||!Number.isFinite(n.sharePercent)||n.sharePercent<=0))return res.status(400).json({message:"Complete all nominee details"});
+   const total=nominees.reduce((n,x)=>n+x.sharePercent,0);if(Math.abs(total-100)>0.01)return res.status(400).json({message:"Nominee shares must total exactly 100%"});
+   const today=new Date();for(const n of nominees){const dob=new Date(n.dateOfBirth);if(Number.isNaN(dob.getTime())||dob>today)return res.status(400).json({message:"Enter valid nominee dates of birth"});let age=today.getFullYear()-dob.getFullYear();if(today<new Date(today.getFullYear(),dob.getMonth(),dob.getDate()))age--;if(age<18&&(!n.appointeeName||!n.appointeeRelation))return res.status(400).json({message:`Appointee details are required for minor nominee ${n.name}`});}
+   nomineeChange={nominees,documentVerified:false};
+ }
  if(requestType==="Cover Enhancement"){
    if(!purchase||purchase.policyStatus!=="Active")return res.status(400).json({message:"Cover enhancement is available only for active purchased policies"});
    const requestedCover=Number(req.body.requestedCover||requestedValue);
@@ -75,11 +83,20 @@ router.post("/",auth(["customer"]),async(req,res)=>{try{
  }
  const open=await PolicyServiceRequest.findOne({customerId:req.user.id,policyNumber,requestType,status:{$in:["Submitted","Under Review"]}});
  if(open)return res.status(409).json({message:"An open request of this type already exists for this policy"});
- const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,status:"Submitted"});
+ const item=await PolicyServiceRequest.create({customerId:req.user.id,policyNumber,requestType,currentValue:clean(req.body.currentValue,1000),requestedValue,customerRemarks:clean(req.body.customerRemarks),coverEnhancement,financialRequest,surrenderRequest,revivalRequest,nomineeChange,status:"Submitted"});
  await writeAudit(req,{action:"SERVICE_REQUEST_SUBMITTED",module:"Policy Services",description:`${requestType} request submitted for ${policyNumber}`});
  res.status(201).json(item);
 }catch(e){console.error(e);res.status(500).json({message:"Service request submission failed"})}});
-router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});if(["Approved","Rejected"].includes(item.status))return res.status(409).json({message:"This service request is already closed"});if(status==="Approved"&&item.requestType==="Cover Enhancement"){
+router.patch("/:id/review",auth(STAFF),async(req,res)=>{try{const item=await PolicyServiceRequest.findById(req.params.id);if(!item)return res.status(404).json({message:"Request not found"});const status=clean(req.body.status,20),remarks=clean(req.body.adminRemarks);if(!["Under Review","Approved","Rejected"].includes(status))return res.status(400).json({message:"Invalid review status"});if(status==="Rejected"&&!remarks)return res.status(400).json({message:"Rejection reason is required"});if(["Approved","Rejected"].includes(item.status))return res.status(409).json({message:"This service request is already closed"}); if(status==="Approved"&&item.requestType==="Nominee Change"){
+   if(!req.body.documentVerified)return res.status(400).json({message:"Nominee documents must be verified before approval"});
+   const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});if(!purchase||purchase.policyStatus!=="Active")return res.status(409).json({message:"Active purchased policy not found"});
+   const nextNominees=item.nomineeChange?.nominees||[];if(!nextNominees.length)return res.status(409).json({message:"Nominee request details are missing"});
+   const oldNominees=purchase.nominees?.length?purchase.nominees.map(n=>n.toObject?.()||n):(purchase.proposal?.nomineeName?[{name:purchase.proposal.nomineeName,relation:purchase.proposal.nomineeRelation,dateOfBirth:purchase.proposal.nomineeDateOfBirth,sharePercent:100}]:[]);
+   purchase.nomineeHistory.push({nominees:oldNominees,changedAt:new Date(),serviceRequestId:item._id});purchase.nominees=nextNominees;
+   purchase.proposal.nomineeName=nextNominees[0].name;purchase.proposal.nomineeRelation=nextNominees[0].relation;purchase.proposal.nomineeDateOfBirth=nextNominees[0].dateOfBirth;await purchase.save();
+   item.nomineeChange.documentVerified=true;item.nomineeChange.effectiveDate=new Date();item.currentValue=oldNominees.map(n=>`${n.name} ${n.sharePercent||100}%`).join(", ");item.requestedValue=nextNominees.map(n=>`${n.name} ${n.sharePercent}%`).join(", ");
+ }
+if(status==="Approved"&&item.requestType==="Cover Enhancement"){
  const purchase=await PlanPurchase.findOne({customerId:item.customerId,policyNumber:item.policyNumber});
  if(!purchase||purchase.policyStatus!=="Active")return res.status(409).json({message:"Active policy purchase not found"});
  const currentCover=Number(purchase.coverageAmount||0),requestedCover=Number(item.coverEnhancement?.requestedCover||0);
