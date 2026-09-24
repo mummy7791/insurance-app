@@ -7,6 +7,7 @@ const PlanPurchase = require("../models/PlanPurchase");
 const Notification = require("../models/Notification");
 const Customer = require("../models/Customer");
 const Followup = require("../models/Followup");
+const {runPremiumReminders}=require("../services/premiumReminderService");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -215,6 +216,15 @@ router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
     const next7Days=premiums.filter(p=>p.status!=="Paid"&&p.dueDate>todayKey&&p.dueDate<=next7Key).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
     res.json({summary:{thisMonthDueAmount:dueAmount,collectedAmount,pendingAmount,collectionPercent,graceAmount,lapsedAmount},months,advisorPerformance,timeline,todayList,next7Days});
   } catch(error){console.error("Premium analytics error:",error);res.status(500).json({message:"Premium analytics failed"});}
+});
+
+// Staff: run due reminder scan. Idempotent per premium/stage.
+router.post("/run-reminders", auth(STAFF_ROLES), async (req,res)=>{
+  try{
+    const result=await runPremiumReminders(req.app.get("io"));
+    await writeAudit(req,{action:"PREMIUM_REMINDER_SCAN",module:"Premiums",description:`Premium reminder scan: ${result.sent} sent, ${result.skipped} skipped, ${result.failed} failed`});
+    res.json(result);
+  }catch(error){console.error("Premium reminder scan error:",error);res.status(500).json({message:"Premium reminder scan failed"});}
 });
 
 // Customer: create a Cashfree order for an outstanding renewal premium.
