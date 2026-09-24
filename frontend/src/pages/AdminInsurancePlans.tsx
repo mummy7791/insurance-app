@@ -17,6 +17,7 @@ type Category =
 type PlanStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Inactive";
 
 type Plan = {
+  surrenderRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; valuePercentOfPaidPremium?:number };
   loanRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; maxPercentOfPaidPremium?:number; partialWithdrawalEnabled?:boolean };
   benefitRules?: { benefitType?: string; payoutStartYear?: number; payoutYears?: number; annualPayout?: number; maturityAmount?: number; deathBenefit?: number };
   _id: string;
@@ -84,6 +85,9 @@ const initialForm = {
   loanEligibleFromPolicyYear: "3",
   loanMaxPercent: "50",
   partialWithdrawalEnabled: false,
+  surrenderEnabled: false,
+  surrenderEligibleFromPolicyYear: "3",
+  surrenderValuePercent: "0",
   coverageAmount: "3000000",
   yearlyPremium: "",
   firstYearPremium: "",
@@ -208,6 +212,9 @@ function AdminInsurancePlans() {
       loanEligibleFromPolicyYear: String(plan.loanRules?.eligibleFromPolicyYear || 3),
       loanMaxPercent: String(plan.loanRules?.maxPercentOfPaidPremium || 0),
       partialWithdrawalEnabled: Boolean(plan.loanRules?.partialWithdrawalEnabled),
+      surrenderEnabled: Boolean(plan.surrenderRules?.enabled),
+      surrenderEligibleFromPolicyYear: String(plan.surrenderRules?.eligibleFromPolicyYear || 3),
+      surrenderValuePercent: String(plan.surrenderRules?.valuePercentOfPaidPremium || 0),
       coverageAmount: String(plan.coverageAmount || 0),
       yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
       firstYearPremium: String(plan.firstYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
@@ -255,6 +262,7 @@ function AdminInsurancePlans() {
         pricingRules: { baseAge: Number(form.baseAge || 25), ageRatePercent: Number(form.ageRatePercent || 0), smokerLoadingPercent: Number(form.smokerLoadingPercent || 0), femaleDiscountPercent: Number(form.femaleDiscountPercent || 0) },
         benefitRules: { benefitType: form.benefitType, payoutStartYear: Number(form.payoutStartYear || 0), payoutYears: Number(form.payoutYears || 0), annualPayout: Number(form.annualPayout || 0), maturityAmount: Number(form.maturityAmount || 0), deathBenefit: Number(form.deathBenefit || 0) },
         loanRules: { enabled: form.loanEnabled, eligibleFromPolicyYear: Number(form.loanEligibleFromPolicyYear || 0), maxPercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.loanMaxPercent || 0))), partialWithdrawalEnabled: form.partialWithdrawalEnabled },
+        surrenderRules: { enabled: form.surrenderEnabled, eligibleFromPolicyYear: Number(form.surrenderEligibleFromPolicyYear || 0), valuePercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.surrenderValuePercent || 0))) },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -406,6 +414,9 @@ function AdminInsurancePlans() {
           <input placeholder="Loan Eligible From Policy Year" value={form.loanEligibleFromPolicyYear} onChange={(e)=>setForm({...form,loanEligibleFromPolicyYear:e.target.value})}/>
           <input placeholder="Max Loan % of Paid Premium" value={form.loanMaxPercent} onChange={(e)=>setForm({...form,loanMaxPercent:e.target.value})}/>
           <label><input type="checkbox" checked={form.partialWithdrawalEnabled} onChange={(e)=>setForm({...form,partialWithdrawalEnabled:e.target.checked})}/> Partial Withdrawal Eligible</label>
+          <label><input type="checkbox" checked={form.surrenderEnabled} onChange={(e)=>setForm({...form,surrenderEnabled:e.target.checked})}/> Surrender Allowed</label>
+          <input placeholder="Surrender Eligible From Policy Year" value={form.surrenderEligibleFromPolicyYear} onChange={(e)=>setForm({...form,surrenderEligibleFromPolicyYear:e.target.value})}/>
+          <input placeholder="Surrender Value % of Paid Premium" value={form.surrenderValuePercent} onChange={(e)=>setForm({...form,surrenderValuePercent:e.target.value})}/>
 
           <input
             placeholder="Coverage Amount"
