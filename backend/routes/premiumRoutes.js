@@ -5,6 +5,7 @@ const {writeAudit}=require("../services/auditService");
 const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
 const Notification = require("../models/Notification");
+const Customer = require("../models/Customer");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -120,6 +121,60 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
+
+// Staff: enriched renewal register for status-specific exports.
+router.get("/renewal-report", auth(STAFF_ROLES), async (req, res) => {
+  try {
+    const premiums = await Premium.find({}).sort({ dueDate: 1, createdAt: -1 });
+    await syncLifecycle(premiums);
+
+    const policyNumbers = [...new Set(premiums.map((p) => p.policyNumber).filter(Boolean))];
+    const [policies, purchases, customers] = await Promise.all([
+      Policy.find({ policyNumber: { $in: policyNumbers } }).select("policyNumber customerId policyName").lean(),
+      PlanPurchase.find({ policyNumber: { $in: policyNumbers } })
+        .select("policyNumber planName premiumFrequency advisorCode proposal customerId advisorId")
+        .populate("advisorId", "name advisorCode")
+        .lean(),
+      Customer.find({ policyNo: { $in: policyNumbers } }).select("policyNo name phone address").lean(),
+    ]);
+
+    const policyMap = new Map(policies.map((p) => [p.policyNumber, p]));
+    const purchaseMap = new Map(purchases.map((p) => [p.policyNumber, p]));
+    const customerMap = new Map(customers.map((c) => [c.policyNo, c]));
+    const userIds = [...new Set(policies.map((p) => String(p.customerId || "")).filter(Boolean))];
+    const users = userIds.length ? await require("../models/User").find({ _id: { $in: userIds } }).select("name phone address").lean() : [];
+    const userMap = new Map(users.map((u) => [String(u._id), u]));
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const rows = premiums.map((premium) => {
+      const policy = policyMap.get(premium.policyNumber);
+      const purchase = purchaseMap.get(premium.policyNumber);
+      const customer = customerMap.get(premium.policyNumber);
+      const user = policy?.customerId ? userMap.get(String(policy.customerId)) : null;
+      const due = new Date(String(premium.dueDate || "") + "T00:00:00");
+      const daysDifference = Number.isNaN(due.getTime()) ? 0 : Math.round((due - today) / 86400000);
+      return {
+        id: String(premium._id),
+        status: premium.status,
+        customerName: premium.customerName || purchase?.proposal?.customerName || customer?.name || user?.name || "",
+        customerPhone: purchase?.proposal?.customerPhone || customer?.phone || user?.phone || "",
+        address: purchase?.proposal?.address || customer?.address || user?.address || "",
+        policyNumber: premium.policyNumber,
+        planName: purchase?.planName || policy?.policyName || "",
+        amount: Number(premium.amount || 0),
+        dueDate: premium.dueDate,
+        daysDifference,
+        advisorName: purchase?.advisorId?.name || "",
+        advisorCode: purchase?.advisorCode || purchase?.advisorId?.advisorCode || "",
+        premiumFrequency: purchase?.premiumFrequency || "",
+      };
+    });
+    res.json({ rows });
+  } catch (error) {
+    console.error("Renewal report error:", error);
+    res.status(500).json({ message: "Renewal report fetch failed" });
+  }
+});
 
 // Customer: create a Cashfree order for an outstanding renewal premium.
 router.post("/:id/create-payment-order", auth(["customer"]), async (req, res) => {
