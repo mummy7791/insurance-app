@@ -17,7 +17,7 @@ type Policy = {
   kycVerifiedAt?: string;
 };
 
-type PurchasedPlan = { _id:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
+type PurchasedPlan = { _id:string; createdAt?:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
 
 type PolicyForm = {
   customerName: string;
@@ -193,15 +193,17 @@ export default function Policies() {
   };
 
   const downloadCertificate = (plan: PurchasedPlan) => {
+    if (Number(plan.yearlyPremium || 0) < 100 || Number(plan.coverageAmount || 0) <= 0) { alert("This policy contains test/invalid premium data. Please contact SecureLife servicing before generating a production policy bond."); return; }
     if (plan.paymentStatus !== "Paid" || !plan.policyNumber) { alert("Policy bond will be available after payment is verified and the policy number is issued."); return; }
     const doc=new jsPDF();addBondHeader(doc,"Policy Bond / Policy Schedule",plan.policyNumber);let y=49;
     y=bondSection(doc,"Policyholder & Policy Details",y);
-    y=bondRows(doc,[["Policyholder",plan.proposal?.customerName||user.name||"Customer"],["Policy Number",plan.policyNumber],["Plan Name",plan.planName],["Product Category",plan.category],["Policy Status",plan.policyStatus],["Payment Status",plan.paymentStatus]],y);
+    y=bondRows(doc,[["Policyholder",plan.proposal?.customerName||user.name||"Customer"],["Policy Number",plan.policyNumber],["Document Reference",`BOND-${plan.policyNumber.slice(-12)}`],["Issue Date",new Date(plan.startDate||plan.createdAt||Date.now()).toLocaleDateString("en-IN")],["Plan Name",plan.planName],["Product Category",plan.category],["Policy Status",plan.policyStatus],["Payment Status",plan.paymentStatus]],y);
     y=bondSection(doc,"Insurance Benefits",y+2);
     y=bondRows(doc,[["Life / Benefit Cover",`INR ${Number(plan.coverageAmount||0).toLocaleString("en-IN")}`],["Annual Premium",`INR ${Number(plan.yearlyPremium||0).toLocaleString("en-IN")}`],["Premium Payment Term",`${plan.paymentYears||1} year(s)`],["Total Premium Payable",`INR ${Number(plan.totalPremiumPayable||(plan.yearlyPremium*(plan.paymentYears||1))).toLocaleString("en-IN")}`]],y);
     y=bondSection(doc,"Nominee & Validity",y+2);
     y=bondRows(doc,[["Nominee",plan.proposal?.nomineeName||"N/A"],["Relationship",plan.proposal?.nomineeRelation||"N/A"],["Commencement Date",plan.startDate?new Date(plan.startDate).toLocaleDateString("en-IN"):"N/A"],["Policy Valid Until",plan.endDate?new Date(plan.endDate).toLocaleDateString("en-IN"):"N/A"],["Next Premium Due",plan.nextPremiumDate?new Date(plan.nextPremiumDate).toLocaleDateString("en-IN"):"No further premium due"]],y);
-    doc.setFillColor(236,253,245);doc.roundedRect(15,230,180,25,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("POLICY ISSUED - PAYMENT VERIFIED",20,241);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,249,{maxWidth:165});
+    if(y>220){doc.addPage();addBondHeader(doc,"Policy Bond / Policy Schedule",plan.policyNumber);y=49;}
+    doc.setFillColor(236,253,245);doc.roundedRect(15,Math.max(y+5,230),180,25,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(10);const verifiedY=Math.max(y+5,230);doc.text("POLICY ISSUED - PAYMENT VERIFIED",20,verifiedY+11);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,verifiedY+19,{maxWidth:165});
     bondFooter(doc,plan.policyNumber);addPolicySchedulePage(doc,plan);addPolicyTermsPage(doc,plan);
     doc.save(`${plan.policyNumber}-SecureLife-Policy-Bond.pdf`);
   };
