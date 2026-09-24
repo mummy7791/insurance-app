@@ -40,6 +40,10 @@ const insurancePlanSchema = new mongoose.Schema(
     premiumFrequencies: { type: [String], default: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"] },
     firstYearPremium: { type: Number, default: 0 },
     subsequentYearPremium: { type: Number, default: 0 },
+    maturityAges: { type: [Number], default: [] },
+    premiumPayingTerms: { type: [Number], default: [] },
+    pptPremiumFactors: { type: Map, of: Number, default: {} },
+
     pricingRules: {
       baseAge: { type: Number, default: 25 },
       ageRatePercent: { type: Number, default: 2 },
