@@ -193,7 +193,7 @@ export default function Policies() {
   };
 
   const downloadCertificate = (plan: PurchasedPlan) => {
-    if (Number(plan.yearlyPremium || 0) < 100 || Number(plan.coverageAmount || 0) <= 0) { alert("This policy contains test/invalid premium data. Please contact SecureLife servicing before generating a production policy bond."); return; }
+    if (Number(plan.yearlyPremium || 0) <= 0 || Number(plan.coverageAmount || 0) <= 0) { alert("This policy does not have a valid plan premium/coverage. Please contact SecureLife servicing."); return; }
     if (plan.paymentStatus !== "Paid" || !plan.policyNumber) { alert("Policy bond will be available after payment is verified and the policy number is issued."); return; }
     const doc=new jsPDF();addBondHeader(doc,"Policy Bond / Policy Schedule",plan.policyNumber);let y=49;
     y=bondSection(doc,"Policyholder & Policy Details",y);
