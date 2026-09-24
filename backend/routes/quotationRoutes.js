@@ -18,4 +18,15 @@ router.post("/",auth([...STAFF,"customer"]),async(req,res)=>{try{
 }catch(e){console.error("Quotation save error:",e);res.status(500).json({message:"Quotation save failed"});}});
 router.get("/",auth([...STAFF,"customer"]),async(req,res)=>{try{const filter=req.user.role==="customer"?{createdBy:req.user.id}:{};res.json(await Quotation.find(filter).sort({createdAt:-1}).limit(500).lean());}catch(e){res.status(500).json({message:"Quotation history failed"});}});
 router.get("/:id",auth([...STAFF,"customer"]),async(req,res)=>{try{const item=await Quotation.findById(req.params.id).lean();if(!item)return res.status(404).json({message:"Quotation not found"});if(req.user.role==="customer"&&String(item.createdBy)!==String(req.user.id))return res.status(403).json({message:"Access denied"});res.json(item);}catch(e){res.status(500).json({message:"Quotation fetch failed"});}});
+
+router.patch("/:id/status",auth([...STAFF,"customer"]),async(req,res)=>{try{
+ const item=await Quotation.findById(req.params.id);if(!item)return res.status(404).json({message:"Quotation not found"});
+ if(req.user.role==="customer"&&String(item.createdBy)!==String(req.user.id))return res.status(403).json({message:"Access denied"});
+ if(item.validUntil<new Date()&&item.status!=="Converted")item.status="Expired";
+ const next=safeText(req.body?.status,20);const allowed=req.user.role==="customer"?["Accepted"]:["Generated","Shared","Accepted"];
+ if(!allowed.includes(next))return res.status(400).json({message:"Invalid quotation status"});
+ if(item.status==="Converted"||item.status==="Expired")return res.status(409).json({message:"Closed quotation cannot be changed"});
+ item.status=next;if(next==="Accepted")item.acceptedAt=new Date();await item.save();
+ await writeAudit(req,{action:"QUOTATION_STATUS_UPDATED",module:"Quotations",description:`Quotation ${item.quotationNumber} marked ${next}`});res.json(item);
+}catch(e){console.error("Quotation status error:",e);res.status(500).json({message:"Quotation status update failed"});}});
 module.exports=router;
