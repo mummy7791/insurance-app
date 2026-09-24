@@ -61,7 +61,7 @@ export default function Register() {
         </section>
 
         <section className="auth-card modern-auth-card">
-          <div className="brand-mark">S</div>
+          <div className="brand-mark brand-mark-logo"><img src="/ic_launcher.png" alt="SecureLife Insurance" /></div>
           <h1 className="auth-title">SecureLife</h1>
           <p className="auth-kicker">Create your customer account</p>
 
