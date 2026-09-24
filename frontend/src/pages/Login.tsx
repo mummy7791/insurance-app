@@ -53,7 +53,7 @@ export default function Login() {
         </section>
 
         <section className="auth-card modern-auth-card">
-          <div className="brand-mark">S</div>
+          <div className="brand-mark brand-mark-logo"><img src="/ic_launcher.png" alt="SecureLife Insurance" /></div>
           <h1 className="auth-title">SecureLife</h1>
           <p className="auth-kicker">Welcome back, policyholder</p>
           <div className="login-method-note">Use your password, or choose email OTP below.</div>
