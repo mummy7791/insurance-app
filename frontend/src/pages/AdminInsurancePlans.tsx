@@ -17,6 +17,7 @@ type Category =
 type PlanStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Inactive";
 
 type Plan = {
+  freeLookRules?: { enabled?:boolean; days?:number };
   revivalRules?: { enabled?:boolean; maxLapseDays?:number; lateFeePercent?:number; medicalReviewRequired?:boolean; kycReviewRequired?:boolean };
   surrenderRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; valuePercentOfPaidPremium?:number };
   loanRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; maxPercentOfPaidPremium?:number; partialWithdrawalEnabled?:boolean };
@@ -94,6 +95,8 @@ const initialForm = {
   revivalLateFeePercent: "0",
   revivalMedicalRequired: false,
   revivalKycRequired: false,
+  freeLookEnabled: false,
+  freeLookDays: "0",
   coverageAmount: "3000000",
   yearlyPremium: "",
   firstYearPremium: "",
@@ -226,6 +229,8 @@ function AdminInsurancePlans() {
       revivalLateFeePercent: String(plan.revivalRules?.lateFeePercent || 0),
       revivalMedicalRequired: Boolean(plan.revivalRules?.medicalReviewRequired),
       revivalKycRequired: Boolean(plan.revivalRules?.kycReviewRequired),
+      freeLookEnabled: Boolean(plan.freeLookRules?.enabled),
+      freeLookDays: String(plan.freeLookRules?.days || 0),
       coverageAmount: String(plan.coverageAmount || 0),
       yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
       firstYearPremium: String(plan.firstYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
@@ -275,6 +280,7 @@ function AdminInsurancePlans() {
         loanRules: { enabled: form.loanEnabled, eligibleFromPolicyYear: Number(form.loanEligibleFromPolicyYear || 0), maxPercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.loanMaxPercent || 0))), partialWithdrawalEnabled: form.partialWithdrawalEnabled },
         surrenderRules: { enabled: form.surrenderEnabled, eligibleFromPolicyYear: Number(form.surrenderEligibleFromPolicyYear || 0), valuePercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.surrenderValuePercent || 0))) },
         revivalRules: { enabled: form.revivalEnabled, maxLapseDays: Math.max(1,Number(form.revivalMaxLapseDays || 730)), lateFeePercent: Math.max(0,Number(form.revivalLateFeePercent || 0)), medicalReviewRequired: form.revivalMedicalRequired, kycReviewRequired: form.revivalKycRequired },
+        freeLookRules: { enabled: form.freeLookEnabled, days: Math.max(0,Number(form.freeLookDays || 0)) },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -434,6 +440,8 @@ function AdminInsurancePlans() {
           <input placeholder="Revival Late Fee %" value={form.revivalLateFeePercent} onChange={(e)=>setForm({...form,revivalLateFeePercent:e.target.value})}/>
           <label><input type="checkbox" checked={form.revivalMedicalRequired} onChange={(e)=>setForm({...form,revivalMedicalRequired:e.target.checked})}/> Medical Review Required</label>
           <label><input type="checkbox" checked={form.revivalKycRequired} onChange={(e)=>setForm({...form,revivalKycRequired:e.target.checked})}/> KYC Review Required</label>
+          <label><input type="checkbox" checked={form.freeLookEnabled} onChange={(e)=>setForm({...form,freeLookEnabled:e.target.checked})}/> Free-Look Cancellation Allowed</label>
+          <input placeholder="Free-Look Days (approved product rule)" value={form.freeLookDays} onChange={(e)=>setForm({...form,freeLookDays:e.target.value})}/>
 
           <input
             placeholder="Coverage Amount"
