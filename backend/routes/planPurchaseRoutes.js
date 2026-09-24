@@ -268,6 +268,12 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       yearlyPremium: amount,
       paymentYears: quotation?.paymentYears || plan.paymentYears || 1,
       policyTermYears: quotation?.policyTermYears || plan.policyTermYears || plan.paymentYears || 1,
+      entryAge: Number(quotation?.age || 0),
+      coverTillAge: Number(quotation?.coverTillAge || (quotation?.age && quotation?.policyTermYears ? Number(quotation.age)+Number(quotation.policyTermYears) : 0)),
+      benefitType: quotation?.benefitType || plan.benefitRules?.benefitType || "",
+      benefitSchedule: quotation?.benefitSchedule || [],
+      maturityAmount: Number(quotation?.maturityAmount || plan.benefitRules?.maturityAmount || 0),
+      deathBenefit: Number(quotation?.deathBenefit || plan.benefitRules?.deathBenefit || cover),
       firstYearPremium: Number(plan.firstYearPremium || amount),
       subsequentYearPremium: Number(plan.subsequentYearPremium || amount),
       premiumFrequency: quotation?.frequency || "Yearly",
@@ -338,10 +344,10 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const amount = Number(quotation?.annualPremium || plan.yearlyPremium || plan.yearlyAmount || 0);
-    const cover = Number(quotation?.coverageAmount || plan.coverageAmount || 0);
+    const amount = Number(purchase.yearlyPremium || 0);
+    const cover = Number(purchase.coverageAmount || 0);
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(cover) || cover <= 0) {
-      return res.status(400).json({ message: "Plan premium/coverage is invalid. Admin must configure the approved plan premium and coverage before policy issue." });
+      return res.status(400).json({ message: "Purchase premium/coverage is invalid." });
     }
 
     if (Number(purchase.yearlyPremium) !== amount) {
@@ -423,17 +429,17 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
     purchase.startDate = purchase.startDate || new Date();
-    purchase.totalPremiumPayable = amount * Number(plan.paymentYears || 1);
+    purchase.totalPremiumPayable = amount * Number(purchase.paymentYears || 1);
 
     if (!purchase.endDate) {
       const endDate = new Date();
       endDate.setFullYear(
-        endDate.getFullYear() + Number(plan.paymentYears || 1)
+        endDate.getFullYear() + Number(purchase.policyTermYears || purchase.paymentYears || 1)
       );
       purchase.endDate = endDate;
     }
 
-    const paymentYears = Math.max(1, Number(plan.paymentYears || 1));
+    const paymentYears = Math.max(1, Number(purchase.paymentYears || 1));
     if (paymentYears > 1) {
       const nextPremiumDate = new Date(purchase.startDate);
       nextPremiumDate.setFullYear(nextPremiumDate.getFullYear() + 1);
@@ -547,7 +553,7 @@ const syncPaidPurchase = async (purchase, customerId) => {
     purchase.startDate = purchase.startDate || new Date();
     if (!purchase.endDate) {
       const endDate = new Date(purchase.startDate);
-      endDate.setFullYear(endDate.getFullYear() + Number(purchase.paymentYears || 1));
+      endDate.setFullYear(endDate.getFullYear() + Number(purchase.policyTermYears || purchase.paymentYears || 1));
       purchase.endDate = endDate;
     }
     await purchase.save();
@@ -602,12 +608,17 @@ router.get("/my-plans", auth(["customer"]), async (req, res) => {
 
     const customerPlans = await PlanPurchase.find({ customerId: req.user.id })
       .select(
-        "_id planId planName category coverageAmount yearlyPremium paymentYears totalPremiumPayable nextPremiumDate paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate proposal.customerName proposal.nomineeName proposal.nomineeRelation createdAt"
+        "_id planId planName category coverageAmount yearlyPremium paymentYears policyTermYears entryAge coverTillAge benefitType benefitSchedule maturityAmount deathBenefit premiumFrequency totalPremiumPayable nextPremiumDate paymentStatus policyStatus transactionId policyNumber receiptNumber startDate endDate proposal.customerName proposal.nomineeName proposal.nomineeRelation createdAt"
       )
       .sort({ createdAt: -1 })
       .lean();
 
-    res.json(customerPlans);
+    const policyNumbers=customerPlans.map(p=>p.policyNumber).filter(Boolean);
+    const premiumRows=policyNumbers.length?await Premium.find({policyNumber:{$in:policyNumbers}}).select("policyNumber amount dueDate paidDate status receiptNumber").sort({dueDate:1}).lean():[];
+    const byPolicy=new Map();
+    premiumRows.forEach(p=>{if(!byPolicy.has(p.policyNumber))byPolicy.set(p.policyNumber,[]);byPolicy.get(p.policyNumber).push(p);});
+    const result=customerPlans.map(p=>{const premiums=byPolicy.get(p.policyNumber)||[];const paid=premiums.filter(x=>x.status==="Paid");const paidAmount=paid.reduce((n,x)=>n+Number(x.amount||0),0);return {...p,premiumProgress:{paidCount:paid.length,remainingCount:Math.max(0,Number(p.paymentYears||1)-paid.length),paidAmount,premiums}};});
+    res.json(result);
   } catch (error) {
     console.error("My plans error:", error);
     res.status(500).json({ message: "My plans fetch failed" });
