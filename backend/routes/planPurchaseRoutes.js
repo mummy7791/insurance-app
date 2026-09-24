@@ -148,8 +148,9 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     }
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ message: "Plan premium is invalid" });
+    const cover = Number(plan.coverageAmount || 0);
+    if (!Number.isFinite(amount) || amount < 100 || !Number.isFinite(cover) || cover <= 0) {
+      return res.status(400).json({ message: "Plan premium/coverage is not production-ready. Admin must configure a valid premium (minimum INR 100) and coverage before payment." });
     }
 
     const staleBefore = new Date(Date.now() - PAYMENT_WINDOW_MS);
@@ -320,8 +321,9 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     }
 
     const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ message: "Plan premium is invalid" });
+    const cover = Number(plan.coverageAmount || 0);
+    if (!Number.isFinite(amount) || amount < 100 || !Number.isFinite(cover) || cover <= 0) {
+      return res.status(400).json({ message: "Plan premium/coverage is not production-ready. Admin must configure a valid premium (minimum INR 100) and coverage before policy issue." });
     }
 
     if (Number(purchase.yearlyPremium) !== amount) {
