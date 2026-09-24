@@ -51,6 +51,7 @@ const customerRoutes = require("./routes/customer");
 const advisorBankRoutes = require("./routes/advisorBankRoutes");
 const policyServiceRoutes = require("./routes/policyServiceRoutes");
 const quotationRoutes = require("./routes/quotationRoutes");
+const { runPremiumReminders } = require("./services/premiumReminderService");
 
 const app = express();
 const server = http.createServer(app);
@@ -255,6 +256,17 @@ mongoose
         throw indexError;
       }
     }
+
+    const runReminderJob = async () => {
+      try {
+        const result = await runPremiumReminders(io);
+        console.log(`🔔 Premium reminders: ${result.sent} sent, ${result.skipped} skipped, ${result.failed} failed`);
+      } catch (error) {
+        console.error("Premium reminder job failed:", error.message);
+      }
+    };
+    await runReminderJob();
+    setInterval(runReminderJob, 60 * 60 * 1000);
 
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
