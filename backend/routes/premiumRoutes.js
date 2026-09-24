@@ -6,6 +6,7 @@ const Policy = require("../models/Policy");
 const PlanPurchase = require("../models/PlanPurchase");
 const Notification = require("../models/Notification");
 const Customer = require("../models/Customer");
+const Followup = require("../models/Followup");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -174,6 +175,46 @@ router.get("/renewal-report", auth(STAFF_ROLES), async (req, res) => {
     console.error("Renewal report error:", error);
     res.status(500).json({ message: "Renewal report fetch failed" });
   }
+});
+
+// Staff: premium collection analytics for renewal operations.
+router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
+  try {
+    const premiums = await Premium.find({}).lean();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999);
+    const todayKey = today.toISOString().slice(0,10);
+    const next7 = new Date(today); next7.setDate(next7.getDate()+7);
+    const next7Key = next7.toISOString().slice(0,10);
+    const currentMonth = todayKey.slice(0,7);
+
+    const thisMonthDue = premiums.filter(p => String(p.dueDate||"").slice(0,7)===currentMonth);
+    const collected = premiums.filter(p => p.status==="Paid" && p.paidDate && new Date(p.paidDate)>=monthStart && new Date(p.paidDate)<=monthEnd);
+    const sum = items => items.reduce((n,p)=>n+Number(p.amount||0),0);
+    const dueAmount = sum(thisMonthDue), collectedAmount = sum(collected);
+    const pendingAmount = sum(thisMonthDue.filter(p=>p.status!=="Paid"));
+    const collectionPercent = dueAmount>0 ? Math.round((collectedAmount/dueAmount)*10000)/100 : 0;
+    const graceAmount = sum(premiums.filter(p=>p.status==="Grace Period"));
+    const lapsedAmount = sum(premiums.filter(p=>p.status==="Lapsed"));
+
+    const months=[];
+    for(let i=5;i>=0;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);const key=d.toISOString().slice(0,7);months.push({month:d.toLocaleString("en-IN",{month:"short",year:"2-digit"}),due:sum(premiums.filter(p=>String(p.dueDate||"").slice(0,7)===key)),collected:sum(premiums.filter(p=>p.status==="Paid"&&String(p.paidDate||"").slice(0,7)===key))});}
+
+    const purchases=await PlanPurchase.find({policyNumber:{$in:[...new Set(premiums.map(p=>p.policyNumber).filter(Boolean))]}}).select("policyNumber advisorCode advisorId").populate("advisorId","name advisorCode").lean();
+    const purchaseMap=new Map(purchases.map(p=>[p.policyNumber,p]));
+    const advisorMap=new Map();
+    premiums.forEach(p=>{const x=purchaseMap.get(p.policyNumber);const code=x?.advisorCode||x?.advisorId?.advisorCode||"Unassigned",name=x?.advisorId?.name||"Unassigned";if(!advisorMap.has(code))advisorMap.set(code,{advisorCode:code,advisorName:name,due:0,collected:0,pending:0});const a=advisorMap.get(code);a.due+=Number(p.amount||0);if(p.status==="Paid")a.collected+=Number(p.amount||0);else a.pending+=Number(p.amount||0);});
+    const advisorPerformance=[...advisorMap.values()].map(a=>({...a,collectionPercent:a.due?Math.round(a.collected/a.due*10000)/100:0})).sort((a,b)=>b.collected-a.collected);
+
+    const followups=await Followup.find({premiumId:{$ne:null}}).sort({createdAt:1}).lean();
+    const followupMap=new Map();followups.forEach(x=>{const k=String(x.premiumId);if(!followupMap.has(k))followupMap.set(k,[]);followupMap.get(k).push({status:x.status,date:x.date,remarks:x.remarks});});
+    const timeline=premiums.slice().sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,50).map(p=>({premiumId:String(p._id),customerName:p.customerName,policyNumber:p.policyNumber,dueDate:p.dueDate,status:p.status,events:[{label:"Premium Due",date:p.dueDate},...(followupMap.get(String(p._id))||[]).map(x=>({label:x.status,date:x.date,remarks:x.remarks})),...(p.status==="Paid"?[{label:"Payment Received",date:p.paidDate},{label:"Receipt Generated",date:p.paidDate,remarks:p.receiptNumber||""}]:[])]}));
+
+    const todayList=premiums.filter(p=>p.dueDate===todayKey);
+    const next7Days=premiums.filter(p=>p.status!=="Paid"&&p.dueDate>todayKey&&p.dueDate<=next7Key).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
+    res.json({summary:{thisMonthDueAmount:dueAmount,collectedAmount,pendingAmount,collectionPercent,graceAmount,lapsedAmount},months,advisorPerformance,timeline,todayList,next7Days});
+  } catch(error){console.error("Premium analytics error:",error);res.status(500).json({message:"Premium analytics failed"});}
 });
 
 // Customer: create a Cashfree order for an outstanding renewal premium.
