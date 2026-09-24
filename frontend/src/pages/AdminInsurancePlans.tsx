@@ -17,6 +17,7 @@ type Category =
 type PlanStatus = "Pending" | "Approved" | "Rejected" | "Active" | "Inactive";
 
 type Plan = {
+  revivalRules?: { enabled?:boolean; maxLapseDays?:number; lateFeePercent?:number; medicalReviewRequired?:boolean; kycReviewRequired?:boolean };
   surrenderRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; valuePercentOfPaidPremium?:number };
   loanRules?: { enabled?:boolean; eligibleFromPolicyYear?:number; maxPercentOfPaidPremium?:number; partialWithdrawalEnabled?:boolean };
   benefitRules?: { benefitType?: string; payoutStartYear?: number; payoutYears?: number; annualPayout?: number; maturityAmount?: number; deathBenefit?: number };
@@ -88,6 +89,11 @@ const initialForm = {
   surrenderEnabled: false,
   surrenderEligibleFromPolicyYear: "3",
   surrenderValuePercent: "0",
+  revivalEnabled: false,
+  revivalMaxLapseDays: "730",
+  revivalLateFeePercent: "0",
+  revivalMedicalRequired: false,
+  revivalKycRequired: false,
   coverageAmount: "3000000",
   yearlyPremium: "",
   firstYearPremium: "",
@@ -215,6 +221,11 @@ function AdminInsurancePlans() {
       surrenderEnabled: Boolean(plan.surrenderRules?.enabled),
       surrenderEligibleFromPolicyYear: String(plan.surrenderRules?.eligibleFromPolicyYear || 3),
       surrenderValuePercent: String(plan.surrenderRules?.valuePercentOfPaidPremium || 0),
+      revivalEnabled: Boolean(plan.revivalRules?.enabled),
+      revivalMaxLapseDays: String(plan.revivalRules?.maxLapseDays || 730),
+      revivalLateFeePercent: String(plan.revivalRules?.lateFeePercent || 0),
+      revivalMedicalRequired: Boolean(plan.revivalRules?.medicalReviewRequired),
+      revivalKycRequired: Boolean(plan.revivalRules?.kycReviewRequired),
       coverageAmount: String(plan.coverageAmount || 0),
       yearlyPremium: String(plan.yearlyPremium || plan.yearlyAmount || 0),
       firstYearPremium: String(plan.firstYearPremium || plan.yearlyPremium || plan.yearlyAmount || 0),
@@ -263,6 +274,7 @@ function AdminInsurancePlans() {
         benefitRules: { benefitType: form.benefitType, payoutStartYear: Number(form.payoutStartYear || 0), payoutYears: Number(form.payoutYears || 0), annualPayout: Number(form.annualPayout || 0), maturityAmount: Number(form.maturityAmount || 0), deathBenefit: Number(form.deathBenefit || 0) },
         loanRules: { enabled: form.loanEnabled, eligibleFromPolicyYear: Number(form.loanEligibleFromPolicyYear || 0), maxPercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.loanMaxPercent || 0))), partialWithdrawalEnabled: form.partialWithdrawalEnabled },
         surrenderRules: { enabled: form.surrenderEnabled, eligibleFromPolicyYear: Number(form.surrenderEligibleFromPolicyYear || 0), valuePercentOfPaidPremium: Math.max(0,Math.min(100,Number(form.surrenderValuePercent || 0))) },
+        revivalRules: { enabled: form.revivalEnabled, maxLapseDays: Math.max(1,Number(form.revivalMaxLapseDays || 730)), lateFeePercent: Math.max(0,Number(form.revivalLateFeePercent || 0)), medicalReviewRequired: form.revivalMedicalRequired, kycReviewRequired: form.revivalKycRequired },
         coverageAmount: Number(form.coverageAmount),
         yearlyPremium: Number(form.yearlyPremium || 0),
         yearlyAmount: Number(form.yearlyPremium || 0),
@@ -417,6 +429,11 @@ function AdminInsurancePlans() {
           <label><input type="checkbox" checked={form.surrenderEnabled} onChange={(e)=>setForm({...form,surrenderEnabled:e.target.checked})}/> Surrender Allowed</label>
           <input placeholder="Surrender Eligible From Policy Year" value={form.surrenderEligibleFromPolicyYear} onChange={(e)=>setForm({...form,surrenderEligibleFromPolicyYear:e.target.value})}/>
           <input placeholder="Surrender Value % of Paid Premium" value={form.surrenderValuePercent} onChange={(e)=>setForm({...form,surrenderValuePercent:e.target.value})}/>
+          <label><input type="checkbox" checked={form.revivalEnabled} onChange={(e)=>setForm({...form,revivalEnabled:e.target.checked})}/> Policy Revival Allowed</label>
+          <input placeholder="Revival Max Lapse Days" value={form.revivalMaxLapseDays} onChange={(e)=>setForm({...form,revivalMaxLapseDays:e.target.value})}/>
+          <input placeholder="Revival Late Fee %" value={form.revivalLateFeePercent} onChange={(e)=>setForm({...form,revivalLateFeePercent:e.target.value})}/>
+          <label><input type="checkbox" checked={form.revivalMedicalRequired} onChange={(e)=>setForm({...form,revivalMedicalRequired:e.target.checked})}/> Medical Review Required</label>
+          <label><input type="checkbox" checked={form.revivalKycRequired} onChange={(e)=>setForm({...form,revivalKycRequired:e.target.checked})}/> KYC Review Required</label>
 
           <input
             placeholder="Coverage Amount"
