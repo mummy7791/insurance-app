@@ -64,6 +64,11 @@ const insurancePlanSchema = new mongoose.Schema(
       kycReviewRequired: { type: Boolean, default: false },
     },
 
+    freeLookRules: {
+      enabled: { type: Boolean, default: false },
+      days: { type: Number, default: 0 },
+    },
+
     pricingRules: {
       baseAge: { type: Number, default: 25 },
       ageRatePercent: { type: Number, default: 2 },
