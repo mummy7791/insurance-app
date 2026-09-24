@@ -25,6 +25,7 @@ const notificationSchema = new mongoose.Schema(
         "Payment Successful",
         "Policy Issued",
         "Target Alert",
+        "Policy Service Update",
       ],
       default: "Premium Due",
     },
