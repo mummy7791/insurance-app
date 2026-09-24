@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type ReportCardData = {
   totalCustomers: number;
@@ -33,6 +35,13 @@ type MonthReport = {
   _id: string;
   count: number;
   total: number;
+};
+
+type BusinessRow = {
+  id:string; customerName:string; customerPhone:string; customerEmail:string; address:string;
+  policyNumber:string; planName:string; category:string; coverageAmount:number; yearlyPremium:number;
+  paymentStatus:string; policyStatus:string; advisorName:string; advisorCode:string;
+  purchaseDate:string; nextPremiumDate?:string|null; premiumFrequency:string; paymentYears:number; policyTermYears:number;
 };
 
 type ReportsResponse = {
@@ -70,6 +79,34 @@ export default function Reports() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [business,setBusiness]=useState<BusinessRow[]>([]);
+  const [filters,setFilters]=useState({from:"",to:"",plan:"",advisor:"",status:""});
+  const money=(n:number)=>"₹"+Number(n||0).toLocaleString("en-IN");
+  const date=(v?:string|null)=>v?new Date(v).toLocaleDateString("en-IN"):"-";
+
+  const loadBusiness=useCallback(async()=>{
+    try{
+      const params=new URLSearchParams();
+      Object.entries(filters).forEach(([k,v])=>{if(v)params.set(k,v);});
+      const res=await api.get<{rows:BusinessRow[]}>(`/reports/business?${params.toString()}`);
+      setBusiness(Array.isArray(res.data.rows)?res.data.rows:[]);
+    }catch(error){console.error("Business report load error:",error);alert("Business report load failed");}
+  },[filters]);
+
+  const csvCell=(value:unknown)=>`"${String(value??"").replace(/"/g,'""')}"`;
+  const downloadExcel=()=>{
+    const headers=["Customer Name","Mobile Number","Email","Address","Policy Number","Plan Name","Category","Coverage Amount","Yearly Premium","Payment Status","Policy Status","Advisor Name","Advisor Code","Purchase Date","Next Premium Due","Frequency","Payment Years","Policy Term"];
+    const lines=[headers.map(csvCell).join(","),...business.map(r=>[r.customerName,r.customerPhone,r.customerEmail,r.address,r.policyNumber,r.planName,r.category,r.coverageAmount,r.yearlyPremium,r.paymentStatus,r.policyStatus,r.advisorName,r.advisorCode,date(r.purchaseDate),date(r.nextPremiumDate),r.premiumFrequency,r.paymentYears,r.policyTermYears].map(csvCell).join(","))];
+    const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`SecureLife-business-report-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  };
+  const downloadPdf=()=>{
+    const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text("SecureLife Insurance - Business Report",14,15);
+    doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text(`Generated: ${new Date().toLocaleString("en-IN")} | Records: ${business.length}`,14,21);
+    autoTable(doc,{startY:27,styles:{fontSize:6,cellPadding:1.5,overflow:"linebreak"},head:[["Customer","Mobile","Address","Policy No.","Plan","Cover","Premium","Payment","Policy","Advisor","Purchase","Next Due"]],body:business.map(r=>[r.customerName,r.customerPhone,r.address,r.policyNumber||"-",r.planName,money(r.coverageAmount),money(r.yearlyPremium),r.paymentStatus,r.policyStatus,[r.advisorName,r.advisorCode].filter(Boolean).join(" / ")||"-",date(r.purchaseDate),date(r.nextPremiumDate)]),columnStyles:{2:{cellWidth:38},3:{cellWidth:29},4:{cellWidth:27}}});
+    doc.save(`SecureLife-business-report-${new Date().toISOString().slice(0,10)}.pdf`);
+  };
 
   const loadReports = useCallback(async () => {
     try {
@@ -90,7 +127,8 @@ export default function Reports() {
 
   useEffect(() => {
     void loadReports();
-  }, [loadReports]);
+    void loadBusiness();
+  }, [loadReports, loadBusiness]);
 
   return (
     <MainLayout
@@ -160,6 +198,23 @@ export default function Reports() {
         <div className="card">
           <h3>Pending Commission</h3>
           <h1>₹{Number(data.cards.pendingCommissionAmount || 0).toLocaleString("en-IN")}</h1>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="admin-page-summary"><div><span className="eyebrow">CUSTOMER BUSINESS</span><h2>Detailed policy business report</h2><p>Filter records and download customer name, mobile number, address and complete policy business details.</p></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button className="mini-btn" onClick={downloadPdf} disabled={!business.length}>Download PDF</button><button className="mini-btn" onClick={downloadExcel} disabled={!business.length}>Download Excel</button></div></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:16}}>
+          <input type="date" value={filters.from} onChange={e=>setFilters(p=>({...p,from:e.target.value}))} title="From date"/>
+          <input type="date" value={filters.to} onChange={e=>setFilters(p=>({...p,to:e.target.value}))} title="To date"/>
+          <input placeholder="Plan name" value={filters.plan} onChange={e=>setFilters(p=>({...p,plan:e.target.value}))}/>
+          <input placeholder="Advisor code" value={filters.advisor} onChange={e=>setFilters(p=>({...p,advisor:e.target.value}))}/>
+          <select value={filters.status} onChange={e=>setFilters(p=>({...p,status:e.target.value}))}><option value="">All policy status</option><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Cancelled">Cancelled</option></select>
+          <button className="mini-btn" onClick={()=>void loadBusiness()}>Apply Filters</button>
+        </div>
+        <p><strong>{business.length}</strong> business records</p>
+        <div style={{overflowX:"auto"}}>
+          <table className="table"><thead><tr><th>Customer</th><th>Mobile</th><th>Address</th><th>Policy No.</th><th>Plan</th><th>Coverage</th><th>Premium</th><th>Payment</th><th>Policy</th><th>Advisor</th><th>Purchase Date</th><th>Next Due</th></tr></thead>
+          <tbody>{business.length===0?<tr><td colSpan={12}>No business records found.</td></tr>:business.map(r=><tr key={r.id}><td><strong>{r.customerName||"-"}</strong><br/><small>{r.customerEmail}</small></td><td>{r.customerPhone||"-"}</td><td style={{minWidth:220,whiteSpace:"normal"}}>{r.address||"-"}</td><td>{r.policyNumber||"-"}</td><td>{r.planName}</td><td>{money(r.coverageAmount)}</td><td>{money(r.yearlyPremium)}</td><td>{r.paymentStatus}</td><td>{r.policyStatus}</td><td>{r.advisorName||"-"}<br/><small>{r.advisorCode}</small></td><td>{date(r.purchaseDate)}</td><td>{date(r.nextPremiumDate)}</td></tr>)}</tbody></table>
         </div>
       </div>
 
