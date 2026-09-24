@@ -61,8 +61,22 @@ export default function Premiums() {
   const [payingId, setPayingId] = useState("");
   const [renewalRows,setRenewalRows]=useState<RenewalRow[]>([]);
   const [renewalTab,setRenewalTab]=useState<PremiumStatus>("Upcoming");
+  const [followupRow,setFollowupRow]=useState<RenewalRow|null>(null);
+  const [followupStatus,setFollowupStatus]=useState("Called");
+  const [followupDate,setFollowupDate]=useState("");
+  const [followupRemarks,setFollowupRemarks]=useState("");
+  const [followupSummary,setFollowupSummary]=useState({today:0,tomorrow:0,missed:0,promiseToPay:0});
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
+
+  const loadFollowupSummary=useCallback(async()=>{if(isCustomer)return;try{const r=await api.get<{today:number;tomorrow:number;missed:number;promiseToPay:number}>("/followups/summary");setFollowupSummary(r.data);}catch(e){console.error("Follow-up summary error:",e);}},[isCustomer]);
+  const saveFollowup=async()=>{
+    if(!followupRow)return;
+    try{
+      await api.post("/followups",{customerName:followupRow.customerName,phone:followupRow.customerPhone||"Not available",followType:"Premium Reminder",date:new Date().toISOString().slice(0,10),time:new Date().toTimeString().slice(0,5),status:followupStatus,remarks:followupRemarks||"Premium renewal follow-up",policyNumber:followupRow.policyNumber,premiumId:followupRow.id,advisorCode:followupRow.advisorCode,nextFollowupDate:followupDate});
+      setFollowupRow(null);setFollowupRemarks("");setFollowupDate("");await loadFollowupSummary();alert("Follow-up saved");
+    }catch(e){console.error("Follow-up save error:",e);alert("Follow-up save failed");}
+  };
 
   const loadRenewalReport=useCallback(async()=>{
     if(isCustomer)return;
@@ -96,7 +110,7 @@ export default function Premiums() {
     }
   }, []);
 
-  useEffect(()=>{void loadRenewalReport();},[loadRenewalReport]);
+  useEffect(()=>{void loadRenewalReport();void loadFollowupSummary();},[loadRenewalReport,loadFollowupSummary]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -371,8 +385,10 @@ export default function Premiums() {
           <strong>{renewalTab} Premiums</strong>
           <button className="mini-btn" disabled={!renewalRows.some(r=>r.status===renewalTab)} onClick={()=>downloadRenewalExcel(renewalTab)}>Download {renewalTab} Excel</button>
         </div>
-        <div className="table-wrap"><table className="table"><thead><tr><th>Customer</th><th>Mobile</th><th>Address</th><th>Policy No.</th><th>Plan</th><th>Premium</th><th>Due Date</th><th>Days</th><th>Advisor</th><th>Frequency</th></tr></thead>
-        <tbody>{renewalRows.filter(r=>r.status===renewalTab).length===0?<tr><td colSpan={10}>No {renewalTab} premium records found.</td></tr>:renewalRows.filter(r=>r.status===renewalTab).map(r=><tr key={r.id}><td>{r.customerName||"-"}</td><td>{r.customerPhone||"-"}</td><td style={{minWidth:210,whiteSpace:"normal"}}>{r.address||"-"}</td><td>{r.policyNumber}</td><td>{r.planName||"-"}</td><td><strong>₹{Number(r.amount||0).toLocaleString("en-IN")}</strong></td><td>{r.dueDate}</td><td>{r.daysDifference>=0?`${r.daysDifference} remaining`:`${Math.abs(r.daysDifference)} overdue`}</td><td>{r.advisorName||"-"}<br/><small>{r.advisorCode}</small></td><td>{r.premiumFrequency||"-"}</td></tr>)}</tbody></table></div>
+        <div className="cards admin-kpi-grid" style={{marginBottom:14}}><div className="card"><h3>Today Follow-ups</h3><h1>{followupSummary.today}</h1></div><div className="card"><h3>Tomorrow</h3><h1>{followupSummary.tomorrow}</h1></div><div className="card"><h3>Missed</h3><h1>{followupSummary.missed}</h1></div><div className="card"><h3>Promise to Pay</h3><h1>{followupSummary.promiseToPay}</h1></div></div>
+        <div className="table-wrap"><table className="table"><thead><tr><th>Customer</th><th>Mobile</th><th>Address</th><th>Policy No.</th><th>Plan</th><th>Premium</th><th>Due Date</th><th>Days</th><th>Advisor</th><th>Frequency</th><th>Follow-up</th></tr></thead>
+        <tbody>{renewalRows.filter(r=>r.status===renewalTab).length===0?<tr><td colSpan={11}>No {renewalTab} premium records found.</td></tr>:renewalRows.filter(r=>r.status===renewalTab).map(r=><tr key={r.id}><td>{r.customerName||"-"}</td><td>{r.customerPhone||"-"}</td><td style={{minWidth:210,whiteSpace:"normal"}}>{r.address||"-"}</td><td>{r.policyNumber}</td><td>{r.planName||"-"}</td><td><strong>₹{Number(r.amount||0).toLocaleString("en-IN")}</strong></td><td>{r.dueDate}</td><td>{r.daysDifference>=0?`${r.daysDifference} remaining`:`${Math.abs(r.daysDifference)} overdue`}</td><td>{r.advisorName||"-"}<br/><small>{r.advisorCode}</small></td><td>{r.premiumFrequency||"-"}</td><td><div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{r.customerPhone&&<a className="mini-btn" href={`tel:${r.customerPhone}`}>Call</a>}{r.customerPhone&&<a className="mini-btn" target="_blank" rel="noreferrer" href={`https://wa.me/91${r.customerPhone.replace(/\D/g,"").slice(-10)}?text=${encodeURIComponent(`SecureLife premium reminder: Policy ${r.policyNumber}, due ${r.dueDate}.`)}`}>WhatsApp</a>}<button className="mini-btn" onClick={()=>setFollowupRow(r)}>Add Follow-up</button></div></td></tr>)}</tbody></table></div>
+        {followupRow&&<div className="section" style={{marginTop:14}}><h3>Follow-up: {followupRow.customerName} · {followupRow.policyNumber}</h3><div className="form-grid"><select value={followupStatus} onChange={e=>setFollowupStatus(e.target.value)}><option>Called</option><option>No Answer</option><option>Customer Will Pay</option><option>Payment Link Sent</option><option>Follow-up Later</option><option>Not Interested</option><option>Completed</option><option>Missed</option></select><input type="date" value={followupDate} onChange={e=>setFollowupDate(e.target.value)}/><input placeholder="Remarks" value={followupRemarks} onChange={e=>setFollowupRemarks(e.target.value)}/></div><div style={{display:"flex",gap:8}}><button className="btn small-btn" onClick={()=>void saveFollowup()}>Save Follow-up</button><button className="mini-btn" onClick={()=>setFollowupRow(null)}>Cancel</button></div></div>}
       </div>}
 
       <div className="section">
