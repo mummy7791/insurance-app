@@ -21,7 +21,6 @@ const Premium = require("../models/Premium");
 const User = require("../models/User");
 const Document = require("../models/Document");
 const Quotation = require("../models/Quotation");
-const Quotation = require("../models/Quotation");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -83,7 +82,6 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
     const proposal = req.body?.proposal;
     const quotationId = String(req.body?.quotationId || "").trim();
-    const quotationId = String(req.body?.quotationId || "").trim();
     if (!proposal || proposal.proposalConsent !== true) {
       return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
     }
@@ -143,15 +141,6 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
 
     if (!["Approved", "Active"].includes(plan.status)) {
       return res.status(400).json({ message: "This plan is not available for purchase" });
-    }
-
-    let quotation = null;
-    if (quotationId) {
-      quotation = await Quotation.findOne({_id:quotationId,createdBy:req.user.id,planId:plan._id});
-      if (!quotation) return res.status(404).json({message:"Quotation not found for this customer and plan"});
-      if (quotation.validUntil < new Date()) { quotation.status="Expired"; await quotation.save(); return res.status(409).json({message:"Quotation has expired. Please generate a new quotation."}); }
-      if (quotation.status === "Converted") return res.status(409).json({message:"Quotation is already converted to a policy purchase"});
-      quotation.status="Accepted"; quotation.acceptedAt=quotation.acceptedAt||new Date(); await quotation.save();
     }
 
     let quotation = null;
