@@ -18,6 +18,14 @@ type Premium = {
   status: PremiumStatus;
 };
 
+type RenewalRow = {
+  id:string; status:PremiumStatus; customerName:string; customerPhone:string; address:string;
+  policyNumber:string; planName:string; amount:number; dueDate:string; daysDifference:number;
+  advisorName:string; advisorCode:string; premiumFrequency:string;
+};
+
+const renewalStatuses: PremiumStatus[] = ["Upcoming","Due","Grace Period","Overdue","Lapsed"];
+
 type CashfreeInstance = {
   checkout: (options: { paymentSessionId: string; redirectTarget: "_self" }) => Promise<{ error?: { message?: string } }>;
 };
@@ -51,8 +59,25 @@ export default function Premiums() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PremiumForm>(initialForm);
   const [payingId, setPayingId] = useState("");
+  const [renewalRows,setRenewalRows]=useState<RenewalRow[]>([]);
+  const [renewalTab,setRenewalTab]=useState<PremiumStatus>("Upcoming");
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
+
+  const loadRenewalReport=useCallback(async()=>{
+    if(isCustomer)return;
+    try{const res=await api.get<{rows:RenewalRow[]}>("/premiums/renewal-report");setRenewalRows(Array.isArray(res.data.rows)?res.data.rows:[]);}
+    catch(error){console.error("Renewal report load error:",error);}
+  },[isCustomer]);
+
+  const csvCell=(v:unknown)=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const downloadRenewalExcel=(status:PremiumStatus)=>{
+    const rows=renewalRows.filter(r=>r.status===status);
+    const headers=["Customer Name","Mobile Number","Address","Policy Number","Plan Name","Premium Amount","Due Date","Days Remaining / Overdue","Premium Status","Advisor Name","Advisor Code","Payment Frequency"];
+    const lines=[headers.map(csvCell).join(","),...rows.map(r=>[r.customerName,r.customerPhone,r.address,r.policyNumber,r.planName,r.amount,r.dueDate,r.daysDifference>=0?`${r.daysDifference} days remaining`:`${Math.abs(r.daysDifference)} days overdue`,r.status,r.advisorName,r.advisorCode,r.premiumFrequency].map(csvCell).join(","))];
+    const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`SecureLife-${status.replace(/\s+/g,"-")}-Premiums-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  };
 
   const loadPremiums = useCallback(async () => {
     try {
@@ -70,6 +95,8 @@ export default function Premiums() {
       alert("Premiums load failed");
     }
   }, []);
+
+  useEffect(()=>{void loadRenewalReport();},[loadRenewalReport]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -334,6 +361,19 @@ export default function Premiums() {
         <button className="btn small-btn" onClick={addPremium}>Add Premium</button>
       </div>
       )}
+
+      {!isCustomer && <div className="section">
+        <div className="section-heading-row"><div><span className="eyebrow">RENEWAL MANAGEMENT</span><h2>Status-wise premium renewal lists</h2><p className="section-copy">Open a status to view only those customers and download that exact list.</p></div><button className="mini-btn" onClick={()=>void loadRenewalReport()}>Refresh renewals</button></div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",margin:"14px 0"}}>
+          {renewalStatuses.map(status=><button key={status} className={renewalTab===status?"btn small-btn":"mini-btn"} onClick={()=>setRenewalTab(status)}>{status} ({renewalRows.filter(r=>r.status===status).length})</button>)}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:12}}>
+          <strong>{renewalTab} Premiums</strong>
+          <button className="mini-btn" disabled={!renewalRows.some(r=>r.status===renewalTab)} onClick={()=>downloadRenewalExcel(renewalTab)}>Download {renewalTab} Excel</button>
+        </div>
+        <div className="table-wrap"><table className="table"><thead><tr><th>Customer</th><th>Mobile</th><th>Address</th><th>Policy No.</th><th>Plan</th><th>Premium</th><th>Due Date</th><th>Days</th><th>Advisor</th><th>Frequency</th></tr></thead>
+        <tbody>{renewalRows.filter(r=>r.status===renewalTab).length===0?<tr><td colSpan={10}>No {renewalTab} premium records found.</td></tr>:renewalRows.filter(r=>r.status===renewalTab).map(r=><tr key={r.id}><td>{r.customerName||"-"}</td><td>{r.customerPhone||"-"}</td><td style={{minWidth:210,whiteSpace:"normal"}}>{r.address||"-"}</td><td>{r.policyNumber}</td><td>{r.planName||"-"}</td><td><strong>₹{Number(r.amount||0).toLocaleString("en-IN")}</strong></td><td>{r.dueDate}</td><td>{r.daysDifference>=0?`${r.daysDifference} remaining`:`${Math.abs(r.daysDifference)} overdue`}</td><td>{r.advisorName||"-"}<br/><small>{r.advisorCode}</small></td><td>{r.premiumFrequency||"-"}</td></tr>)}</tbody></table></div>
+      </div>}
 
       <div className="section">
         <div className="section-heading-row"><div><span className="eyebrow">PAYMENT HISTORY</span><h2>{isCustomer ? "My Premiums" : "Premium register"}</h2></div>{isCustomer ? <span className="secure-chip">Receipts verified</span> : <span className="secure-chip">{premiums.length} records</span>}</div>
