@@ -50,6 +50,12 @@ const insurancePlanSchema = new mongoose.Schema(
       partialWithdrawalEnabled: { type: Boolean, default: false },
     },
 
+    surrenderRules: {
+      enabled: { type: Boolean, default: false },
+      eligibleFromPolicyYear: { type: Number, default: 0 },
+      valuePercentOfPaidPremium: { type: Number, default: 0 },
+    },
+
     pricingRules: {
       baseAge: { type: Number, default: 25 },
       ageRatePercent: { type: Number, default: 2 },
