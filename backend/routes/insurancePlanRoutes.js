@@ -37,7 +37,7 @@ const isValidAge = (value) => {
 };
 
 const customerPlanFields =
-  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies pricingRules benefitRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
+  "_id planName category planType productGroup coverageAmount yearlyPremium yearlyAmount firstYearPremium subsequentYearPremium paymentYears policyTermYears premiumFrequencies maturityAges premiumPayingTerms pptPremiumFactors pricingRules benefitRules ageMin ageMax eligibleFrom eligibleTo benefits coverage description premiumMode status";
 
 const calculatePremium = ({
   category,
@@ -136,6 +136,8 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const gender = String(req.body.gender || "Male");
     const smoker = Boolean(req.body.smoker);
     const frequency = String(req.body.frequency || "Yearly");
+    const coverTillAge = Number(req.body.coverTillAge || 0);
+    const requestedPpt = Number(req.body.paymentYears || 0);
     const cover = Number(req.body.coverageAmount || plan.coverageAmount || 0);
     if (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100)) return res.status(400).json({ message: "Age is not eligible for this plan" });
     if (!Number.isFinite(cover) || cover <= 0) return res.status(400).json({ message: "Valid coverage amount required" });
@@ -149,15 +151,24 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const ageRate = Math.max(0, Number(rules.ageRatePercent || 0)) / 100;
     const smokerLoading = Math.max(0, Number(rules.smokerLoadingPercent || 0)) / 100;
     const femaleDiscount = Math.max(0, Number(rules.femaleDiscountPercent || 0)) / 100;
+    const maturityAges = Array.isArray(plan.maturityAges) ? plan.maturityAges.map(Number).filter(x=>x>age) : [];
+    const selectedMaturityAge = coverTillAge || (maturityAges.length ? maturityAges[0] : age + Number(plan.policyTermYears || plan.paymentYears || 1));
+    if (maturityAges.length && !maturityAges.includes(selectedMaturityAge)) return res.status(400).json({ message: "Selected cover till age is not available for this plan" });
+    const policyTermYears = selectedMaturityAge - age;
+    if (!Number.isFinite(policyTermYears) || policyTermYears < 1) return res.status(400).json({ message: "Policy term is not valid for the selected age" });
+    const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
+    const paymentYears = requestedPpt || allowedPpts[0];
+    if (!allowedPpts.includes(paymentYears) || paymentYears > policyTermYears) return res.status(400).json({ message: "Selected premium paying term is not available for this policy term" });
     let annual = basePremium * (baseCover > 0 ? cover / baseCover : 1);
     if (plan.premiumMode === "auto") annual *= 1 + Math.max(0, age - baseAge) * ageRate;
+    const pptFactors = plan.pptPremiumFactors || {};
+    const pptFactor = Number(pptFactors[String(paymentYears)] ?? pptFactors.get?.(String(paymentYears)) ?? 1);
+    if (Number.isFinite(pptFactor) && pptFactor > 0) annual *= pptFactor;
     if (smoker) annual *= 1 + smokerLoading;
     if (gender.toLowerCase() === "female") annual *= 1 - Math.min(femaleDiscount, 0.5);
     annual = Math.max(1, Math.round(annual));
     const divisors = { Yearly: 1, "Half-Yearly": 2, Quarterly: 4, Monthly: 12 };
     const instalmentPremium = Math.round(annual / (divisors[frequency] || 1));
-    const paymentYears = Number(plan.paymentYears || 1);
-    const policyTermYears = Math.max(paymentYears, Number(plan.policyTermYears || paymentYears));
     const schedule = Array.from({ length: paymentYears }, (_, i) => ({ policyYear: i + 1, annualPremium: annual, frequency, instalmentPremium }));
     const benefitRules = plan.benefitRules || {};
     const benefitType = String(benefitRules.benefitType || "Life Cover");
@@ -168,7 +179,7 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const maturityAmount = Math.max(0, Number(benefitRules.maturityAmount || 0));
     const deathBenefit = Math.max(0, Number(benefitRules.deathBenefit || cover));
 
-    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
   } catch (error) {
     console.error("Smart quote error:", error);
     res.status(500).json({ message: "Quotation calculation failed" });
@@ -190,6 +201,9 @@ router.post("/", auth(["admin"]), async (req, res) => {
       subsequentYearPremium,
       pricingRules,
       benefitRules,
+      maturityAges,
+      premiumPayingTerms,
+      pptPremiumFactors,
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
@@ -286,6 +300,9 @@ router.post("/", auth(["admin"]), async (req, res) => {
       subsequentYearPremium: Number(subsequentYearPremium || finalPremium || 0),
       pricingRules: pricingRules || undefined,
       benefitRules: benefitRules || undefined,
+      maturityAges: Array.isArray(maturityAges) ? maturityAges.map(Number).filter(Number.isFinite) : [],
+      premiumPayingTerms: Array.isArray(premiumPayingTerms) ? premiumPayingTerms.map(Number).filter(x=>Number.isFinite(x)&&x>0) : [],
+      pptPremiumFactors: pptPremiumFactors && typeof pptPremiumFactors === "object" ? pptPremiumFactors : {},
       coverageAmount: Number(coverageAmount || 0),
       yearlyPremium: finalPremium,
       yearlyAmount: finalPremium,
@@ -628,6 +645,9 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
       premiumFrequencies,
       pricingRules,
       benefitRules,
+      maturityAges,
+      premiumPayingTerms,
+      pptPremiumFactors,
       coverageAmount,
       yearlyPremium,
       yearlyAmount,
@@ -738,6 +758,9 @@ router.put("/:id", auth(["admin"]), async (req, res) => {
     }
     if (pricingRules !== undefined) plan.pricingRules = { ...plan.pricingRules?.toObject?.(), ...pricingRules };
     if (benefitRules !== undefined) plan.benefitRules = { ...plan.benefitRules?.toObject?.(), ...benefitRules };
+    if (maturityAges !== undefined) plan.maturityAges = Array.isArray(maturityAges) ? maturityAges.map(Number).filter(Number.isFinite) : [];
+    if (premiumPayingTerms !== undefined) plan.premiumPayingTerms = Array.isArray(premiumPayingTerms) ? premiumPayingTerms.map(Number).filter(x=>Number.isFinite(x)&&x>0) : [];
+    if (pptPremiumFactors !== undefined && pptPremiumFactors && typeof pptPremiumFactors === "object") plan.pptPremiumFactors = pptPremiumFactors;
     plan.coverageAmount = Number(coverageAmount || plan.coverageAmount || 0);
     plan.yearlyPremium = finalPremium;
     plan.yearlyAmount = finalPremium;
