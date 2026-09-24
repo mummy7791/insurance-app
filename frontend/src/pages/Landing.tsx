@@ -4,7 +4,7 @@ export default function Landing() {
   return (
     <div className="public-home">
       <header className="public-nav">
-        <Link to="/" className="public-brand"><img src="/ic_launcher.png" alt="SecureLife Insurance" className="brand-logo-img" /> SecureLife</Link>
+        <Link to="/" className="public-brand"><img src="/securelife-logo.jpg" alt="SecureLife Insurance" className="brand-logo-img" /> SecureLife</Link>
         <nav>
           <Link to="/premium-calculator">Premium Calculator</Link>
           <Link to="/login">Sign in</Link>
