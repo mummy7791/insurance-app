@@ -43,6 +43,12 @@ const insurancePlanSchema = new mongoose.Schema(
     maturityAges: { type: [Number], default: [] },
     premiumPayingTerms: { type: [Number], default: [] },
     pptPremiumFactors: { type: Map, of: Number, default: {} },
+    loanRules: {
+      enabled: { type: Boolean, default: false },
+      eligibleFromPolicyYear: { type: Number, default: 0 },
+      maxPercentOfPaidPremium: { type: Number, default: 0 },
+      partialWithdrawalEnabled: { type: Boolean, default: false },
+    },
 
     pricingRules: {
       baseAge: { type: Number, default: 25 },
