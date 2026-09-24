@@ -21,6 +21,7 @@ const Premium = require("../models/Premium");
 const User = require("../models/User");
 const Document = require("../models/Document");
 const Quotation = require("../models/Quotation");
+const Quotation = require("../models/Quotation");
 
 const getCashfreeConfig = () => {
   const appId = String(process.env.CASHFREE_APP_ID || "").trim();
@@ -82,6 +83,7 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
   try {
     const proposal = req.body?.proposal;
     const quotationId = String(req.body?.quotationId || "").trim();
+    const quotationId = String(req.body?.quotationId || "").trim();
     if (!proposal || proposal.proposalConsent !== true) {
       return res.status(400).json({ message: "Complete and confirm your proposal before payment" });
     }
@@ -141,6 +143,15 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
 
     if (!["Approved", "Active"].includes(plan.status)) {
       return res.status(400).json({ message: "This plan is not available for purchase" });
+    }
+
+    let quotation = null;
+    if (quotationId) {
+      quotation = await Quotation.findOne({_id:quotationId,createdBy:req.user.id,planId:plan._id});
+      if (!quotation) return res.status(404).json({message:"Quotation not found for this customer and plan"});
+      if (quotation.validUntil < new Date()) { quotation.status="Expired"; await quotation.save(); return res.status(409).json({message:"Quotation has expired. Please generate a new quotation."}); }
+      if (quotation.status === "Converted") return res.status(409).json({message:"Quotation is already converted to a policy purchase"});
+      quotation.status="Accepted"; quotation.acceptedAt=quotation.acceptedAt||new Date(); await quotation.save();
     }
 
     let quotation = null;
@@ -338,8 +349,8 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       return res.status(404).json({ message: "Plan not found" });
     }
 
-    const amount = Number(plan.yearlyPremium || plan.yearlyAmount || 0);
-    const cover = Number(plan.coverageAmount || 0);
+    const amount = Number(quotation?.annualPremium || plan.yearlyPremium || plan.yearlyAmount || 0);
+    const cover = Number(quotation?.coverageAmount || plan.coverageAmount || 0);
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(cover) || cover <= 0) {
       return res.status(400).json({ message: "Plan premium/coverage is invalid. Admin must configure the approved plan premium and coverage before policy issue." });
     }
