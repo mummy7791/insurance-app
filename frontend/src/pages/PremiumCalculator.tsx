@@ -13,7 +13,7 @@ const err=(e:unknown)=>typeof e==="object"&&e!==null&&"response" in e?(e as {res
 export default function PremiumCalculator(){
  const navigate=useNavigate();
  const backToPortal=()=>{try{const u=JSON.parse(localStorage.getItem("insuranceUser")||"{}");if(u.role==="advisor")return navigate("/advisor-dashboard");if(u.role==="customer")return navigate("/customer-dashboard");if(["admin","bm","unit_manager","agency_manager","agent"].includes(u.role))return navigate("/dashboard");}catch{}navigate("/");};
- const [plans,setPlans]=useState<Plan[]>([]),[planId,setPlanId]=useState(""),[age,setAge]=useState("30"),[dob,setDob]=useState(""),[customerName,setCustomerName]=useState(""),[mobile,setMobile]=useState(""),[gender,setGender]=useState("Male"),[smoker,setSmoker]=useState(false),[cover,setCover]=useState(""),[frequency,setFrequency]=useState("Yearly"),[quote,setQuote]=useState<Quote|null>(null),[loading,setLoading]=useState(false),[savedQuoteNumber,setSavedQuoteNumber]=useState("");
+ const [plans,setPlans]=useState<Plan[]>([]),[planId,setPlanId]=useState(""),[age,setAge]=useState("30"),[dob,setDob]=useState(""),[customerName,setCustomerName]=useState(""),[mobile,setMobile]=useState(""),[gender,setGender]=useState("Male"),[smoker,setSmoker]=useState(false),[cover,setCover]=useState(""),[frequency,setFrequency]=useState("Yearly"),[quote,setQuote]=useState<Quote|null>(null),[loading,setLoading]=useState(false),[savedQuoteNumber,setSavedQuoteNumber]=useState(""),[savedQuoteId,setSavedQuoteId]=useState("");
  const quotationNumber=quote?`QT-${new Date().toISOString().slice(0,10).replace(/-/g,"")}-${String(quote.planId).slice(-6).toUpperCase()}`:"";
  const quoteDate=new Date();
  const validityDate=new Date(quoteDate.getTime()+15*86400000);
