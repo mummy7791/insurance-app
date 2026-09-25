@@ -159,8 +159,15 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
     const paymentYears = requestedPpt || allowedPpts[0];
     if (!allowedPpts.includes(paymentYears) || paymentYears > policyTermYears) return res.status(400).json({ message: "Selected premium paying term is not available for this policy term" });
-    let annual = basePremium * (baseCover > 0 ? cover / baseCover : 1);
-    if (plan.premiumMode === "auto") annual *= 1 + Math.max(0, age - baseAge) * ageRate;
+    const agePremiums = rules.agePremiums || {};
+    const agePremiumValue = Number(agePremiums[String(age)] ?? agePremiums.get?.(String(age)) ?? 0);
+    const hasAgePremium = Number.isFinite(agePremiumValue) && agePremiumValue > 0;
+    let annual = hasAgePremium
+      ? agePremiumValue * (baseCover > 0 ? cover / baseCover : 1)
+      : basePremium * (baseCover > 0 ? cover / baseCover : 1);
+    if (!hasAgePremium && plan.premiumMode === "auto") annual *= 1 + Math.max(0, age - baseAge) * ageRate;
+    const premiumAdditionPercent = Math.max(0, Number(rules.premiumAdditionPercent || 0)) / 100;
+    annual *= 1 + premiumAdditionPercent;
     const pptFactors = plan.pptPremiumFactors || {};
     const pptFactor = Number(pptFactors[String(paymentYears)] ?? pptFactors.get?.(String(paymentYears)) ?? 1);
     if (Number.isFinite(pptFactor) && pptFactor > 0) annual *= pptFactor;
@@ -363,10 +370,10 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
         planType: "Term Plan",
         productGroup: "Term / Health Products",
         coverageAmount: 500000,
-        yearlyPremium: 29748,
-        yearlyAmount: 29748,
-        firstYearPremium: 29748,
-        subsequentYearPremium: 29748,
+        yearlyPremium: 8160,
+        yearlyAmount: 8160,
+        firstYearPremium: 8160,
+        subsequentYearPremium: 8160,
         paymentYears: 10,
         policyTermYears: 30,
         premiumFrequencies: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
@@ -378,6 +385,16 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
           ageRatePercent: 0,
           smokerLoadingPercent: 0,
           femaleDiscountPercent: 0,
+          agePremiums: {
+            "18": 8000, "19": 9000, "20": 10000, "21": 11000, "22": 12000,
+            "23": 13000, "24": 14000, "25": 15000, "26": 16000, "27": 17000,
+            "28": 17600, "29": 18000, "30": 19000, "31": 20000, "32": 21000,
+            "33": 22000, "34": 23000, "35": 24000, "36": 25000, "37": 26000,
+            "38": 26800, "39": 27000, "40": 28000, "41": 29000, "42": 30000,
+            "43": 40000, "44": 41000, "45": 42000, "46": 43000, "47": 44000,
+            "48": 46700, "49": 45000, "50": 46000
+          },
+          premiumAdditionPercent: 2,
         },
         benefitRules: {
           benefitType: "Life Cover",
@@ -402,7 +419,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
           "15 Day Free-Look Period",
         ],
         coverage: "₹5,00,000 Life Cover",
-        description: "IPsmart Plus term plan. Age 18 approved base premium is ₹2,479 monthly (₹29,748 yearly). Other-age rates require approved premium data.",
+        description: "IPsmart Plus term plan with admin-provided age-wise annual premiums for ages 18 to 50. Customer quotation displays the final premium after the configured 2% addition.",
         premiumMode: "manual",
         status: "Approved",
       },
@@ -613,12 +630,9 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       defaultPlans.map((plan) => ({
         updateOne: {
           filter: { planName: plan.planName },
-          update: {
-            $setOnInsert: {
-              ...plan,
-              createdBy: req.user.id,
-            },
-          },
+          update: plan.planName === "IPsmart Plus"
+            ? { $set: { ...plan, createdBy: req.user.id } }
+            : { $setOnInsert: { ...plan, createdBy: req.user.id } },
           upsert: true,
         },
       }))
