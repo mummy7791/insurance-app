@@ -74,6 +74,8 @@ const insurancePlanSchema = new mongoose.Schema(
       ageRatePercent: { type: Number, default: 2 },
       smokerLoadingPercent: { type: Number, default: 15 },
       femaleDiscountPercent: { type: Number, default: 0 },
+      agePremiums: { type: Map, of: Number, default: {} },
+      premiumAdditionPercent: { type: Number, default: 0 },
     },
 
     benefitRules: {
