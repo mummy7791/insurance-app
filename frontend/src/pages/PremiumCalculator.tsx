@@ -42,7 +42,7 @@ export default function PremiumCalculator(){
   doc.save(`${quote.planName.replace(/[^a-z0-9]+/gi,"-")}-quotation.pdf`);
  };
  const saveQuote=async()=>{if(!quote)return;try{const r=await api.post<{quotationNumber:string}>("/quotations",{...quote,customerName,mobile,dob});setSavedQuoteNumber(r.data.quotationNumber);setSavedQuoteId((r.data as {quotationNumber:string;_id?:string})._id||"");alert("Quotation saved: "+r.data.quotationNumber);}catch(e){alert(err(e));}};
- const calculate=async()=>{if(!selected)return;setSavedQuoteNumber("");setSavedQuoteId("");try{setLoading(true);const r=await api.post<Quote>(`/insurance-plans/${selected._id}/quote`,{age:Number(age),gender,smoker,coverageAmount:Number(cover),annualPremium:selected.planName==="Glod 1 32"?Number(flexPremium):undefined,frequency,coverTillAge:Number(coverTillAge||0),paymentYears:Number(ppt||selected.paymentYears||1)});setQuote(r.data);sessionStorage.setItem("premiumEstimate",JSON.stringify({category:selected.category,coverageAmount:r.data.coverageAmount,yearlyPremium:r.data.annualPremium,planId:selected._id}));}catch(e){alert(err(e));}finally{setLoading(false);}};
+ const calculate=async()=>{if(!selected)return;setSavedQuoteNumber("");setSavedQuoteId("");try{setLoading(true);const r=await api.post<Quote>(`/insurance-plans/${selected._id}/quote`,{age:Number(age),gender,smoker,coverageAmount:Number(cover),annualPremium:selected.productGroup==="Traditional Products"?Number(flexPremium):undefined,frequency,coverTillAge:Number(coverTillAge||0),paymentYears:Number(ppt||selected.paymentYears||1)});setQuote(r.data);sessionStorage.setItem("premiumEstimate",JSON.stringify({category:selected.category,coverageAmount:r.data.coverageAmount,yearlyPremium:r.data.annualPremium,planId:selected._id}));}catch(e){alert(err(e));}finally{setLoading(false);}};
  return <div className="calculator-page smart-quote-page"><div className="calculator-shell smart-quote-shell">
   <header className="calculator-header"><Link className="public-brand" to="/"><span>S</span>SecureLife</Link><button type="button" onClick={backToPortal} className="mini-btn">Back to portal</button></header>
   <div className="calculator-intro"><span className="eyebrow">SMART QUOTES</span><h1>Plan-specific insurance quotation</h1><p>Select a product, enter customer details and get premium by age, cover, payment frequency and plan rules.</p></div>
@@ -53,8 +53,8 @@ export default function PremiumCalculator(){
    <input type="date" aria-label="Date of Birth" value={dob} onChange={e=>changeDob(e.target.value)} />
    <input type="number" min={selected.ageMin||1} max={selected.ageMax||100} placeholder="Age" value={age} onChange={e=>setAge(e.target.value)}/>
    <select value={gender} onChange={e=>setGender(e.target.value)}><option>Male</option><option>Female</option><option>Other</option></select>
-   {selected.planName==="Glod 1 32"
-    ? <input type="number" min={30000} step={1000} placeholder="Annual Premium (Minimum ₹30,000)" value={flexPremium} onChange={e=>{setFlexPremium(e.target.value);setQuote(null);}}/>
+   {selected.productGroup==="Traditional Products"
+    ? <input type="number" min={30000} step={1000} placeholder="Premium Amount (Minimum ₹30,000)" value={flexPremium} onChange={e=>{setFlexPremium(e.target.value);setQuote(null);}}/>
     : <input type="number" placeholder="Sum Assured / Benefit Cover" value={cover} onChange={e=>setCover(e.target.value)}/>} 
    {availableMaturityAges.length>0&&<select aria-label="Cover till age" value={coverTillAge} onChange={e=>{setCoverTillAge(e.target.value);setQuote(null);}}><option value="">Cover Till Age</option>{availableMaturityAges.map(x=><option key={x} value={x}>Cover till age {x} ({x-Number(age)} years)</option>)}</select>}
    <select aria-label="Premium paying term" value={ppt} onChange={e=>{setPpt(e.target.value);setQuote(null);}}>{availablePpts.map(x=><option key={x} value={x}>Pay premium for {x} years</option>)}</select>
