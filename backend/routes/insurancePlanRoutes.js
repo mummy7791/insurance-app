@@ -183,10 +183,13 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const payoutYears = Math.max(0, Number(benefitRules.payoutYears || 0));
     const annualPayout = Math.max(0, Number(benefitRules.annualPayout || 0));
     const benefitSchedule = payoutYears && annualPayout ? Array.from({length:payoutYears},(_,i)=>({policyYear:payoutStartYear+i,amount:annualPayout,type:benefitType})) : [];
-    const maturityAmount = Math.max(0, Number(benefitRules.maturityAmount || 0));
+    const configuredMaturityAmount = Math.max(0, Number(benefitRules.maturityAmount || 0));
+    const returnOfPremium = String(benefitType).toLowerCase() === "return of premium";
+    const totalPremium = annual * paymentYears;
+    const maturityAmount = returnOfPremium ? totalPremium : configuredMaturityAmount;
     const deathBenefit = Math.max(0, Number(benefitRules.deathBenefit || cover));
 
-    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium: annual * paymentYears, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
   } catch (error) {
     console.error("Smart quote error:", error);
     res.status(500).json({ message: "Quotation calculation failed" });
