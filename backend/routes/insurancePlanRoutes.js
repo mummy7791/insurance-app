@@ -471,6 +471,59 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       },
 
       {
+        planName: "Glod 1 32",
+        category: "Life Insurance",
+        planType: "Traditional Plan",
+        productGroup: "Traditional Products",
+        coverageAmount: 519500,
+        yearlyPremium: 50000,
+        yearlyAmount: 50000,
+        firstYearPremium: 50000,
+        subsequentYearPremium: 50000,
+        paymentYears: 10,
+        policyTermYears: 10,
+        premiumFrequencies: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
+        premiumPayingTerms: [10],
+        pptPremiumFactors: { "10": 1 },
+        maturityAges: [],
+        pricingRules: {
+          baseAge: 18,
+          ageRatePercent: 0,
+          smokerLoadingPercent: 0,
+          femaleDiscountPercent: 0,
+          premiumAdditionPercent: 0
+        },
+        benefitRules: {
+          benefitType: "Guaranteed Income",
+          payoutStartYear: 1,
+          payoutYears: 10,
+          annualPayout: 6210,
+          maturityAmount: 500000,
+          deathBenefit: 519500
+        },
+        freeLookRules: { enabled: true, days: 15 },
+        ageMin: 18,
+        ageMax: 50,
+        eligibleFrom: "Age 18",
+        eligibleTo: "Age 50",
+        benefits: [
+          "Immediate Income option",
+          "Level Guaranteed Income ₹6,210 yearly",
+          "Simple Bonus",
+          "Sum Assured on Maturity ₹5,00,000",
+          "Sum Assured on Death at inception ₹5,19,500",
+          "Save The Date feature",
+          "Savings Wallet option",
+          "Bonus-linked benefits are non-guaranteed and depend on declared bonuses",
+          "15 Day Free-Look Period"
+        ],
+        coverage: "₹5,19,500 Sum Assured on Death at inception",
+        description: "Traditional participating savings example based on the supplied benefit illustration. Base annual premium ₹50,000 for 10 years. Guaranteed income ₹6,210 yearly. Bonus-linked values are illustrative/non-guaranteed and are not auto-promised by the quotation engine.",
+        premiumMode: "manual",
+        status: "Approved"
+      },
+
+      {
         planName: "Term Insurance",
         category: "Life Insurance",
         planType: "Term Plan",
@@ -676,7 +729,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       defaultPlans.map((plan) => ({
         updateOne: {
           filter: { planName: plan.planName },
-          update: ["IPsmart Plus", "IPsmart Plus ROP"].includes(plan.planName)
+          update: ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32"].includes(plan.planName)
             ? { $set: { ...plan, createdBy: req.user.id } }
             : { $setOnInsert: { ...plan, createdBy: req.user.id } },
           upsert: true,
