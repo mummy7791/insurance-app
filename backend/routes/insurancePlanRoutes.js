@@ -534,6 +534,46 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       },
 
       {
+        planName: "Gift P1 32",
+        category: "Life Insurance",
+        planType: "Traditional Plan",
+        productGroup: "Traditional Products",
+        coverageAmount: 1080000,
+        yearlyPremium: 100000,
+        yearlyAmount: 100000,
+        firstYearPremium: 100000,
+        subsequentYearPremium: 100000,
+        paymentYears: 10,
+        policyTermYears: 15,
+        premiumFrequencies: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
+        premiumPayingTerms: [10],
+        pptPremiumFactors: { "10": 1 },
+        maturityAges: [],
+        pricingRules: { baseAge: 18, ageRatePercent: 0, smokerLoadingPercent: 0, femaleDiscountPercent: 0, premiumAdditionPercent: 0 },
+        benefitRules: { benefitType: "Guaranteed Income", payoutStartYear: 11, payoutYears: 5, annualPayout: 246200, maturityAmount: 0, deathBenefit: 1080000 },
+        freeLookRules: { enabled: true, days: 15 },
+        ageMin: 18,
+        ageMax: 50,
+        eligibleFrom: "Age 18",
+        eligibleTo: "Age 50",
+        benefits: [
+          "Level Guaranteed Income option",
+          "Guaranteed Income start year selectable from policy year 5 to 15",
+          "10 Year Premium Paying Term",
+          "Death sum assured auto-calculated from selected annual premium",
+          "Guaranteed income auto-calculated from selected annual premium and selected income start year",
+          "MoneyBack Benefit 0%",
+          "Low Cover Income Booster: No",
+          "Save The Date: No",
+          "15 Day Free-Look Period"
+        ],
+        coverage: "Flexible cover auto-calculated from annual premium",
+        description: "Traditional guaranteed-income example. Customer selects annual premium and guaranteed-income start year. ₹1,00,000 annual premium with income starting in year 11 uses ₹2,46,200 annual guaranteed income as the configured app example.",
+        premiumMode: "manual",
+        status: "Approved"
+      },
+
+      {
         planName: "Term Insurance",
         category: "Life Insurance",
         planType: "Term Plan",
@@ -739,7 +779,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       defaultPlans.map((plan) => ({
         updateOne: {
           filter: { planName: plan.planName },
-          update: ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32"].includes(plan.planName)
+          update: ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32", "Gift P1 32"].includes(plan.planName)
             ? { $set: { ...plan, createdBy: req.user.id } }
             : { $setOnInsert: { ...plan, createdBy: req.user.id } },
           upsert: true,
