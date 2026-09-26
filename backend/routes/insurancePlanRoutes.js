@@ -676,7 +676,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       defaultPlans.map((plan) => ({
         updateOne: {
           filter: { planName: plan.planName },
-          update: plan.planName === "IPsmart Plus"
+          update: ["IPsmart Plus", "IPsmart Plus ROP"].includes(plan.planName)
             ? { $set: { ...plan, createdBy: req.user.id } }
             : { $setOnInsert: { ...plan, createdBy: req.user.id } },
           upsert: true,
