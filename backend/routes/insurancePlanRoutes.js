@@ -140,10 +140,16 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const requestedPpt = Number(req.body.paymentYears || 0);
     const customerAnnualPremium = Number(req.body.annualPremium || 0);
     const isGlodFlexible = plan.planName === "Glod 1 32";
+    const isGiftFlexible = plan.planName === "Gift P1 32";
+    const isFlexibleTraditional = isGlodFlexible || isGiftFlexible;
+    const incomeStartYear = isGiftFlexible ? Math.min(15, Math.max(5, Number(req.body.incomeStartYear || 11))) : 0;
     const cover = isGlodFlexible && customerAnnualPremium >= 30000
       ? Math.round(customerAnnualPremium * 10.39)
-      : Number(req.body.coverageAmount || plan.coverageAmount || 0);
+      : isGiftFlexible && customerAnnualPremium > 0
+        ? Math.round(customerAnnualPremium * 10.8)
+        : Number(req.body.coverageAmount || plan.coverageAmount || 0);
     if (isGlodFlexible && (!Number.isFinite(customerAnnualPremium) || customerAnnualPremium < 30000)) return res.status(400).json({ message: "Glod 1 32 annual premium starts from ₹30,000" });
+    if (isGiftFlexible && (!Number.isFinite(customerAnnualPremium) || customerAnnualPremium <= 0)) return res.status(400).json({ message: "Enter annual premium for Gift P1 32" });
     if (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100)) return res.status(400).json({ message: "Age is not eligible for this plan" });
     if (!Number.isFinite(cover) || cover <= 0) return res.status(400).json({ message: "Valid coverage amount required" });
     const allowed = Array.isArray(plan.premiumFrequencies) && plan.premiumFrequencies.length ? plan.premiumFrequencies : ["Yearly"];
@@ -167,7 +173,7 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const agePremiums = rules.agePremiums || {};
     const agePremiumValue = Number(agePremiums[String(age)] ?? agePremiums.get?.(String(age)) ?? 0);
     const hasAgePremium = Number.isFinite(agePremiumValue) && agePremiumValue > 0;
-    let annual = isGlodFlexible
+    let annual = isFlexibleTraditional
       ? customerAnnualPremium
       : hasAgePremium
         ? agePremiumValue * (baseCover > 0 ? cover / baseCover : 1)
@@ -189,17 +195,20 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const payoutStartYear = Math.max(0, Number(benefitRules.payoutStartYear || 0));
     const payoutYears = Math.max(0, Number(benefitRules.payoutYears || 0));
     const configuredAnnualPayout = Math.max(0, Number(benefitRules.annualPayout || 0));
-    const guaranteedIncome = isGlodFlexible ? Math.round(annual * 0.1242) : configuredAnnualPayout;
+    const giftStartFactor = isGiftFlexible ? Math.pow(1.08, incomeStartYear - 11) : 1;
+    const guaranteedIncome = isGlodFlexible ? Math.round(annual * 0.1242) : isGiftFlexible ? Math.round(annual * 2.462 * giftStartFactor) : configuredAnnualPayout;
     const immediateIncome = isGlodFlexible ? Math.round(annual * 0.30) : 0;
-    const annualPayout = isGlodFlexible ? guaranteedIncome : configuredAnnualPayout;
-    const benefitSchedule = payoutYears && annualPayout ? Array.from({length:payoutYears},(_,i)=>({policyYear:payoutStartYear+i,amount:annualPayout,type:benefitType})) : [];
+    const annualPayout = isFlexibleTraditional ? guaranteedIncome : configuredAnnualPayout;
+    const effectivePayoutStartYear = isGiftFlexible ? incomeStartYear : payoutStartYear;
+    const effectivePayoutYears = isGiftFlexible ? 5 : payoutYears;
+    const benefitSchedule = effectivePayoutYears && annualPayout ? Array.from({length:effectivePayoutYears},(_,i)=>({policyYear:effectivePayoutStartYear+i,amount:annualPayout,type:benefitType})) : [];
     const configuredMaturityAmount = Math.max(0, Number(benefitRules.maturityAmount || 0));
     const returnOfPremium = String(benefitType).toLowerCase() === "return of premium";
     const totalPremium = annual * paymentYears;
     const maturityAmount = returnOfPremium ? totalPremium : (isGlodFlexible ? Math.round(annual * 10) : configuredMaturityAmount);
-    const deathBenefit = isGlodFlexible ? Math.round(annual * 10.39) : Math.max(0, Number(benefitRules.deathBenefit || cover));
+    const deathBenefit = isGlodFlexible ? Math.round(annual * 10.39) : isGiftFlexible ? Math.round(annual * 10.8) : Math.max(0, Number(benefitRules.deathBenefit || cover));
 
-    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, guaranteedIncome, immediateIncome, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, guaranteedIncome, immediateIncome, incomeStartYear: isGiftFlexible ? incomeStartYear : undefined, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
   } catch (error) {
     console.error("Smart quote error:", error);
     res.status(500).json({ message: "Quotation calculation failed" });
