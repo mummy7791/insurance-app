@@ -369,7 +369,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
         category: "Life Insurance",
         planType: "Term Plan",
         productGroup: "Term / Health Products",
-        coverageAmount: 500000,
+        coverageAmount: 3500000,
         yearlyPremium: 8160,
         yearlyAmount: 8160,
         firstYearPremium: 8160,
