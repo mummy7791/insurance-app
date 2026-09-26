@@ -451,7 +451,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
             "34":29000,"35":30000,"36":31000,"37":32000,"38":32700,"39":33000,"40":34000,"41":35000,
             "42":36000,"43":47000,"44":48000,"45":49000,"46":50000,"47":51000,"48":51880,"49":52000,"50":53000
           },
-          premiumAdditionPercent: 0
+          premiumAdditionPercent: 2
         },
         benefitRules: {
           benefitType: "Return of Premium",
