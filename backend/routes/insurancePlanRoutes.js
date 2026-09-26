@@ -425,6 +425,49 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       },
 
       {
+        planName: "IPsmart Plus ROP",
+        category: "Life Insurance",
+        planType: "Term Plan",
+        productGroup: "Term / Health Products",
+        coverageAmount: 4000000,
+        yearlyPremium: 14000,
+        yearlyAmount: 14000,
+        firstYearPremium: 14000,
+        subsequentYearPremium: 14000,
+        paymentYears: 10,
+        policyTermYears: 40,
+        premiumFrequencies: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
+        premiumPayingTerms: [10],
+        pptPremiumFactors: { "10": 1 },
+        maturityAges: [],
+        pricingRules: {
+          baseAge: 18, ageRatePercent: 0, smokerLoadingPercent: 0, femaleDiscountPercent: 0,
+          agePremiums: {
+            "18":14000,"19":15000,"20":16000,"21":17000,"22":18000,"23":19000,"24":20000,"25":21000,
+            "26":22000,"27":23000,"28":23600,"29":24000,"30":25000,"31":26000,"32":27000,"33":28000,
+            "34":29000,"35":30000,"36":31000,"37":32000,"38":32700,"39":33000,"40":34000,"41":35000,
+            "42":36000,"43":47000,"44":48000,"45":49000,"46":50000,"47":51000,"48":51880,"49":52000,"50":53000
+          },
+          premiumAdditionPercent: 0
+        },
+        benefitRules: {
+          benefitType: "Return of Premium",
+          payoutStartYear: 40,
+          payoutYears: 0,
+          annualPayout: 0,
+          maturityAmount: 0,
+          deathBenefit: 4000000
+        },
+        freeLookRules: { enabled: true, days: 15 },
+        ageMin: 18, ageMax: 50, eligibleFrom: "Age 18", eligibleTo: "Age 50",
+        benefits: ["₹40,00,000 Life Cover","40 Year Policy Term","10 Year Premium Paying Term","Return of premiums paid at maturity","15 Day Free-Look Period"],
+        coverage: "₹40,00,000 Life Cover",
+        description: "IPsmart Plus ROP with admin-provided age-wise annual premium rates. Premiums are payable for 10 years. Maturity benefit is configured as return of premiums paid, subject to the plan terms shown to the customer.",
+        premiumMode: "manual",
+        status: "Approved"
+      },
+
+      {
         planName: "Term Insurance",
         category: "Life Insurance",
         planType: "Term Plan",
