@@ -73,7 +73,7 @@ setForm(p=>({...p,...saved,customerName:saved.customerName||profileRes.data?.nam
   }catch(e){alert(errorMessage(e,"Secure KYC upload failed. Please try again."));}finally{setUploading(false);}
  };
  if(loading)return <MainLayout title="Insurance Proposal" subtitle="Preparing your application"><div className="section"><p>Loading plan and profile...</p></div></MainLayout>; if(!plan)return null;
- const premium=Number(quote?.annualPremium||plan.yearlyPremium||plan.yearlyAmount||0); const displayCover=isBikeInsurance?Number(quote?.idv||0):Number(quote?.coverageAmount||plan.coverageAmount||0); const benefits=Array.isArray(plan.benefits)?plan.benefits.join(" • "):plan.benefits||plan.coverage||"Protection benefits as per plan terms.";
+ const premium=Number(quote?.annualPremium||plan.yearlyPremium||plan.yearlyAmount||0); const benefits=Array.isArray(plan.benefits)?plan.benefits.join(" • "):plan.benefits||plan.coverage||"Protection benefits as per plan terms.";
  return <MainLayout title="Insurance Proposal" subtitle="Complete KYC, nominee and settlement details before payment">
   <div className="payment-progress"><span className="done">1 Plan</span><span className="active">2 Proposal & KYC</span><span>3 Payment</span><span>4 Policy active</span></div>
   {restored&&<div className="proposal-restored"><strong>Saved proposal restored</strong><span>Sensitive KYC numbers and documents must be entered again for your security.</span></div>}
