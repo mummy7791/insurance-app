@@ -21,7 +21,7 @@ export default function Landing() {
             <div className="public-hero-actions">
               <Link to="/register" className="customer-primary-action">Create free account →</Link>
               <Link to="/login" className="public-secondary-action">I already have an account</Link>
-              <a href="/downloads/SecureLife.apk" download="SecureLife.apk" className="public-secondary-action">Download Android App ↓</a>
+              <a href="/SecureLife.apk.apk" download="SecureLife.apk" className="public-secondary-action">Download Android App ↓</a>
             </div>
             <div className="public-trust-row">
               <span>✓ Secure sign-in</span><span>✓ OTP verification</span><span>✓ Digital policy access</span><span>✓ Android app</span>
