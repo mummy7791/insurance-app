@@ -157,8 +157,8 @@ router.post("/:id/quote", auth(), async (req, res) => {
         : Number(req.body.coverageAmount || plan.coverageAmount || 0);
     if (isGlodFlexible && (!Number.isFinite(customerAnnualPremium) || customerAnnualPremium < 30000)) return res.status(400).json({ message: "Glod 1 32 annual premium starts from ₹30,000" });
     if (isGiftFlexible && (!Number.isFinite(customerAnnualPremium) || customerAnnualPremium <= 0)) return res.status(400).json({ message: "Enter annual premium for Gift P1 32" });
-    if (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100)) return res.status(400).json({ message: "Age is not eligible for this plan" });
-    if (!Number.isFinite(cover) || cover <= 0) return res.status(400).json({ message: "Valid coverage amount required" });
+    if (!isBikeInsurance && (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100))) return res.status(400).json({ message: "Age is not eligible for this plan" });
+    if (!isBikeInsurance && (!Number.isFinite(cover) || cover <= 0)) return res.status(400).json({ message: "Valid coverage amount required" });
     if (isSuperStarHealth && ![500000,1000000,1500000,2000000].includes(cover)) return res.status(400).json({ message: "Select ₹5 lakh, ₹10 lakh, ₹15 lakh or ₹20 lakh health cover" });
     const allowed = Array.isArray(plan.premiumFrequencies) && plan.premiumFrequencies.length ? plan.premiumFrequencies : ["Yearly"];
     if (!allowed.includes(frequency)) return res.status(400).json({ message: "Premium frequency is not available for this plan" });
@@ -173,9 +173,9 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const smokerLoading = Math.max(0, Number(rules.smokerLoadingPercent || 0)) / 100;
     const femaleDiscount = Math.max(0, Number(rules.femaleDiscountPercent || 0)) / 100;
     const maturityAges = Array.isArray(plan.maturityAges) ? plan.maturityAges.map(Number).filter(x=>x>age) : [];
-    const selectedMaturityAge = coverTillAge || (maturityAges.length ? maturityAges[0] : age + Number(plan.policyTermYears || plan.paymentYears || 1));
+    const selectedMaturityAge = isBikeInsurance ? 1 : (coverTillAge || (maturityAges.length ? maturityAges[0] : age + Number(plan.policyTermYears || plan.paymentYears || 1)));
     if (maturityAges.length && !maturityAges.includes(selectedMaturityAge)) return res.status(400).json({ message: "Selected cover till age is not available for this plan" });
-    const policyTermYears = isSuperStarHealth && requestedPpt === 3 ? 3 : selectedMaturityAge - age;
+    const policyTermYears = isBikeInsurance ? 1 : (isSuperStarHealth && requestedPpt === 3 ? 3 : selectedMaturityAge - age);
     if (!Number.isFinite(policyTermYears) || policyTermYears < 1) return res.status(400).json({ message: "Policy term is not valid for the selected age" });
     const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
     const paymentYears = requestedPpt || allowedPpts[0];
@@ -196,15 +196,20 @@ router.post("/:id/quote", auth(), async (req, res) => {
     if (!isSuperStarHealth && Number.isFinite(pptFactor) && pptFactor > 0) annual *= pptFactor;
     if (smoker) annual *= 1 + smokerLoading;
     if (gender.toLowerCase() === "female") annual *= 1 - Math.min(femaleDiscount, 0.5);
+    let bikeIdv;
     if (isBikeInsurance) {
       const modelText = `${bikeCompany} ${bikeModel}`.toLowerCase();
       const premiumBike = /hayabusa|ninja|z900|650|390|310|rr 310|interceptor|continental|super meteor|himalayan 450|duke 390/.test(modelText);
       const midBike = /350|400|250|200|220|xpulse|r15|mt-15|ns200|rs200|n250|gixxer|apache rr|duke 200/.test(modelText);
       const vehicleAge = Math.max(0, new Date().getFullYear() - manufacturingYear);
-      const base = premiumBike ? 5200 : midBike ? 3200 : 2200;
-      const ageLoading = 1 + Math.min(vehicleAge, 15) * 0.035;
-      const coverFactor = bikeCoverType === "Third-Party Cover" ? 0.62 : bikeCoverType === "Comprehensive + Nil Dep" ? 1.38 : 1;
-      annual = base * ageLoading * coverFactor;
+      const scooter = /activa|dio|jupiter|ntorq|access|burgman|avenis|fascino|rayzr|aerox|pleasure|destini|xoom|vida|chetak|ather|ola|iqube/.test(modelText);
+      const estimatedNewValue = premiumBike ? 650000 : midBike ? 220000 : scooter ? 115000 : 105000;
+      const depreciation = Math.min(0.75, vehicleAge <= 1 ? vehicleAge * 0.10 : 0.10 + (vehicleAge - 1) * 0.075);
+      bikeIdv = Math.max(20000, Math.round(estimatedNewValue * (1 - depreciation) / 1000) * 1000);
+      const tpBase = premiumBike ? 5200 : midBike ? 3100 : scooter ? 1900 : 2100;
+      const ownDamage = bikeIdv * (premiumBike ? 0.021 : midBike ? 0.018 : 0.016);
+      annual = bikeCoverType === "Third-Party Cover" ? tpBase : tpBase + ownDamage;
+      if (bikeCoverType === "Comprehensive + Nil Dep") annual += bikeIdv * 0.0045;
     }
     annual = Math.max(1, Math.round(annual));
     const divisors = { Yearly: 1, "Half-Yearly": 2, Quarterly: 4, Monthly: 12 };
@@ -230,7 +235,7 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const maturityAmount = returnOfPremium ? totalPremium : (isGlodFlexible ? Math.round(annual * 10) : configuredMaturityAmount);
     const deathBenefit = isGlodFlexible ? Math.round(annual * 10.39) : isGiftFlexible ? Math.round(annual * 10.8) : Math.max(0, Number(benefitRules.deathBenefit || cover));
 
-    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, bikeCompany: isBikeInsurance ? bikeCompany : undefined, bikeModel: isBikeInsurance ? bikeModel : undefined, manufacturingYear: isBikeInsurance ? manufacturingYear : undefined, bikeCoverType: isBikeInsurance ? bikeCoverType : undefined, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, guaranteedIncome, immediateIncome, incomeStartYear: isGiftFlexible ? incomeStartYear : undefined, benefits: plan.benefits || [], disclaimer: "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
+    res.json({ planId: plan._id, planName: plan.planName, productGroup: plan.productGroup || "Other", age, gender, smoker, coverageAmount: cover, bikeCompany: isBikeInsurance ? bikeCompany : undefined, bikeModel: isBikeInsurance ? bikeModel : undefined, manufacturingYear: isBikeInsurance ? manufacturingYear : undefined, bikeCoverType: isBikeInsurance ? bikeCoverType : undefined, idv: isBikeInsurance ? bikeIdv : undefined, coverTillAge:selectedMaturityAge, paymentYears, policyTermYears, frequency, instalmentsPerYear: divisors[frequency] || 1, instalmentPremium, annualPremium: annual, totalPremium, schedule, benefitType, benefitSchedule, maturityAmount, deathBenefit, guaranteedIncome, immediateIncome, incomeStartYear: isGiftFlexible ? incomeStartYear : undefined, benefits: plan.benefits || [], disclaimer: isBikeInsurance ? "Indicative motor quote. IDV and final premium are subject to RC, vehicle details, RTO, NCB, inspection and insurer tariff." : "Indicative quotation based on admin-approved plan rules. Final premium and benefits are subject to proposal review, underwriting and policy terms." });
   } catch (error) {
     console.error("Smart quote error:", error);
     res.status(500).json({ message: "Quotation calculation failed" });
