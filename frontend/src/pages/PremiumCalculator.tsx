@@ -55,7 +55,7 @@ export default function PremiumCalculator(){
    <select value={gender} onChange={e=>setGender(e.target.value)}><option>Male</option><option>Female</option><option>Other</option></select>
    {selected.productGroup==="Traditional Products"
     ? <input type="number" min={30000} step={1000} placeholder="Premium Amount (Minimum ₹30,000)" value={flexPremium} onChange={e=>{setFlexPremium(e.target.value);setQuote(null);}}/>
-    : <input type="number" placeholder="Sum Assured / Benefit Cover" value={cover} onChange={e=>setCover(e.target.value)}/>} 
+    : selected.planName==="Super Star Pl" ? <select value={cover} onChange={e=>{setCover(e.target.value);setQuote(null);}}><option value="500000">5 Lakh Health Cover</option><option value="1000000">10 Lakh Health Cover</option><option value="1500000">15 Lakh Health Cover</option><option value="2000000">20 Lakh Health Cover</option></select> : <input type="number" placeholder="Sum Assured / Benefit Cover" value={cover} onChange={e=>setCover(e.target.value)}/>} 
    {availableMaturityAges.length>0&&<select aria-label="Cover till age" value={coverTillAge} onChange={e=>{setCoverTillAge(e.target.value);setQuote(null);}}><option value="">Cover Till Age</option>{availableMaturityAges.map(x=><option key={x} value={x}>Cover till age {x} ({x-Number(age)} years)</option>)}</select>}
    <select aria-label="Premium paying term" value={ppt} onChange={e=>{setPpt(e.target.value);setQuote(null);}}>{availablePpts.map(x=><option key={x} value={x}>Pay premium for {x} years</option>)}</select>
    <select value={frequency} onChange={e=>setFrequency(e.target.value)}>{(selected.premiumFrequencies?.length?selected.premiumFrequencies:["Yearly"]).map(x=><option key={x}>{x}</option>)}</select>
