@@ -105,16 +105,20 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
       advisorCode: String(proposal.advisorCode || "").trim().toUpperCase().slice(0, 40),
     };
 
+    const plan = await InsurancePlan.findById(req.params.planId);
+    if (!plan) return res.status(404).json({ message: "Plan not found" });
+    const isMotorInsurance = ["Bike Insurance", "Car Insurance"].includes(plan.planName);
+
     const phoneDigits = clean.customerPhone.replace(/\D/g, "");
-    const customerDob = new Date(clean.dateOfBirth);
+    const customerDob = clean.dateOfBirth ? new Date(clean.dateOfBirth) : null;
     const nomineeDob = new Date(clean.nomineeDateOfBirth);
     const today = new Date();
 
     if (!clean.customerName || !clean.customerEmail || !clean.customerPhone || !clean.address ||
-        !clean.dateOfBirth || !clean.nomineeName || !clean.nomineeRelation || !clean.nomineeDateOfBirth ||
+        (!isMotorInsurance && !clean.dateOfBirth) || !clean.nomineeName || !clean.nomineeRelation || !clean.nomineeDateOfBirth ||
         phoneDigits.length < 10 || phoneDigits.length > 15 ||
-        Number.isNaN(customerDob.getTime()) || Number.isNaN(nomineeDob.getTime()) ||
-        customerDob > today || nomineeDob > today ||
+        (!isMotorInsurance && (!customerDob || Number.isNaN(customerDob.getTime()))) || Number.isNaN(nomineeDob.getTime()) ||
+        (!isMotorInsurance && customerDob > today) || nomineeDob > today ||
         !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(clean.panNumber)) {
       return res.status(400).json({ message: "Proposal details are incomplete or invalid" });
     }
@@ -131,12 +135,6 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
     });
     if (requiredKycTypes.some((type) => !uploadedKyc.includes(type))) {
       return res.status(400).json({ message: "Please upload all policyholder and nominee KYC documents before payment" });
-    }
-
-    const plan = await InsurancePlan.findById(req.params.planId);
-
-    if (!plan) {
-      return res.status(404).json({ message: "Plan not found" });
     }
 
     if (!["Approved", "Active"].includes(plan.status)) {
