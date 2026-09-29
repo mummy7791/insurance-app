@@ -55,7 +55,7 @@ setForm(p=>({...p,...saved,customerName:saved.customerName||profileRes.data?.nam
   if(requiredUploads.some(([,f])=>!f)){alert(isMotorInsurance?`Please upload KYC documents, all 4 ${isCarInsurance?"Car":"Bike"} Photos and RC`:"Please upload policyholder and nominee KYC documents");return;}
   if(isMotorInsurance&&(!bikeCompany||!bikeModel||!bikeYear)){alert("Please select bike company, model and manufacturing year");return;} if(isMotorInsurance&&!quote){alert("Please wait for the IDV and premium calculation");return;}
   if(Object.values(uploads).some(f=>f&&f.size>5*1024*1024)){alert("Each KYC file must be 5 MB or smaller");return;}
-  const typeMap:Record<UploadKey,string>={policyholderPhoto:"Customer Photo",aadhaarDocument:"Aadhaar",panDocument:"PAN",addressProof:"Address Proof",nomineePhoto:"Nominee Photo",nomineeAadhaarDocument:"Nominee Aadhaar",nomineePanDocument:"Nominee PAN",bikePhotoFront:"Bike Photo Front",bikePhotoRear:"Bike Photo Rear",bikePhotoLeft:"Bike Photo Left",bikePhotoRight:"Bike Photo Right",bikeRC:"Bike RC"};
+  const typeMap:Record<UploadKey,string>={policyholderPhoto:"Customer Photo",aadhaarDocument:"Aadhaar",panDocument:"PAN",addressProof:"Address Proof",nomineePhoto:"Nominee Photo",nomineeAadhaarDocument:"Nominee Aadhaar",nomineePanDocument:"Nominee PAN",bikePhotoFront:isCarInsurance?"Car Photo Front":"Bike Photo Front",bikePhotoRear:isCarInsurance?"Car Photo Rear":"Bike Photo Rear",bikePhotoLeft:isCarInsurance?"Car Photo Left":"Bike Photo Left",bikePhotoRight:isCarInsurance?"Car Photo Right":"Bike Photo Right",bikeRC:isCarInsurance?"Car RC":"Bike RC"};
   try{
    setUploading(true);
    let uploadRef="";
