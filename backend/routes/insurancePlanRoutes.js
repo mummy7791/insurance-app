@@ -206,7 +206,8 @@ router.post("/:id/quote", auth(), async (req, res) => {
       const estimatedNewValue = premiumBike ? 650000 : midBike ? 220000 : scooter ? 115000 : 105000;
       const depreciation = Math.min(0.75, vehicleAge <= 1 ? vehicleAge * 0.10 : 0.10 + (vehicleAge - 1) * 0.075);
       bikeIdv = Math.max(20000, Math.round(estimatedNewValue * (1 - depreciation) / 1000) * 1000);
-      const tpBase = premiumBike ? 5200 : midBike ? 3100 : scooter ? 1900 : 2100;
+      const yearFactor = 1 + Math.min(vehicleAge, 15) * 0.025;
+      const tpBase = (premiumBike ? 5200 : midBike ? 3100 : scooter ? 1900 : 2100) * yearFactor;
       const ownDamage = bikeIdv * (premiumBike ? 0.021 : midBike ? 0.018 : 0.016);
       annual = bikeCoverType === "Third-Party Cover" ? tpBase : tpBase + ownDamage;
       if (bikeCoverType === "Comprehensive + Nil Dep") annual += bikeIdv * 0.0045;
