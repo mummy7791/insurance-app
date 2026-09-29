@@ -142,6 +142,7 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const isGlodFlexible = plan.planName === "Glod 1 32";
     const isGiftFlexible = plan.planName === "Gift P1 32";
     const isFlexibleTraditional = isGlodFlexible || isGiftFlexible;
+    const isSuperStarHealth = plan.planName === "Super Star Pl";
     const incomeStartYear = isGiftFlexible ? Math.min(15, Math.max(5, Number(req.body.incomeStartYear || 11))) : 0;
     const cover = isGlodFlexible && customerAnnualPremium >= 30000
       ? Math.round(customerAnnualPremium * 10.39)
@@ -152,6 +153,7 @@ router.post("/:id/quote", auth(), async (req, res) => {
     if (isGiftFlexible && (!Number.isFinite(customerAnnualPremium) || customerAnnualPremium <= 0)) return res.status(400).json({ message: "Enter annual premium for Gift P1 32" });
     if (!Number.isFinite(age) || age < Number(plan.ageMin || 0) || age > Number(plan.ageMax ?? 100)) return res.status(400).json({ message: "Age is not eligible for this plan" });
     if (!Number.isFinite(cover) || cover <= 0) return res.status(400).json({ message: "Valid coverage amount required" });
+    if (isSuperStarHealth && ![500000,1000000,1500000,2000000].includes(cover)) return res.status(400).json({ message: "Select ₹5 lakh, ₹10 lakh, ₹15 lakh or ₹20 lakh health cover" });
     const allowed = Array.isArray(plan.premiumFrequencies) && plan.premiumFrequencies.length ? plan.premiumFrequencies : ["Yearly"];
     if (!allowed.includes(frequency)) return res.status(400).json({ message: "Premium frequency is not available for this plan" });
 
@@ -165,11 +167,11 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const maturityAges = Array.isArray(plan.maturityAges) ? plan.maturityAges.map(Number).filter(x=>x>age) : [];
     const selectedMaturityAge = coverTillAge || (maturityAges.length ? maturityAges[0] : age + Number(plan.policyTermYears || plan.paymentYears || 1));
     if (maturityAges.length && !maturityAges.includes(selectedMaturityAge)) return res.status(400).json({ message: "Selected cover till age is not available for this plan" });
-    const policyTermYears = selectedMaturityAge - age;
+    const policyTermYears = isSuperStarHealth && requestedPpt === 3 ? 3 : selectedMaturityAge - age;
     if (!Number.isFinite(policyTermYears) || policyTermYears < 1) return res.status(400).json({ message: "Policy term is not valid for the selected age" });
     const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
     const paymentYears = requestedPpt || allowedPpts[0];
-    if (!allowedPpts.includes(paymentYears) || paymentYears > policyTermYears) return res.status(400).json({ message: "Selected premium paying term is not available for this policy term" });
+    if (!allowedPpts.includes(paymentYears) || (!isSuperStarHealth && paymentYears > policyTermYears)) return res.status(400).json({ message: "Selected premium paying term is not available for this policy term" });
     const agePremiums = rules.agePremiums || {};
     const agePremiumValue = Number(agePremiums[String(age)] ?? agePremiums.get?.(String(age)) ?? 0);
     const hasAgePremium = Number.isFinite(agePremiumValue) && agePremiumValue > 0;
@@ -183,13 +185,15 @@ router.post("/:id/quote", auth(), async (req, res) => {
     annual *= 1 + premiumAdditionPercent;
     const pptFactors = plan.pptPremiumFactors || {};
     const pptFactor = Number(pptFactors[String(paymentYears)] ?? pptFactors.get?.(String(paymentYears)) ?? 1);
-    if (Number.isFinite(pptFactor) && pptFactor > 0) annual *= pptFactor;
+    if (!isSuperStarHealth && Number.isFinite(pptFactor) && pptFactor > 0) annual *= pptFactor;
     if (smoker) annual *= 1 + smokerLoading;
     if (gender.toLowerCase() === "female") annual *= 1 - Math.min(femaleDiscount, 0.5);
     annual = Math.max(1, Math.round(annual));
     const divisors = { Yearly: 1, "Half-Yearly": 2, Quarterly: 4, Monthly: 12 };
     const instalmentPremium = Math.round(annual / (divisors[frequency] || 1));
-    const schedule = Array.from({ length: paymentYears }, (_, i) => ({ policyYear: i + 1, annualPremium: annual, frequency, instalmentPremium }));
+    const schedule = isSuperStarHealth && paymentYears === 3
+      ? [{ policyYear: 1, annualPremium: annual * 3, frequency: "3-Year Upfront", instalmentPremium: annual * 3 }]
+      : Array.from({ length: paymentYears }, (_, i) => ({ policyYear: i + 1, annualPremium: annual, frequency, instalmentPremium }));
     const benefitRules = plan.benefitRules || {};
     const benefitType = String(benefitRules.benefitType || "Life Cover");
     const payoutStartYear = Math.max(0, Number(benefitRules.payoutStartYear || 0));
@@ -583,6 +587,55 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       },
 
       {
+        planName: "Super Star Pl",
+        category: "Health Insurance",
+        planType: "Health Insurance",
+        productGroup: "Term / Health Products",
+        coverageAmount: 500000,
+        yearlyPremium: 10000,
+        yearlyAmount: 10000,
+        firstYearPremium: 10000,
+        subsequentYearPremium: 10000,
+        paymentYears: 1,
+        policyTermYears: 1,
+        premiumFrequencies: ["Yearly", "Half-Yearly", "Quarterly", "Monthly"],
+        premiumPayingTerms: [1, 3],
+        pptPremiumFactors: { "1": 1, "3": 3 },
+        maturityAges: [],
+        pricingRules: {
+          baseAge: 18,
+          ageRatePercent: 0,
+          smokerLoadingPercent: 0,
+          femaleDiscountPercent: 0,
+          premiumAdditionPercent: 0,
+          agePremiums: {
+            "18":10000,"19":11000,"20":12000,"21":13000,"22":14000,"23":15000,"24":16000,"25":17000,
+            "26":20000,"27":21000,"28":22000,"29":23000,"30":24000,"31":25000,"32":26000,"33":27000,
+            "34":28000,"35":29000,"36":30000,"37":31000,"38":32000,"39":33000,"40":34000,"41":35000,
+            "42":36000,"43":47000,"44":48000,"45":49000,"46":50000,"47":51000,"48":51880,"49":52000,"50":53000
+          }
+        },
+        benefitRules: { benefitType: "Custom", payoutStartYear: 0, payoutYears: 0, annualPayout: 0, maturityAmount: 0, deathBenefit: 0 },
+        freeLookRules: { enabled: true, days: 15 },
+        ageMin: 18,
+        ageMax: 50,
+        eligibleFrom: "Age 18",
+        eligibleTo: "Age 50",
+        benefits: [
+          "Health insurance cover selectable at ₹5 lakh, ₹10 lakh, ₹15 lakh or ₹20 lakh",
+          "Age-based premium calculation for ages 18 to 50",
+          "1 Year policy option",
+          "Optional 3-year upfront premium payment",
+          "Yearly, Half-Yearly, Quarterly and Monthly payment frequency",
+          "15 Day Free-Look Period"
+        ],
+        coverage: "₹5,00,000 / ₹10,00,000 / ₹15,00,000 / ₹20,00,000 Health Cover",
+        description: "Super Star Pl health plan using the admin-provided age-wise premium table. ₹5 lakh is the base cover; higher cover premiums scale proportionally from the approved base table.",
+        premiumMode: "manual",
+        status: "Approved"
+      },
+
+      {
         planName: "Term Insurance",
         category: "Life Insurance",
         planType: "Term Plan",
@@ -788,7 +841,7 @@ router.post("/seed-default", auth(["admin"]), async (req, res) => {
       defaultPlans.map((plan) => ({
         updateOne: {
           filter: { planName: plan.planName },
-          update: ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32", "Gift P1 32"].includes(plan.planName)
+          update: ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32", "Gift P1 32", "Super Star Pl"].includes(plan.planName)
             ? { $set: { ...plan, createdBy: req.user.id } }
             : { $setOnInsert: { ...plan, createdBy: req.user.id } },
           upsert: true,
