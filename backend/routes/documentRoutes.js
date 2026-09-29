@@ -34,6 +34,8 @@ const DOCUMENT_TYPES = new Set([
   "Nominee Photo",
   "Nominee Aadhaar",
   "Nominee PAN",
+  "Bike Photo Front", "Bike Photo Rear", "Bike Photo Left", "Bike Photo Right", "Bike RC",
+  "Car Photo Front", "Car Photo Rear", "Car Photo Left", "Car Photo Right", "Car RC",
 ]);
 
 const DOCUMENT_STATUSES = new Set([
