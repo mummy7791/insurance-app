@@ -36,6 +36,7 @@ const PolicyPurchases = lazy(() => import("./pages/PolicyPurchases"));
 const Payment = lazy(() => import("./pages/Payment"));
 const VerifyClaim = lazy(() => import("./pages/VerifyClaim"));
 const Quotations = lazy(() => import("./pages/Quotations"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
           <Route path="/customer-otp-login" element={<CustomerOtpLogin />} />
           <Route path="/premium-calculator" element={<PremiumCalculator />} />
           <Route path="/verify-claim" element={<VerifyClaim />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "advisor"]}><Profile /></ProtectedRoute>} />
