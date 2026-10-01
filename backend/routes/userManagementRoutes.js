@@ -24,7 +24,7 @@ const allowedStatus = ["active", "blocked"];
 router.post("/advisor/request-otp", auth(["admin"]), async (req,res)=>{try{
  const {name,email,phone,advisorCode,address,password,status}=req.body; const cleanEmail=String(email||"").toLowerCase().trim(); const cleanPhone=normalizeIndianMobile(phone);
  if(!name||!cleanEmail||!cleanPhone||!advisorCode||!password) return res.status(400).json({message:"Name, email, phone, advisor code and password are required"});
- if(!/^[6-9]\\d{9}$/.test(cleanPhone)) return res.status(400).json({message:"Enter a valid 10-digit Indian mobile number"});
+ if(!/^[6-9]\d{9}$/.test(cleanPhone)) return res.status(400).json({message:"Enter a valid 10-digit Indian mobile number"});
  if(String(password).length<8) return res.status(400).json({message:"Password must be at least 8 characters"});
  if(await User.findOne({email:cleanEmail})) return res.status(409).json({message:"User already exists with this email"});
  const otp=crypto.randomInt(100000,1000000).toString(); const hashedPassword=await bcrypt.hash(String(password),10);
