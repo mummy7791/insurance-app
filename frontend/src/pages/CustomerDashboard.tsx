@@ -108,6 +108,25 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
+      <section className="securelife-patriotic-hero">
+        <div className="patriotic-hero-copy">
+          <span className="eyebrow">SECURELIFE INSURANCE</span>
+          <h1>Your Protection<br/><strong>Our Responsibility</strong></h1>
+          <p>Trusted protection for a safer tomorrow.</p>
+          <div className="patriotic-search">
+            <span>⌕</span>
+            <input aria-label="Search insurance plans" placeholder="Search plans (e.g. Car, Bike, Health, Term...)" />
+            <Link to="/insurance-plans">Search</Link>
+          </div>
+          <div className="patriotic-quick-links">
+            <Link to="/insurance-plans">🚗 Car</Link><Link to="/insurance-plans">🏍 Bike</Link>
+            <Link to="/insurance-plans">🛡 Health</Link><Link to="/insurance-plans">✈ Travel</Link>
+            <Link to="/insurance-plans">♥ Term Life</Link>
+          </div>
+        </div>
+        <div className="patriotic-emblem" aria-hidden="true">🇮🇳</div>
+      </section>
+
       <div className="customer-welcome customer-welcome-pro">
         <div>
           <span className="eyebrow">SECURELIFE CUSTOMER PORTAL</span>
