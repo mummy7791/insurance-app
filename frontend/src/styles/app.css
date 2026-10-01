@@ -1850,3 +1850,24 @@ body::after {
 .reference-dashboard-columns{padding:0 4px!important;grid-template-columns:minmax(0,2.2fr) minmax(340px,.8fr)!important}
 .reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 @media(max-width:1200px) and (min-width:769px){.sidebar{width:225px!important;min-width:225px!important;padding:16px 14px!important}.main:has(.securelife-reference-hero){margin-left:225px!important;width:calc(100vw - 225px)!important}.sidebar-brand{grid-template-columns:52px 1fr!important}.sidebar-logo{width:52px!important;height:52px!important}.sidebar-title h2{font-size:20px!important}.customer-topnav{gap:18px!important}.securelife-reference-hero{padding-left:28px!important}.reference-hero-copy{width:78%!important}}
+
+
+/* ===== EXACT APPROVED REFERENCE COMPOSITION ===== */
+@media(min-width:769px){
+ .sidebar{width:238px!important;min-width:238px!important;padding:18px 18px!important}
+ .main:has(.securelife-reference-hero){margin-left:238px!important;width:calc(100vw - 238px)!important;padding:0 18px 28px!important}
+}
+.sidebar-brand{grid-template-columns:58px minmax(0,1fr)!important}.sidebar-logo{width:58px!important;height:58px!important}.sidebar-title h2{font-size:23px!important}.sidebar-title small{font-size:11px!important}
+.main:has(.securelife-reference-hero)>.topbar{height:64px!important;min-height:64px!important;margin:0 -18px!important;padding:0 30px!important}.customer-topnav{gap:30px!important}.customer-topnav a{font-size:12px!important}
+.securelife-reference-hero{height:330px!important;min-height:330px!important;margin:0 -18px 0!important;padding:145px 30px 12px!important;background:
+ linear-gradient(100deg,rgba(255,255,255,.70) 0%,rgba(255,255,255,.10) 55%,rgba(255,255,255,.01) 78%),
+ url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center 47%/cover no-repeat!important}
+.securelife-reference-hero:after{display:block!important;height:105px!important;bottom:-34px!important;opacity:.92!important}
+.reference-hero-copy{width:68%!important;max-width:760px!important}.reference-hero-copy h1{font-size:36px!important;line-height:1!important}.reference-hero-copy p{font-size:13px!important;margin:6px 0 12px!important}
+.reference-search{height:44px!important;max-width:740px!important}.reference-search a{font-size:13px!important}.reference-categories{gap:7px!important;margin-top:8px!important;flex-wrap:nowrap!important}.reference-categories a{font-size:11px!important;padding:7px 11px!important}
+.reference-dashboard-columns{grid-template-columns:minmax(0,2.15fr) minmax(330px,.85fr)!important;gap:14px!important;margin:0 auto 18px!important;padding:16px 0 0!important;background:linear-gradient(180deg,#f4fff8,#effbf4)!important}
+.reference-popular,.reference-summary-panel{padding:14px!important;border-radius:15px!important}.reference-section-heading h2{font-size:19px!important}.reference-section-heading p{font-size:11px!important}
+.reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}.reference-plan-card{padding:11px!important}.reference-plan-card h3{font-size:14px!important}.plan-visual{height:95px!important;font-size:55px!important;overflow:hidden!important}.plan-visual img{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important}.family-art{font-size:55px!important}
+.reference-plan-card p{font-size:10px!important;margin:5px 0!important}.reference-plan-card>a{padding:8px!important}
+.reference-summary-cards>a{min-height:92px!important;padding:11px!important}.reference-summary-cards strong{font-size:19px!important}.reference-promo{min-height:105px!important;padding:15px!important}.reference-promo b{font-size:18px!important}
+@media(max-width:1100px) and (min-width:769px){.sidebar{width:218px!important;min-width:218px!important}.main:has(.securelife-reference-hero){margin-left:218px!important;width:calc(100vw - 218px)!important}.reference-hero-copy{width:75%!important}.customer-topnav{gap:15px!important}}
