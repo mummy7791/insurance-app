@@ -2108,3 +2108,10 @@ body::after {
 .reference-plan-card>a{padding:8px!important}
 .reference-summary-cards>a{min-height:92px!important}
 .reference-promo{min-height:112px!important}
+
+
+/* Hide duplicate customer identity card in left sidebar on customer dashboard */
+.main-layout:has(.securelife-reference-hero) .sidebar-user-card,
+body:has(.securelife-reference-hero) .sidebar-user-card{
+  display:none!important;
+}
