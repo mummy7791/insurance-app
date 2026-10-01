@@ -29,7 +29,11 @@ export default function Register() {
       setError("Please enter your name, email, mobile number and password.");
       return;
     }
-    if (!/^[6-9]\\d{9}$/.test(phone)) {\n      setError("Please enter a valid 10-digit Indian mobile number.");\n      return;\n    }\n    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setError("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
       setError("Password must be at least 8 characters with a letter and number.");
       return;
     }
