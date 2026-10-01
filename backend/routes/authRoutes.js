@@ -31,7 +31,7 @@ const authRateLimit = (req, res, next) => {
 };
 
 const User = require("../models/User");
-const sendOTP = require("../services/mailService");
+const { sendSmsOTP, normalizeIndianMobile } = require("../services/smsService");
 const sendEmail = require("../utils/sendEmail");
 const auth = require("../middleware/auth");
 
@@ -51,12 +51,12 @@ const isStrongPassword = (password) =>
   /[A-Za-z]/.test(password) &&
   /\d/.test(password);
 
-const safeSendOTP = async (email, otp) => {
+const safeSendOTP = async (phone, otp) => {
   try {
-    await sendOTP(email, otp);
+    await sendSmsOTP(phone, otp);
     return true;
   } catch (error) {
-    console.error("OTP email sending failed:", error.message);
+    console.error("OTP SMS sending failed:", error.message);
     return false;
   }
 };
@@ -194,8 +194,8 @@ router.post("/register", authRateLimit, async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email and password required" });
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ message: "Name, email, mobile number and password required" });
     }
 
     const normalizedEmail =
@@ -212,13 +212,23 @@ router.post("/register", authRateLimit, async (req, res) => {
       });
     }
 
+    const normalizedPhone = normalizeIndianMobile(phone);
+    if (!/^[6-9]\\d{9}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
+    }
+
+    const phoneExists = await User.findOne({ phone: normalizedPhone });
+    if (phoneExists) {
+      return res.status(409).json({ message: "An account with this mobile number already exists" });
+    }
+
     const otp = generateOtp();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
       email: normalizedEmail,
-      phone: phone || "",
+      phone: normalizedPhone,
       password: hashedPassword,
       role: "customer",
       status: "active",
@@ -228,18 +238,18 @@ router.post("/register", authRateLimit, async (req, res) => {
       permissions: getPermissionsByRole("customer"),
     });
 
-    const emailSent = await safeSendOTP(user.email, otp);
+    const smsSent = await safeSendOTP(user.phone, otp);
 
-    if (!emailSent) {
+    if (!smsSent) {
       return res.status(503).json({
-        message: "Customer registered, but verification email could not be sent. Please retry OTP delivery.",
-        email: user.email,
+        message: "Customer registered, but OTP SMS could not be sent. Please retry OTP delivery.",
+        phone: user.phone,
       });
     }
 
     res.status(201).json({
-      message: "Customer registered. OTP sent to email.",
-      email: user.email,
+      message: "Customer registered. OTP sent to mobile.",
+      phone: user.phone,
     });
   } catch (error) {
     if (
@@ -259,99 +269,62 @@ router.post("/register", authRateLimit, async (req, res) => {
 
 router.post("/send-login-otp", authRateLimit, async (req, res) => {
   try {
-    const email =
-      typeof req.body?.email === "string"
-        ? req.body.email.toLowerCase().trim()
-        : "";
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+    const phone = normalizeIndianMobile(req.body?.phone);
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
     }
 
-    const user = await User.findOne({ email, role: { $in: ["customer", "advisor"] } });
-
-    // Keep the public response generic so this endpoint does not reveal
-    // whether a customer account exists.
+    const user = await User.findOne({ phone, role: { $in: ["customer", "advisor"] } });
     if (!user || (user.status && user.status !== "active")) {
-      return res.json({
-        message: "If an eligible customer account exists, an OTP will be sent.",
-      });
+      return res.json({ message: "If an eligible account exists, an OTP will be sent." });
     }
-
     if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.json({
-        message: "If an eligible customer account exists, an OTP will be sent.",
-      });
+      return res.json({ message: "If an eligible account exists, an OTP will be sent." });
     }
 
     const otp = generateOtp();
-
     user.otp = otp;
     user.otpAttempts = 0;
     user.otpLockedUntil = null;
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    const emailSent = await safeSendOTP(user.email, otp);
-
-    if (!emailSent) {
-      return res.status(503).json({
-        message: "OTP email could not be sent right now. Please try again shortly.",
-      });
+    const smsSent = await safeSendOTP(user.phone, otp);
+    if (!smsSent) {
+      return res.status(503).json({ message: "OTP SMS could not be sent right now. Please try again shortly." });
     }
-
-    return res.json({
-      message: "OTP sent to your registered email.",
-    });
+    return res.json({ message: "OTP sent to your registered mobile number." });
   } catch (error) {
-    console.error("Send login OTP error:", error);
-    return res.status(500).json({ message: "Send login OTP failed" });
+    console.error("Send mobile OTP error:", error);
+    return res.status(500).json({ message: "Send OTP failed" });
   }
 });
 
-router.post("/login-with-otp", authRateLimit, async (req, res) => {
+const verifyMobileOtp = async (req, res) => {
   try {
-    const email =
-      typeof req.body?.email === "string"
-        ? req.body.email.toLowerCase().trim()
-        : "";
-    const otp =
-      typeof req.body?.otp === "string" || typeof req.body?.otp === "number"
-        ? String(req.body.otp).trim()
-        : "";
-
-    if (!email || !otp) {
-      return res.status(400).json({ message: "Invalid email or OTP" });
+    const phone = normalizeIndianMobile(req.body?.phone);
+    const otp = req.body?.otp !== undefined ? String(req.body.otp).trim() : "";
+    if (!/^[6-9]\d{9}$/.test(phone) || !/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ message: "Invalid mobile number or OTP" });
     }
 
-    const user = await User.findOne({ email, role: { $in: ["customer", "advisor"] } });
-
+    const user = await User.findOne({ phone, role: { $in: ["customer", "advisor"] } });
     if (!user || (user.status && user.status !== "active")) {
-      return res.status(401).json({ message: "Invalid email or OTP" });
+      return res.status(401).json({ message: "Invalid mobile number or OTP" });
     }
-
     if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.status(429).json({
-        message: "Too many OTP attempts. Please try again later.",
-      });
+      return res.status(429).json({ message: "Too many OTP attempts. Please try again later." });
     }
 
-    const otpIsValid =
-      user.otp &&
-      user.otp === otp &&
-      user.otpExpires &&
-      user.otpExpires >= new Date();
-
+    const otpIsValid = user.otp && user.otp === otp && user.otpExpires && user.otpExpires >= new Date();
     if (!otpIsValid) {
       user.otpAttempts = (user.otpAttempts || 0) + 1;
-
       if (user.otpAttempts >= 5) {
         user.otpLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
         user.otpAttempts = 0;
       }
-
       await user.save();
-      return res.status(401).json({ message: "Invalid email or OTP" });
+      return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
     user.otp = "";
@@ -364,90 +337,19 @@ router.post("/login-with-otp", authRateLimit, async (req, res) => {
     return res.json({
       token: createToken(user),
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions || getPermissionsByRole(user.role),
+        id: user._id, name: user.name, email: user.email, role: user.role,
+        branch: user.branch || "", phone: user.phone || "", advisorCode: user.advisorCode || "",
+        address: user.address || "", permissions: user.permissions || getPermissionsByRole(user.role),
       },
     });
   } catch (error) {
-    console.error("Customer OTP login error:", error);
-    return res.status(500).json({ message: "OTP login failed" });
+    console.error("Mobile OTP verify error:", error);
+    return res.status(500).json({ message: "OTP verification failed" });
   }
-});
+};
 
-router.post("/verify-otp", authRateLimit, async (req, res) => {
-  try {
-    const email =
-      typeof req.body?.email === "string"
-        ? req.body.email.toLowerCase().trim()
-        : "";
-    const otp =
-      typeof req.body?.otp === "string" || typeof req.body?.otp === "number"
-        ? String(req.body.otp).trim()
-        : "";
-
-    if (!email || !otp) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user || (user.status && user.status !== "active")) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-      return res.status(429).json({
-        message: "Too many OTP attempts. Please try again later.",
-      });
-    }
-
-    const otpIsValid =
-      user.otp &&
-      user.otp === otp &&
-      user.otpExpires &&
-      user.otpExpires >= new Date();
-
-    if (!otpIsValid) {
-      user.otpAttempts = (user.otpAttempts || 0) + 1;
-
-      if (user.otpAttempts >= 5) {
-        user.otpLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
-        user.otpAttempts = 0;
-      }
-
-      await user.save();
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    user.otp = "";
-    user.otpExpires = null;
-    user.otpAttempts = 0;
-    user.otpLockedUntil = null;
-    user.isEmailVerified = true;
-    await user.save();
-
-    return res.json({
-      token: createToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        branch: user.branch || "",
-        phone: user.phone || "",
-        advisorCode: user.advisorCode || "",
-        address: user.address || "",
-        permissions: user.permissions || getPermissionsByRole(user.role),
-      },
-    });
-  } catch (error) {
-    console.error("OTP verify error:", error);
-    return res.status(500).json({ message: "OTP verify failed" });
-  }
-});
+router.post("/login-with-otp", authRateLimit, verifyMobileOtp);
+router.post("/verify-otp", authRateLimit, verifyMobileOtp);
 
 router.post("/change-password", auth(["advisor"]), async(req,res)=>{try{
  const {currentPassword,newPassword}=req.body; if(!isStrongPassword(newPassword)) return res.status(400).json({message:"New password must be at least 8 characters and include a letter and number"});
