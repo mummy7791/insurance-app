@@ -53,6 +53,7 @@ const menuItems: MenuItem[] = [
   { name: "Premiums", path: "/premiums", icon: "₹", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Claims", path: "/claims", icon: "◎", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "KYC & Documents", path: "/documents", icon: "▤", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
+  { name: "Notifications", path: "/notifications", icon: "◉", roles: ["admin", "bm", "unit_manager", "agency_manager", "advisor", "agent"] },
   { name: "Team", path: "/employees", icon: "◌", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
   { name: "Commission", path: "/commission", icon: "%", roles: ["admin", "bm", "unit_manager", "agency_manager", "agent"] },
   { name: "Reports", path: "/reports", icon: "▥", roles: ["admin", "bm", "unit_manager", "agency_manager"] },
