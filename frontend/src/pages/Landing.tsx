@@ -6,6 +6,7 @@ export default function Landing() {
       <header className="public-nav">
         <Link to="/" className="public-brand"><img src="/securelife-logo.jpg" alt="SecureLife Insurance" className="brand-logo-img" /> SecureLife</Link>
         <nav>
+          <a href="#services">Services</a>
           <Link to="/premium-calculator">Premium Calculator</Link>
           <Link to="/login">Sign in</Link>
           <Link to="/register" className="public-nav-cta">Get started</Link>
@@ -36,7 +37,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="public-services">
+        <section className="public-services" id="services">
           <div><span className="eyebrow">ONE ACCOUNT</span><h2>Your insurance journey, connected.</h2></div>
           <div className="public-service-grid">
             <article><span>01</span><h3>Compare plans</h3><p>Review available coverage and premium information before you proceed.</p></article>
@@ -50,7 +51,7 @@ export default function Landing() {
           <Link to="/premium-calculator" className="customer-primary-action">Calculate premium →</Link>
         </section>
       </main>
-      <footer className="public-footer"><strong>SecureLife</strong><span>Digital insurance customer portal</span><Link to="/admin-login">Staff login</Link></footer>
+      <footer className="public-footer"><div><strong>SecureLife</strong><span>Digital insurance customer portal</span></div><div className="public-footer-links"><Link to="/privacy-policy">Privacy Policy</Link><Link to="/verify-claim">Verify Claim Receipt</Link><Link to="/advisor-login">Advisor Login</Link><Link to="/admin-login">Staff Login</Link></div></footer>
     </div>
   );
 }
