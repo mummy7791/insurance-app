@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
+import { confirmFirebasePhoneOtp, sendFirebasePhoneOtp } from "../services/firebasePhone";
 import MainLayout from "../layouts/MainLayout";
 
 type UserRole = "advisor";
@@ -79,8 +80,8 @@ export default function UserManagement() {
     return () => clearTimeout(timer);
   }, [loadUsers,loadBankSubmissions]);
 
-  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor mobile number");}catch(e){console.error(e);const message = typeof e === "object" && e !== null && "response" in e ? String((e as {response?:{data?:{message?:string}}}).response?.data?.message || "OTP send failed. Check the mobile number and SMS service.") : "OTP send failed. Check the mobile number and SMS service.";alert(message);}finally{setOtpBusy(false);}};
-  const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
+  const sendAdvisorOtp=async()=>{const mobile=form.phone.replace(/\D/g,"").slice(-10);if(!form.name||!form.email||!mobile||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}if(!/^[6-9]\d{9}$/.test(mobile)){alert("Enter a valid 10-digit Indian mobile number");return;}try{setOtpBusy(true);await sendFirebasePhoneOtp(mobile);setForm(prev=>({...prev,phone:mobile}));setOtpSent(true);setOtpVerified(false);setVerificationId("");alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert(e instanceof Error?e.message:"Could not send advisor OTP");}finally{setOtpBusy(false);}};
+  const verifyAdvisorOtp=async()=>{if(!/^\d{6}$/.test(otp))return;try{setOtpBusy(true);const idToken=await confirmFirebasePhoneOtp(otp);const r=await api.post<{verificationId:string}>("/user-management/advisor/verify-firebase-phone",{...form,idToken});setVerificationId(r.data.verificationId);setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);const msg=typeof e==="object"&&e!==null&&"response" in e?String((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Invalid or expired OTP"):e instanceof Error?e.message:"Invalid or expired OTP";alert(msg);}finally{setOtpBusy(false);}};
 
   const createUser = async () => {
     if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
@@ -180,6 +181,7 @@ export default function UserManagement() {
       </div>
 
       <div className="section">
+        <div id="firebase-recaptcha" />
         <span className="eyebrow">NEW ADVISOR ACCOUNT</span><h2>Create advisor login</h2><p className="section-copy">Advisor can access only Plans, Commission and their Profile.</p>
 
         <div className="form-grid">
