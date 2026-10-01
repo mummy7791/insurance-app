@@ -33,6 +33,7 @@ export default function InsurancePlans() {
   const [loading, setLoading] = useState(false);
   const [buyingId, setBuyingId] = useState("");
   const [estimate, setEstimate] = useState<{ category?: string; coverageAmount?: number; yearlyPremium?: number } | null>(null);
+  const [error, setError] = useState("");
 
   const fetchPlans = useCallback(async (): Promise<Plan[]> => {
     const res = await api.get<Plan[]>("/insurance-plans");
@@ -51,13 +52,14 @@ export default function InsurancePlans() {
 
     const timer = window.setTimeout(() => {
       setLoading(true);
+      setError("");
 
       void fetchPlans()
         .then((data) => {
           if (active) setPlans(data);
         })
         .catch((error: unknown) => {
-          alert(getErrorMessage(error, "Plans load failed"));
+          if (active) setError(getErrorMessage(error, "Plans load failed"));
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -74,7 +76,6 @@ export default function InsurancePlans() {
     const token = localStorage.getItem("insuranceToken");
 
     if (!token) {
-      alert("Please login first");
       navigate("/login");
       return;
     }
@@ -100,15 +101,17 @@ export default function InsurancePlans() {
 
       <div className="customer-welcome plan-hero"><div><span className="eyebrow">PROTECT WHAT MATTERS</span><h1>Choose cover with confidence.</h1><p>Compare coverage, premium, eligibility and key benefits before you apply.</p></div><button className="customer-primary-action" onClick={() => navigate("/premium-calculator")}>Estimate Premium →</button></div>
 
+      {error && <div className="checkout-inline-error" role="alert">{error} <button className="mini-btn" onClick={() => window.location.reload()}>Retry</button></div>}
+
       {estimate && <div className="estimate-reminder"><div><span className="eyebrow">YOUR PREMIUM ESTIMATE</span><h3>{estimate.category || "Protection plan"}</h3><p>You estimated {estimate.coverageAmount ? `₹${estimate.coverageAmount.toLocaleString("en-IN")} cover` : "your cover"}{estimate.yearlyPremium ? ` at about ₹${estimate.yearlyPremium.toLocaleString("en-IN")} per year` : ""}.</p></div><button className="mini-btn" onClick={() => { sessionStorage.removeItem("premiumEstimate"); setEstimate(null); }}>Dismiss</button></div>}
 
       <div className="section">
         <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="plan-loading-state">Loading protection plans...</div>
         ) : plans.length === 0 ? (
-          <p>No plans found.</p>
+          <div className="plan-empty-state"><strong>No insurance plans are available right now.</strong><span>Please check again later or use the premium calculator.</span><button className="mini-btn" onClick={() => navigate("/premium-calculator")}>Premium Calculator</button></div>
         ) : (
           <div className="insurance-plan-grid">
             {[...plans].sort((a, b) => {
