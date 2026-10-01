@@ -1562,3 +1562,90 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::after { animation: none; }
 }
+
+
+/* ===== FIX: SHOW HERITAGE ART INSIDE REAL PAGE SURFACES =====
+   The dashboard content itself owns the decorative image, so opaque page layers
+   cannot hide it. Cards remain readable and interactive. */
+.main,
+.dashboard-content,
+.content,
+.main-content {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(rgba(247,255,249,.84), rgba(255,255,255,.90)),
+    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%20from%20the%20forecourt.jpg")
+      center 150px / min(82vw, 1120px) auto no-repeat fixed !important;
+}
+
+.main::before,
+.dashboard-content::before,
+.content::before,
+.main-content::before {
+  content: "";
+  position: fixed;
+  left: 260px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: center 130px / min(76vw, 1050px) auto no-repeat;
+  opacity: .22;
+  animation: securelifeSurfaceGallery 36s infinite ease-in-out;
+}
+
+@keyframes securelifeSurfaceGallery {
+  0%, 15% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%20from%20the%20forecourt.jpg");
+  }
+  17%, 32% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Dome%20with%20Lion%20Capital%20of%20Ashoka%2C%20Vidhana%20Soudha%20%2801%29.jpg");
+  }
+  34%, 49% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20bhavan%20IND.jpg");
+  }
+  51%, 66% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%2C%20New%20Delhi%20%282018%29.jpg");
+  }
+  68%, 83% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Back%20of%20Rashtrapati%20Bhavan%2C%20New%20Delhi.jpg");
+  }
+  85%, 100% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Dome%20with%20Lion%20Capital%20of%20Ashoka%2C%20Vidhana%20Soudha%20%2801%29.jpg");
+  }
+}
+
+/* Give the green customer hero a subtle heritage texture too. */
+.customer-welcome-pro {
+  background:
+    linear-gradient(110deg, rgba(20,83,45,.96), rgba(21,128,61,.90) 56%, rgba(34,197,94,.86)),
+    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%20from%20the%20forecourt.jpg")
+      center 43% / cover no-repeat !important;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .main::before,.dashboard-content::before,.content::before,.main-content::before {
+    left: 230px;
+    background-size: 100vw auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .main,.dashboard-content,.content,.main-content {
+    background-position: center 90px !important;
+    background-size: 150vw auto !important;
+  }
+  .main::before,.dashboard-content::before,.content::before,.main-content::before {
+    left: 0;
+    top: 60px;
+    background-position: center 80px;
+    background-size: 145vw auto;
+    opacity: .17;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main::before,.dashboard-content::before,.content::before,.main-content::before { animation: none; }
+}
