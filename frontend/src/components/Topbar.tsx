@@ -9,7 +9,12 @@ type Notice = { _id: string; status: "Unread" | "Read" };
 export default function Topbar({ title, subtitle }: Props) {
   const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
-  const user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  let user: { name?: string; role?: string } = {};
+  try {
+    user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
+  } catch {
+    localStorage.removeItem("insuranceUser");
+  }
   const showNotifications = user.role === "customer";
 
   useEffect(() => {
