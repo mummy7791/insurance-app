@@ -1935,3 +1935,64 @@ body::after {
  .reference-categories{gap:5px!important}.reference-categories a{padding:7px 9px!important;font-size:10px!important}
  .reference-dashboard-columns{grid-template-columns:1fr!important}
 }
+
+
+/* ===== SUPPLIED SCREENSHOT — FINAL FULL PAGE MATCH ===== */
+@media(min-width:769px){
+  .sidebar{
+    width:287px!important;min-width:287px!important;padding:20px 24px!important;
+    background:linear-gradient(180deg,#006a45 0%,#008d50 68%,#00a253 100%)!important;
+    overflow-y:auto!important;overflow-x:hidden!important
+  }
+  .main:has(.securelife-reference-hero){
+    margin-left:287px!important;width:calc(100vw - 287px)!important;padding:0!important;
+    background:#f2fcf7!important;overflow-x:hidden!important
+  }
+  .main:has(.securelife-reference-hero)>.topbar{
+    height:62px!important;min-height:62px!important;margin:0!important;padding:0 56px!important;
+    background:#fff!important;border-bottom:1px solid #edf2ef!important
+  }
+}
+.sidebar-brand{grid-template-columns:64px 1fr!important;gap:14px!important;margin:0 0 28px!important}
+.sidebar-logo{width:64px!important;height:64px!important;border-radius:14px!important}
+.sidebar-title h2{font-size:28px!important;line-height:1!important;letter-spacing:-.8px!important}
+.sidebar-title small{font-size:12px!important;letter-spacing:3px!important;margin-top:8px!important}
+.sidebar-user-card{padding:13px 0 18px!important;margin:0 0 12px!important;background:transparent!important;border-radius:0!important}
+.sidebar-avatar{width:58px!important;height:58px!important;background:#fff!important;color:#087846!important}
+.sidebar-user-card strong{font-size:18px!important}.sidebar-user-card small{font-size:14px!important}
+.sidebar>a{min-height:52px!important;padding:0 14px!important;margin:2px 0!important;border-radius:10px!important;font-size:15px!important}
+.sidebar>a.active-link{background:rgba(255,255,255,.17)!important}
+.customer-logout-link{width:100%!important;border:0!important;background:transparent!important;color:#fff!important;text-align:left!important;padding:14px 15px!important;font:inherit!important;font-size:15px!important;cursor:pointer!important}
+.customer-logout-link span{font-size:20px!important;margin-right:14px!important}
+.sidebar-secure-card{margin-top:14px!important;padding:15px 14px!important;border-radius:12px!important;background:#f5fff9!important;color:#073f2d!important;text-align:center!important}
+.sidebar-secure-card b{display:block!important;font-size:14px!important;margin-bottom:5px!important}.sidebar-secure-card small{font-size:11px!important;line-height:1.45!important;color:#385c50!important}
+.customer-topnav{gap:42px!important}.customer-topnav a{font-size:13px!important;font-weight:700!important}.customer-topnav a:first-child:after{bottom:-18px!important}
+.securelife-reference-hero{
+  height:438px!important;min-height:438px!important;margin:0!important;padding:180px 37px 14px!important;border-radius:0!important;overflow:hidden!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,0) 0 43%,rgba(245,255,249,.20) 58%,rgba(245,255,249,.96) 100%),
+    url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center 43%/cover no-repeat!important
+}
+.securelife-reference-hero:after{display:block!important;height:135px!important;bottom:-18px!important;opacity:.98!important;z-index:1!important}
+.reference-hero-copy{position:relative!important;z-index:5!important;width:72%!important;max-width:840px!important}
+.reference-hero-copy h1{font-size:43px!important;line-height:1.02!important;margin:0 0 8px!important;letter-spacing:-1.2px!important}
+.reference-hero-copy p{font-size:15px!important;margin:0 0 14px!important}
+.reference-search{height:51px!important;max-width:840px!important;margin:0!important;border-radius:12px!important;background:rgba(255,255,255,.94)!important}
+.reference-search a{min-width:132px!important;border-radius:11px!important;font-size:14px!important}
+.reference-categories{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;margin-top:10px!important;overflow:visible!important}
+.reference-categories a{min-height:39px!important;padding:8px 13px!important;border-radius:20px!important;font-size:12px!important;background:rgba(255,255,255,.94)!important}
+.reference-dashboard-columns{
+  display:grid!important;grid-template-columns:minmax(0,2.15fr) minmax(355px,.85fr)!important;gap:16px!important;
+  width:100%!important;margin:0!important;padding:18px 20px 20px!important;box-sizing:border-box!important;background:#f2fcf7!important
+}
+.reference-popular,.reference-summary-panel{padding:16px!important;border-radius:16px!important;background:#fbfffd!important;border:1px solid #dceee4!important;box-shadow:none!important}
+.reference-section-heading{margin-bottom:12px!important}.reference-section-heading h2{font-size:21px!important;margin:0!important}.reference-section-heading p{font-size:12px!important;margin-top:4px!important}
+.reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+.reference-plan-card{padding:12px!important;border-radius:13px!important;min-width:0!important}.reference-plan-card h3{font-size:15px!important;margin:8px 0!important}
+.plan-visual{height:112px!important;background:#eefaf3!important;border-radius:12px!important}.plan-visual img{width:100%!important;height:100%!important;object-fit:contain!important}
+.reference-plan-card p{font-size:11px!important;margin:5px 0!important;white-space:nowrap!important}.reference-plan-card>a{padding:9px!important;font-size:12px!important;border-radius:9px!important}
+.reference-summary-panel h2{font-size:20px!important}.reference-summary-cards{gap:10px!important}.reference-summary-cards>a{min-height:100px!important;padding:11px!important;border-radius:12px!important}.reference-summary-cards strong{font-size:20px!important}
+.reference-promo{min-height:120px!important;border-radius:13px!important}
+.reference-dashboard-columns ~ *{display:none!important}
+@media(max-width:1200px) and (min-width:769px){.reference-dashboard-columns{grid-template-columns:1fr!important}.reference-categories{gap:4px!important}.reference-categories a{padding:7px 8px!important;font-size:10px!important}}
+@media(max-width:768px){.reference-dashboard-columns ~ *{display:none!important}.sidebar-secure-card{display:none!important}}
