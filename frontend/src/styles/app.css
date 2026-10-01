@@ -2024,3 +2024,40 @@ body::after {
 .reference-categories a{box-shadow:0 4px 12px rgba(0,80,50,.07)!important;border:1px solid rgba(10,128,72,.08)!important}
 .reference-popular,.reference-summary-panel{box-shadow:0 8px 24px rgba(0,85,50,.055)!important}
 .reference-plan-card{box-shadow:0 5px 15px rgba(0,70,45,.055)!important}
+
+
+/* ===== HERO BUILDING BEHIND TITLE — APPROVED LOOK ===== */
+.securelife-reference-hero{
+  position:relative!important;
+  height:440px!important;
+  min-height:440px!important;
+  padding:190px 36px 18px!important;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.14) 48%,rgba(255,255,255,.02) 76%),
+    url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center 48%/cover no-repeat!important;
+}
+.reference-hero-copy{
+  position:relative!important;
+  z-index:8!important;
+  width:72%!important;
+  max-width:850px!important;
+  padding:8px 0 0!important;
+}
+.reference-hero-copy h1{
+  margin:0!important;
+  font-size:44px!important;
+  line-height:1.02!important;
+  letter-spacing:-1.4px!important;
+  text-shadow:0 2px 5px rgba(255,255,255,.65)!important;
+}
+.reference-hero-copy h1 strong{color:#078a4c!important}
+.reference-hero-copy p{
+  margin:8px 0 14px!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  color:#10223d!important;
+  text-shadow:0 1px 4px rgba(255,255,255,.9)!important;
+}
+.securelife-reference-hero:before{z-index:2!important;opacity:.96!important}
+.securelife-reference-hero:after{z-index:3!important;opacity:.94!important}
+.reference-search,.reference-categories{z-index:10!important}
