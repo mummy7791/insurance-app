@@ -1777,3 +1777,29 @@ body::after {
 .reference-dashboard-columns{width:100%!important;box-sizing:border-box!important}
 .reference-popular,.reference-summary-panel{min-width:0!important}
 @media(max-width:1000px) and (min-width:769px){.customer-topnav{gap:14px}.customer-topnav a{font-size:11px}}
+
+
+/* ===== CUSTOMER DASHBOARD GEOMETRY + REAL PHOTO FIX ===== */
+@media(min-width:769px){
+ .sidebar{box-sizing:border-box!important;width:218px!important;min-width:218px!important;padding:18px 14px!important;overflow-x:hidden!important}
+ .main:has(.securelife-reference-hero){box-sizing:border-box!important;margin-left:218px!important;width:calc(100vw - 218px)!important;padding-left:18px!important;padding-right:18px!important}
+}
+.main:has(.securelife-reference-hero)>.topbar{box-sizing:border-box!important;width:auto!important}
+.customer-topnav{padding-left:0!important}
+.securelife-reference-hero{
+ box-sizing:border-box!important;
+ background:
+   linear-gradient(100deg,rgba(255,255,255,.76) 0%,rgba(255,255,255,.34) 43%,rgba(255,255,255,.04) 70%),
+   url("https://qtxasset.com/quartz/qcloud5/media/image/2016-06/6897778652_aa3159a9b7_o_0.jpg?VersionId=wpCrjpxbCp58Qh3h4iWPAeEZHAJVFjyZ") 82% 28%/190px auto no-repeat,
+   url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center 42%/cover no-repeat!important;
+}
+.securelife-reference-hero:before{display:none!important}
+.reference-hero-copy{padding-left:0!important;margin-left:0!important}
+@media(max-width:768px){
+ .securelife-reference-hero{
+   background:
+    linear-gradient(180deg,rgba(255,255,255,.05) 0 38%,rgba(255,255,255,.92) 60% 100%),
+    url("https://qtxasset.com/quartz/qcloud5/media/image/2016-06/6897778652_aa3159a9b7_o_0.jpg?VersionId=wpCrjpxbCp58Qh3h4iWPAeEZHAJVFjyZ") 85% 18%/120px auto no-repeat,
+    url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center top/cover no-repeat!important;
+ }
+}
