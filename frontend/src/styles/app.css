@@ -2115,3 +2115,46 @@ body::after {
 body:has(.securelife-reference-hero) .sidebar-user-card{
   display:none!important;
 }
+
+
+/* ===== CUSTOMER PORTAL GLOBAL ALIGNMENT FIX — 01 OCT 2026 =====
+   Keep every customer page aligned after the fixed sidebar. */
+@media (min-width: 769px){
+  .layout > .main{
+    margin-left:287px!important;
+    width:calc(100vw - 287px)!important;
+    max-width:calc(100vw - 287px)!important;
+    padding:0 20px 28px!important;
+    overflow-x:hidden!important;
+    box-sizing:border-box!important;
+  }
+  .layout > .main > .topbar{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
+  .layout > .main > .section,
+  .layout > .main > .plan-hero,
+  .layout > .main > .customer-welcome,
+  .layout > .main > .cards,
+  .layout > .main > .customer-summary-grid,
+  .layout > .main > .customer-dashboard-grid{
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    box-sizing:border-box!important;
+  }
+}
+/* Sidebar customer identity is already available in the top-right header.
+   Remove duplicate identity block from every customer portal page. */
+.layout .sidebar-user-card{display:none!important;}
+
+/* Prevent plans/policies/quotations content from slipping underneath sidebar. */
+.layout > .main .section,
+.layout > .main .plan-hero{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+}
