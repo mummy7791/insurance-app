@@ -79,8 +79,8 @@ export default function UserManagement() {
     return () => clearTimeout(timer);
   }, [loadUsers,loadBankSubmissions]);
 
-  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor email");}catch(e){console.error(e);alert("OTP send failed / email may already exist");}finally{setOtpBusy(false);}};
-  const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Email verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
+  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert("OTP send failed. Check the mobile number and SMS service.");}finally{setOtpBusy(false);}};
+  const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
 
   const createUser = async () => {
     if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
@@ -155,7 +155,7 @@ export default function UserManagement() {
       title="Advisor Access"
       subtitle="Admin creates advisor login access, profile and account status"
     >
-      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create advisor accounts with email/password login and secure email OTP access.</p></div><div className="admin-summary-metrics"><div><span>Total Advisors</span><strong>{users.filter((u) => u.role === "advisor").length}</strong></div><div><span>Active</span><strong>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
+      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create advisor accounts with email/password login and secure mobile number OTP verification.</p></div><div className="admin-summary-metrics"><div><span>Total Advisors</span><strong>{users.filter((u) => u.role === "advisor").length}</strong></div><div><span>Active</span><strong>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
 
       <div className="cards admin-kpi-grid">
         <div className="card">
@@ -223,7 +223,7 @@ export default function UserManagement() {
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
           <button className="btn small-btn" onClick={sendAdvisorOtp} disabled={otpBusy || otpVerified}>
-            {otpBusy ? "Sending..." : otpSent ? "Resend OTP" : "Send Email OTP"}
+            {otpBusy ? "Sending..." : otpSent ? "Resend OTP" : "Send Number OTP"}
           </button>
           {otpSent && !otpVerified && (
             <>
@@ -240,7 +240,7 @@ export default function UserManagement() {
               </button>
             </>
           )}
-          {otpVerified && <span className="secure-chip">✓ Email verified</span>}
+          {otpVerified && <span className="secure-chip">✓ Number verified</span>}
         </div>
 
         <button
@@ -249,7 +249,7 @@ export default function UserManagement() {
           disabled={creating || !otpVerified}
           style={{ marginTop: 14 }}
         >
-          {creating ? "Creating..." : otpVerified ? "Create Advisor" : "Verify Email First"}
+          {creating ? "Creating..." : otpVerified ? "Create Advisor" : "Verify Number First"}
         </button>
       </div>
 
