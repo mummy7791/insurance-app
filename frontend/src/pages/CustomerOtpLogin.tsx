@@ -30,11 +30,18 @@ export default function CustomerOtpLogin() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (state.phone) setPhone(state.phone);
   }, [state.phone]);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setInterval(() => setResendSeconds((value) => Math.max(value - 1, 0)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
 
   const normalizedPhone = () => phone.replace(/\D/g, "").slice(-10);
 
@@ -46,6 +53,7 @@ export default function CustomerOtpLogin() {
       await sendFirebasePhoneOtp(mobile);
       setPhone(mobile);
       setSent(true);
+      setResendSeconds(30);
       setNotice("A fresh 6-digit OTP was sent to your mobile number.");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : getMessage(error, "Could not send OTP. Please try again.");
@@ -95,8 +103,8 @@ export default function CustomerOtpLogin() {
               <input className="otp-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" autoFocus />
             </div>
             <button className="auth-btn" onClick={() => void verifyOtp()} disabled={loading || otp.length !== 6}>{loading ? "Verifying..." : "Verify & continue"}</button>
-            <button className="auth-text-btn" onClick={() => void sendOtp()} disabled={loading}>Resend OTP</button>
-            <button className="auth-text-btn muted" onClick={() => { setSent(false); setOtp(""); setNotice(""); }}>Use another mobile number</button>
+            <button className="auth-text-btn" onClick={() => void sendOtp()} disabled={loading || resendSeconds > 0}>{resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : "Resend OTP"}</button>
+            <button className="auth-text-btn muted" onClick={() => { setSent(false); setOtp(""); setNotice(""); setError(""); setResendSeconds(0); }}>Use another mobile number</button>
           </>
         )}
 
