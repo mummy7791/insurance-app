@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import api from "../services/api";
+import api, { getErrorMessage } from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
 type UserRole = "advisor";
@@ -79,7 +79,7 @@ export default function UserManagement() {
     return () => clearTimeout(timer);
   }, [loadUsers,loadBankSubmissions]);
 
-  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert("OTP send failed. Check the mobile number and SMS service.");}finally{setOtpBusy(false);}};
+  const sendAdvisorOtp=async()=>{if(!form.name||!form.email||!form.phone||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}try{setOtpBusy(true);const r=await api.post<{verificationId:string;message:string}>("/user-management/advisor/request-otp",form);setVerificationId(r.data.verificationId);setOtpSent(true);setOtpVerified(false);alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert(getErrorMessage(e, "OTP send failed. Check the mobile number and SMS service."));}finally{setOtpBusy(false);}};
   const verifyAdvisorOtp=async()=>{if(!verificationId||!otp.trim())return;try{setOtpBusy(true);await api.post("/user-management/advisor/verify-otp",{verificationId,otp});setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);alert("Invalid or expired OTP");}finally{setOtpBusy(false);}};
 
   const createUser = async () => {
