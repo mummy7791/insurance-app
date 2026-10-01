@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
 type Verification = {
@@ -35,13 +35,13 @@ export default function VerifyClaim() {
 
   const money = (n?: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
-  return <main style={{minHeight:"100vh",background:"#fff7f5",padding:"40px 18px",fontFamily:"Inter,Arial,sans-serif"}}>
-    <section style={{maxWidth:760,margin:"0 auto",background:"#fff",border:"1px solid #f1d5cf",borderRadius:22,overflow:"hidden",boxShadow:"0 18px 50px rgba(120,20,30,.10)"}}>
-      <header style={{background:"#a60a26",color:"#fff",padding:"28px 34px"}}>
+  return <main className="claim-verify-page">
+    <section className="claim-verify-card">
+      <header className="claim-verify-header">
         <div style={{fontSize:24,fontWeight:800}}>SecureLife Insurance</div>
         <div style={{fontSize:12,marginTop:5,opacity:.85}}>CLAIMS & SETTLEMENT SERVICES · RECEIPT VERIFICATION</div>
       </header>
-      <div style={{padding:"34px"}}>
+      <div className="claim-verify-body">
         {loading ? <h2>Verifying receipt…</h2> : data?.verified ? <>
           <div style={{display:"inline-block",padding:"9px 16px",borderRadius:999,background:"#ecfdf5",color:"#047857",fontWeight:800}}>✓ VERIFIED SETTLEMENT RECEIPT</div>
           <h1 style={{margin:"20px 0 8px",color:"#111827"}}>Document verified</h1>
@@ -61,7 +61,7 @@ export default function VerifyClaim() {
           <h1 style={{color:"#111827"}}>Receipt verification failed</h1>
           <p style={{color:"#64748b"}}>{data?.message || "The receipt details do not match a settled claim record."}</p>
         </>}
-      </div>
+      <div className="claim-verify-actions"><Link to="/" className="mini-btn">SecureLife Home</Link><Link to="/login" className="btn small-btn">Customer Login</Link></div></div>
     </section>
   </main>;
 }
