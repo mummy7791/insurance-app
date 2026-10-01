@@ -9,6 +9,10 @@ export default function HelpCenter() {
     ["How do I buy a policy?", "Open Insurance Plans, review the cover and premium, then continue to secure payment. Your policy appears in My Policies after successful payment."],
     ["Where can I track a claim?", "Open Claims to submit a request and view its latest status, amount and remarks."],
     ["How do I upload KYC?", "Open Documents / KYC, select the document type and upload the requested file securely."],
+    ["Where can I download my policy certificate?", "Open My Policies and use Download Policy for the active policy you need."],
+    ["Where can I download a payment receipt?", "Open My Policies or Premiums and use the available receipt download option for the relevant payment."],
+    ["How do I request a nominee or address change?", "Open Policy Services, select your policy and choose the required service request. Complete the requested details and documents before submitting."],
+    ["What can I do if an OTP expires?", "Use Resend OTP after the resend timer becomes available, then enter the latest 6-digit code received on your registered mobile number."],
   ];
   const filtered = faqs.filter(([q, a]) => (q + " " + a).toLowerCase().includes(query.toLowerCase()));
   return <MainLayout title="Help & Support" subtitle="Policyholder assistance and self-service help">
@@ -21,7 +25,7 @@ export default function HelpCenter() {
       <Link to="/documents" className="support-action"><span>🔐</span><strong>KYC Vault</strong><small>Manage secure documents</small></Link>
     </div>
     <div className="section"><div className="section-heading-row"><div><span className="eyebrow">FREQUENTLY ASKED</span><h2>Quick answers</h2></div><span className="secure-chip">Self service</span></div>
-      <div className="faq-list">{filtered.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}{filtered.length === 0 && <p>No matching help topic found.</p>}</div>
+      <div className="faq-list">{filtered.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}{filtered.length === 0 && <div className="support-empty"><strong>No matching help topic found.</strong><span>Try terms like policy, receipt, OTP, KYC, claim or nominee.</span></div>}</div>
     </div>
   </MainLayout>;
 }
