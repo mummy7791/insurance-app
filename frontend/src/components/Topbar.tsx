@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import socket, { connectSocket } from "../services/socket";
 
@@ -47,10 +47,18 @@ export default function Topbar({ title, subtitle }: Props) {
 
   return (
     <div className="topbar">
-      <div className="topbar-title">
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
-      </div>
+      {showNotifications ? (
+        <nav className="customer-topnav" aria-label="Customer navigation">
+          <Link to="/customer-dashboard">Home</Link>
+          <Link to="/insurance-plans">Insurance Plans</Link>
+          <Link to="/policies">My Policies</Link>
+          <Link to="/claims">Claims</Link>
+          <Link to="/premiums">Payments</Link>
+          <Link to="/policy-services">Services</Link>
+        </nav>
+      ) : (
+        <div className="topbar-title"><h2>{title}</h2><p>{subtitle}</p></div>
+      )}
 
       <div className="topbar-actions">
         {showNotifications && <button
