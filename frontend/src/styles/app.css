@@ -2230,3 +2230,24 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 .layout>.main .section>p.section-copy{color:#64748b}
 @media(min-width:769px) and (max-width:1100px){.layout>.main{margin-left:230px!important;width:calc(100vw - 230px)!important;max-width:calc(100vw - 230px)!important;padding:0 16px 24px!important}.support-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:768px){.layout>.main{padding:72px 12px 22px!important;overflow-x:hidden!important}.layout>.main>.topbar{margin:-72px -12px 14px!important;width:calc(100% + 24px)!important;border-radius:0 0 16px 16px!important;padding-left:64px!important}.support-hero,.profile-hero{align-items:flex-start;flex-direction:column;padding:18px}.profile-hero>.secure-chip{margin-left:0}.support-grid{grid-template-columns:1fr}.support-icon{width:52px;height:52px}.layout>.main>.section{padding:18px!important}.layout>.main .form-grid{grid-template-columns:1fr!important}.layout>.main .section .btn.small-btn{width:100%!important;max-width:none}.table-wrap,.kyc-table-wrap{max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch}.reference-dashboard-columns{grid-template-columns:1fr!important;padding:12px!important}.reference-plan-grid{grid-template-columns:1fr!important}}
+
+
+/* ===== FINAL LAYOUT AUDIT: ROLE-SCOPED PORTALS =====
+   Customer uses the wider reference sidebar; staff/advisor retain the standard workspace width. */
+@media (min-width:1101px){
+  .layout.customer-portal>.main{margin-left:287px!important;width:calc(100vw - 287px)!important;max-width:calc(100vw - 287px)!important}
+  .layout.staff-portal>.main,.layout.advisor-portal>.main{margin-left:260px!important;width:calc(100vw - 260px)!important;max-width:calc(100vw - 260px)!important;padding:24px!important}
+  .layout.staff-portal>.sidebar,.layout.advisor-portal>.sidebar{width:260px!important;min-width:260px!important}
+}
+@media (min-width:769px) and (max-width:1100px){
+  .layout.customer-portal>.main,.layout.staff-portal>.main,.layout.advisor-portal>.main{margin-left:230px!important;width:calc(100vw - 230px)!important;max-width:calc(100vw - 230px)!important}
+  .layout.customer-portal>.sidebar,.layout.staff-portal>.sidebar,.layout.advisor-portal>.sidebar{width:230px!important;min-width:230px!important}
+}
+@media (max-width:768px){
+  .layout.customer-portal>.main,.layout.staff-portal>.main,.layout.advisor-portal>.main{margin-left:0!important;width:100%!important;max-width:100%!important}
+}
+.layout.customer-portal .sidebar-user-card{display:none!important}
+.layout.staff-portal .sidebar-user-card,.layout.advisor-portal .sidebar-user-card{display:block!important}
+.layout>.main>*{min-width:0}
+.layout>.main img{max-width:100%}
+.layout>.main .section,.layout>.main .card,.layout>.main .plan-card{min-width:0}
