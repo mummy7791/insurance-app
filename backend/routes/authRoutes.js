@@ -227,7 +227,6 @@ router.post("/register", authRateLimit, async (req, res) => {
       return res.status(409).json({ message: "An account with this mobile number already exists" });
     }
 
-    const otp = generateOtp();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -237,23 +236,14 @@ router.post("/register", authRateLimit, async (req, res) => {
       password: hashedPassword,
       role: "customer",
       status: "active",
-      otp,
-      otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      otp: "",
+      otpExpires: null,
       isEmailVerified: false,
       permissions: getPermissionsByRole("customer"),
     });
 
-    const smsSent = await safeSendOTP(user.phone, otp);
-
-    if (!smsSent) {
-      return res.status(503).json({
-        message: "Customer registered, but OTP SMS could not be sent. Please retry OTP delivery.",
-        phone: user.phone,
-      });
-    }
-
     res.status(201).json({
-      message: "Customer registered. OTP sent to mobile.",
+      message: "Customer registered. Verify your mobile number with Firebase OTP.",
       phone: user.phone,
     });
   } catch (error) {
@@ -269,6 +259,57 @@ router.post("/register", authRateLimit, async (req, res) => {
 
     console.error("Customer register error:", error);
     res.status(500).json({ message: "Customer register failed" });
+  }
+});
+
+router.post("/firebase-phone-login", authRateLimit, async (req, res) => {
+  try {
+    const phone = normalizeIndianMobile(req.body?.phone);
+    const idToken = typeof req.body?.idToken === "string" ? req.body.idToken.trim() : "";
+    if (!/^[6-9]\\d{9}$/.test(phone) || !idToken) {
+      return res.status(400).json({ message: "Valid mobile verification is required" });
+    }
+
+    const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY || "AIzaSyAVdZx21Nf_BSizmRZEwThZppjez8ACvRU";
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+    const firebaseData = await response.json().catch(() => ({}));
+    const firebaseUser = firebaseData?.users?.[0];
+    const verifiedPhone = normalizeIndianMobile(firebaseUser?.phoneNumber || "");
+
+    if (!response.ok || !firebaseUser || verifiedPhone !== phone) {
+      return res.status(401).json({ message: "Firebase mobile verification failed" });
+    }
+
+    const user = await User.findOne({ phone, role: { $in: ["customer", "advisor"] } });
+    if (!user || (user.status && user.status !== "active")) {
+      return res.status(401).json({ message: "No active SecureLife account found for this mobile number" });
+    }
+
+    user.isEmailVerified = true;
+    user.otp = "";
+    user.otpExpires = null;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
+    await user.save();
+
+    return res.json({
+      token: createToken(user),
+      user: {
+        id: user._id, name: user.name, email: user.email, role: user.role,
+        branch: user.branch || "", phone: user.phone || "", advisorCode: user.advisorCode || "",
+        address: user.address || "", permissions: user.permissions || getPermissionsByRole(user.role),
+      },
+    });
+  } catch (error) {
+    console.error("Firebase phone login error:", error);
+    return res.status(500).json({ message: "Firebase mobile verification failed" });
   }
 });
 
