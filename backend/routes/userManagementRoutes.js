@@ -33,6 +33,23 @@ router.post("/advisor/request-otp", auth(["admin"]), async (req,res)=>{try{
  await sendSmsOTP(cleanPhone,otp);
  res.json({message:"OTP sent to advisor mobile number",verificationId:pending._id,phone:cleanPhone});
  }catch(error){console.error("Advisor OTP send error:",error);res.status(500).json({message:"Could not send advisor OTP"});}});
+router.post("/advisor/verify-firebase-phone", auth(["admin"]), async(req,res)=>{try{
+ const {name,email,phone,advisorCode,address,password,status,idToken}=req.body;
+ const cleanEmail=String(email||"").toLowerCase().trim(); const cleanPhone=normalizeIndianMobile(phone);
+ if(!name||!cleanEmail||!cleanPhone||!advisorCode||!password||!idToken) return res.status(400).json({message:"Advisor details and verified mobile token are required"});
+ if(!/^[6-9]\d{9}$/.test(cleanPhone)) return res.status(400).json({message:"Enter a valid 10-digit Indian mobile number"});
+ if(String(password).length<8) return res.status(400).json({message:"Password must be at least 8 characters"});
+ if(await User.findOne({email:cleanEmail})) return res.status(409).json({message:"User already exists with this email"});
+ const firebaseApiKey=process.env.FIREBASE_WEB_API_KEY||"AIzaSyAVdZx21Nf_BSizmRZEwThZppjez8ACvRU";
+ const response=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idToken})});
+ const firebaseData=await response.json().catch(()=>({})); const firebaseUser=firebaseData?.users?.[0]; const verifiedPhone=normalizeIndianMobile(firebaseUser?.phoneNumber||"");
+ if(!response.ok||!firebaseUser||verifiedPhone!==cleanPhone) return res.status(401).json({message:"Firebase mobile verification failed"});
+ const hashedPassword=await bcrypt.hash(String(password),10);
+ await PendingAdvisor.deleteMany({$or:[{email:cleanEmail},{phone:cleanPhone}]});
+ const pending=await PendingAdvisor.create({name:String(name).trim(),email:cleanEmail,phone:cleanPhone,advisorCode,address:address||"",password:hashedPassword,status:status||"active",otp:"VERIFIED",otpExpires:new Date(Date.now()+30*60*1000),verifiedAt:new Date(),expiresAt:new Date(Date.now()+30*60*1000)});
+ res.json({message:"Mobile number verified. You can create the advisor now.",verificationId:pending._id});
+ }catch(error){console.error("Advisor Firebase phone verification error:",error);res.status(500).json({message:"Advisor mobile verification failed"});}});
+
 router.post("/advisor/verify-otp", auth(["admin"]), async(req,res)=>{try{
  const {verificationId,otp}=req.body; const pending=await PendingAdvisor.findById(verificationId);
  if(!pending||pending.expiresAt<new Date()) return res.status(400).json({message:"Verification session expired"});
