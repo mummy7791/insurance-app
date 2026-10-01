@@ -124,22 +124,16 @@ export default function CustomerDashboard() {
             <Link to="/insurance-plans">▣ Pension</Link><Link to="/insurance-plans">▦ All Plans</Link>
           </div>
         </div>
-        <div className="reference-trust-strip">
-          <div><b>🛡</b><strong>Secure Access</strong><small>Safe & Encrypted</small></div>
-          <div><b>▣</b><strong>Digital Services</strong><small>Anytime, Anywhere</small></div>
-          <div><b>🎧</b><strong>24×7 Support</strong><small>We're Here for You</small></div>
-          <div><b>▤</b><strong>Easy Claims</strong><small>Hassle-Free Process</small></div>
-        </div>
-      </section>
+        </section>
 
       <div className="reference-dashboard-columns">
         <section className="reference-popular">
           <div className="reference-section-heading"><div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div><Link to="/insurance-plans">View All Plans →</Link></div>
           <div className="reference-plan-grid">
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual">🚙</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual">🏍️</div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual">👨‍👩‍👧</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual">☂️</div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual plan-car">🚙</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual plan-bike">🏍️</div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual plan-health">👨‍👩‍👧</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual plan-life">☂️</div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
           </div>
         </section>
         <aside className="reference-summary-panel">
