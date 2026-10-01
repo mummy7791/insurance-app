@@ -108,37 +108,29 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
-      <section className="securelife-patriotic-hero">
-        <div className="patriotic-hero-copy">
-          <span className="eyebrow">SECURELIFE INSURANCE</span>
+      <section className="securelife-reference-hero">
+        <div className="reference-hero-copy">
           <h1>Your Protection<br/><strong>Our Responsibility</strong></h1>
-          <p>Trusted protection for a safer tomorrow.</p>
-          <div className="patriotic-search">
+          <p>SecureLife Insurance – Trusted Protection for a Safer Tomorrow.</p>
+          <div className="reference-search">
             <span>⌕</span>
-            <input aria-label="Search insurance plans" placeholder="Search plans (e.g. Car, Bike, Health, Term...)" />
+            <input aria-label="Search insurance plans" placeholder="Search plans (e.g. Car, Bike, Health, Term, etc.)..." />
             <Link to="/insurance-plans">Search</Link>
           </div>
-          <div className="patriotic-quick-links">
+          <div className="reference-categories">
             <Link to="/insurance-plans">🚗 Car</Link><Link to="/insurance-plans">🏍 Bike</Link>
             <Link to="/insurance-plans">🛡 Health</Link><Link to="/insurance-plans">✈ Travel</Link>
-            <Link to="/insurance-plans">♥ Term Life</Link>
+            <Link to="/insurance-plans">♥ Term Life</Link><Link to="/insurance-plans">♟ Child</Link>
+            <Link to="/insurance-plans">▣ Pension</Link><Link to="/insurance-plans">▦ All Plans</Link>
           </div>
         </div>
-        <div className="patriotic-emblem" aria-hidden="true">🇮🇳</div>
+        <div className="reference-trust-strip">
+          <div><b>🛡</b><strong>Secure Access</strong><small>Safe & Encrypted</small></div>
+          <div><b>▣</b><strong>Digital Services</strong><small>Anytime, Anywhere</small></div>
+          <div><b>🎧</b><strong>24×7 Support</strong><small>We're Here for You</small></div>
+          <div><b>▤</b><strong>Easy Claims</strong><small>Hassle-Free Process</small></div>
+        </div>
       </section>
-
-      <div className="customer-welcome customer-welcome-pro">
-        <div>
-          <span className="eyebrow">SECURELIFE CUSTOMER PORTAL</span>
-          <h1>Your protection. One simple dashboard.</h1>
-          <p>Manage policies, upcoming premiums, claims and KYC securely from anywhere.</p>
-          <div className="customer-hero-actions">
-            <Link className="customer-primary-action" to="/insurance-plans">Explore protection plans →</Link>
-            <Link className="customer-secondary-action" to="/policies">View my policies</Link>
-          </div>
-        </div>
-        <div className="protection-shield" aria-hidden="true"><span>✓</span><strong>Protected</strong><small>Secure digital access</small></div>
-      </div>
 
       {loading ? <div className="section"><p>Loading your insurance summary...</p></div> : (
         <>
