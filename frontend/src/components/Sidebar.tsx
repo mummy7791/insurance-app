@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
-import socket from "../services/socket";
 
 type UserRole =
   | "admin"
@@ -18,11 +17,6 @@ type User = {
   email?: string;
   role?: UserRole;
   branch?: string;
-};
-
-type NotificationItem = {
-  _id: string;
-  status: "Unread" | "Read";
 };
 
 const customerMenu = [
@@ -71,7 +65,6 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [unreadCount, setUnreadCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const user: User = useMemo(() => {
@@ -89,51 +82,6 @@ export default function Sidebar() {
     return menuItems.filter((item) => item.roles.includes(role));
   }, [role]);
 
-  useEffect(() => {
-    if (role !== "customer") { setUnreadCount(0); return; }
-    let mounted = true;
-
-    const loadUnreadCount = async () => {
-      try {
-        const res = await api.get<NotificationItem[]>("/notifications");
-        if (!mounted) return;
-
-        const count = res.data.filter((item) => item.status === "Unread").length;
-        setUnreadCount(count);
-      } catch (error) {
-        console.error("Unread notification count error:", error);
-      }
-    };
-
-    void loadUnreadCount();
-
-    const handleNewNotification = (notification: NotificationItem) => {
-      if (notification.status === "Unread") {
-        setUnreadCount((prev) => prev + 1);
-      }
-    };
-
-    const handleNotificationUpdated = (notification: NotificationItem) => {
-      if (notification.status === "Read") {
-        setUnreadCount((prev) => Math.max(prev - 1, 0));
-      }
-    };
-
-    const handleNotificationDeleted = () => {
-      void loadUnreadCount();
-    };
-
-    socket.on("newNotification", handleNewNotification);
-    socket.on("notificationUpdated", handleNotificationUpdated);
-    socket.on("notificationDeleted", handleNotificationDeleted);
-
-    return () => {
-      mounted = false;
-      socket.off("newNotification", handleNewNotification);
-      socket.off("notificationUpdated", handleNotificationUpdated);
-      socket.off("notificationDeleted", handleNotificationDeleted);
-    };
-  }, [role]);
 
   const logout = async () => {
     try {
@@ -198,10 +146,6 @@ export default function Sidebar() {
             <span>
               {item.icon} {item.name}
             </span>
-
-            {item.path === "/notifications" && unreadCount > 0 && (
-              <span className="notify-badge">{unreadCount}</span>
-            )}
           </Link>
         ))}
 
