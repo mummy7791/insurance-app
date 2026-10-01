@@ -1486,3 +1486,27 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 @media(max-width:800px){
   .public-nav .public-brand .brand-logo-img{width:48px;height:48px;flex-basis:48px}
 }
+
+
+/* ===== SECURELIFE LIGHT GOVERNMENT-DOME WATERMARK =====
+   A subtle fixed watermark is visible across public, login, customer,
+   advisor and admin pages without blocking clicks or reducing readability. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Vidhana_Soudha_(Bengaluru)_-_Architectural_close-up_of_the_central_dome_with_the_State_Emblem_of_India.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: min(38vw, 520px) auto;
+  opacity: 0.045;
+  filter: saturate(0.7);
+}
+@media (max-width: 768px) {
+  body::after {
+    background-size: min(72vw, 380px) auto;
+    opacity: 0.04;
+  }
+}
