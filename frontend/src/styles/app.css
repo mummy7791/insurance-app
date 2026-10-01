@@ -2323,3 +2323,7 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 
 /* ===== CUSTOMER PROFILE FEEDBACK ===== */
 .customer-portal .profile-status-banner{margin:14px 0;padding:11px 14px;border:1px solid #d8eadf;border-radius:11px;background:#f4fbf6;color:#166534;font-size:13px;font-weight:800}.customer-portal .profile-hero+.cards{margin-top:14px}.customer-portal .profile-hero~.admin-success-state,.customer-portal .profile-hero~.checkout-inline-error{max-width:100%}
+
+
+/* ===== HELP CENTER SELF-SERVICE EXPANSION ===== */
+.support-empty{display:flex;flex-direction:column;gap:5px;padding:18px;border:1px dashed #b9d8c4;border-radius:12px;background:#f7fcf8;color:#526174}.support-empty strong{color:#10223d}.support-empty span{font-size:12px}.faq-list details p{line-height:1.65}.faq-list details[open]{border-color:#a7d8b8;background:#fbfffc}
