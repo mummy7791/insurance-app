@@ -132,6 +132,28 @@ export default function CustomerDashboard() {
         </div>
       </section>
 
+      <div className="reference-dashboard-columns">
+        <section className="reference-popular">
+          <div className="reference-section-heading"><div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div><Link to="/insurance-plans">View All Plans →</Link></div>
+          <div className="reference-plan-grid">
+            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual">🚙</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual">🏍️</div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual">👨‍👩‍👧</div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
+            <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual">☂️</div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+          </div>
+        </section>
+        <aside className="reference-summary-panel">
+          <div className="reference-section-heading"><h2>Your Insurance Summary</h2><span className="secure-chip">● Secure session</span></div>
+          <div className="reference-summary-cards">
+            <Link to="/policies"><small>Active Policies</small><strong>{activePolicyCount}</strong><span>View policies →</span></Link>
+            <Link to="/insurance-plans"><small>Total Protection</small><strong>{money(totalCoverage)}</strong><span>Explore plans →</span></Link>
+            <Link to="/premiums"><small>Premium Due</small><strong>{money(dueAmount)}</strong><span>Pay now →</span></Link>
+            <Link to="/claims"><small>Open Claims</small><strong>{openClaims.length}</strong><span>Track claims →</span></Link>
+          </div>
+          <Link to="/insurance-plans" className="reference-promo"><b>Protection<br/>for a Brighter<br/>Tomorrow</b><span>Explore Plans →</span></Link>
+        </aside>
+      </div>
+
       {loading ? <div className="section"><p>Loading your insurance summary...</p></div> : (
         <>
           <div className="customer-section-title"><div><span className="eyebrow">AT A GLANCE</span><h2>Your insurance summary</h2></div><span className="secure-chip">● Secure session</span></div>
