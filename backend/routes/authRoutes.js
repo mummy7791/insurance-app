@@ -127,8 +127,8 @@ router.post("/create-staff", auth(["admin"]), async (req, res) => {
     const { name, email, password, role, branch, phone } = req.body;
     const allowedRoles = ["bm", "unit_manager", "agency_manager", "advisor", "agent"];
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: "Name, email, password and role required" });
+    if (!name || !email || !password || !role || !phone) {
+      return res.status(400).json({ message: "Name, email, mobile number, password and role required" });
     }
 
     if (!allowedRoles.includes(role)) {
@@ -137,6 +137,11 @@ router.post("/create-staff", auth(["admin"]), async (req, res) => {
 
     if (!isStrongPassword(password)) {
       return res.status(400).json({ message: "Password must be at least 8 characters and include a letter and number" });
+    }
+
+    const normalizedPhone = normalizeIndianMobile(phone);
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
     }
 
     const otp = generateOtp();
@@ -157,7 +162,7 @@ router.post("/create-staff", auth(["admin"]), async (req, res) => {
     const user = await User.create({
       name,
       email: normalizedEmail,
-      phone: phone || "",
+      phone: normalizedPhone,
       password: hashedPassword,
       role,
       branch: branch || "",
@@ -168,13 +173,13 @@ router.post("/create-staff", auth(["admin"]), async (req, res) => {
       permissions: getPermissionsByRole(role),
     });
 
-    const emailSent = await safeSendOTP(user.email, otp);
-    if (!emailSent) {
-      return res.status(503).json({ message: "Staff created, but verification email could not be sent. Please retry OTP delivery." });
+    const smsSent = await safeSendOTP(user.phone, otp);
+    if (!smsSent) {
+      return res.status(503).json({ message: "Staff created, but OTP SMS could not be sent. Please retry OTP delivery." });
     }
 
     res.json({
-      message: "Staff created. OTP sent to email.",
+      message: "Staff created. OTP sent to mobile.",
       user: {
         id: user._id,
         name: user.name,
@@ -213,7 +218,7 @@ router.post("/register", authRateLimit, async (req, res) => {
     }
 
     const normalizedPhone = normalizeIndianMobile(phone);
-    if (!/^[6-9]\\d{9}$/.test(normalizedPhone)) {
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
       return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
     }
 
@@ -386,7 +391,7 @@ router.post("/login", authRateLimit, async (req, res) => {
     }
 
     if (!user.isEmailVerified) {
-      return res.status(403).json({ message: "Please verify your email with OTP before logging in" });
+      return res.status(403).json({ message: "Please verify your mobile number with OTP before logging in" });
     }
 
     res.json({
