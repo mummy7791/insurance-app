@@ -2327,3 +2327,7 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 
 /* ===== HELP CENTER SELF-SERVICE EXPANSION ===== */
 .support-empty{display:flex;flex-direction:column;gap:5px;padding:18px;border:1px dashed #b9d8c4;border-radius:12px;background:#f7fcf8;color:#526174}.support-empty strong{color:#10223d}.support-empty span{font-size:12px}.faq-list details p{line-height:1.65}.faq-list details[open]{border-color:#a7d8b8;background:#fbfffc}
+
+
+/* ===== INSURANCE PLAN RESILIENCE STATES ===== */
+.plan-loading-state,.plan-empty-state{min-height:150px;display:flex;align-items:center;justify-content:center;border:1px dashed #c7dfcf;border-radius:14px;background:#f8fcf9;color:#526174}.plan-loading-state{font-weight:800}.plan-empty-state{flex-direction:column;gap:7px;text-align:center;padding:24px}.plan-empty-state strong{color:#10223d;font-size:16px}.plan-empty-state span{font-size:12px}.plan-empty-state .mini-btn{margin-top:5px}.customer-portal .checkout-inline-error>.mini-btn{margin-left:10px}
