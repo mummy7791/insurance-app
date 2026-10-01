@@ -34,8 +34,7 @@ const customerMenu = [
   { name: "Premiums", path: "/premiums", icon: "₹" },
   { name: "Claims", path: "/claims", icon: "◎" },
   { name: "KYC & Documents", path: "/documents", icon: "▤" },
-  { name: "Notifications", path: "/notifications", icon: "○" },
-  { name: "My Profile", path: "/customer-profile", icon: "◉" },
+  { name: "Profile", path: "/customer-profile", icon: "●" },
   { name: "Help & Support", path: "/help", icon: "?" },
 ];
 
@@ -206,16 +205,17 @@ export default function Sidebar() {
           </Link>
         ))}
 
-        <hr
-          style={{
-            margin: "20px 0",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}
-        />
-
-        <button className="logout" onClick={logout} style={{ width: "100%" }}>
-          Sign out
-        </button>
+        {role === "customer" ? (
+          <>
+            <button className="customer-logout-link" onClick={logout}><span>↪</span> Logout</button>
+            <div className="sidebar-secure-card">
+              <b>🛡 Secure & Trusted</b>
+              <small>Your data is protected<br/>with bank-level security.</small>
+            </div>
+          </>
+        ) : (
+          <button className="logout" onClick={logout} style={{ width: "100%" }}>Sign out</button>
+        )}
       </aside>
     </>
   );
