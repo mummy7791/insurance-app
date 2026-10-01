@@ -1832,3 +1832,21 @@ body::after {
 .reference-hero-copy{width:70%!important}.reference-hero-copy h1{font-size:39px!important}
 .reference-dashboard-columns{margin-top:0!important}
 @media(max-width:1100px) and (min-width:769px){.sidebar{width:218px!important;min-width:218px!important;padding:16px 13px!important}.main:has(.securelife-reference-hero){margin-left:218px!important;width:calc(100vw - 218px)!important}.sidebar-logo{width:50px!important;height:50px!important}.sidebar-title h2{font-size:21px!important}.sidebar-brand{grid-template-columns:50px minmax(0,1fr)!important;gap:9px!important}}
+
+
+/* ===== CUSTOMER DASHBOARD VISUAL REPAIR ===== */
+@media(min-width:769px){
+ .sidebar{width:255px!important;min-width:255px!important;padding:18px 20px!important}
+ .main:has(.securelife-reference-hero){margin-left:255px!important;width:calc(100vw - 255px)!important;padding:0 18px 28px!important}
+}
+.sidebar-brand{grid-template-columns:62px 1fr!important;gap:12px!important}
+.sidebar-logo{width:62px!important;height:62px!important}
+.sidebar-title h2{font-size:24px!important;letter-spacing:-.6px!important}.sidebar-title small{font-size:11px!important;letter-spacing:2.3px!important}
+.main:has(.securelife-reference-hero)>.topbar{height:78px!important;min-height:78px!important;margin:0 -18px!important;padding:0 32px!important}
+.customer-topnav{gap:34px!important}
+.securelife-reference-hero{height:390px!important;min-height:390px!important;margin:0 -18px 20px!important;padding:188px 38px 22px!important;background-position:center 47%!important}
+.reference-hero-copy{width:72%!important;max-width:850px!important}.reference-hero-copy h1{font-size:42px!important}.reference-hero-copy p{font-size:15px!important;margin-bottom:16px!important}
+.reference-search{height:52px!important}.reference-categories{flex-wrap:nowrap!important;overflow:visible!important;gap:7px!important}.reference-categories a{padding:8px 12px!important;white-space:nowrap!important}
+.reference-dashboard-columns{padding:0 4px!important;grid-template-columns:minmax(0,2.2fr) minmax(340px,.8fr)!important}
+.reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(max-width:1200px) and (min-width:769px){.sidebar{width:225px!important;min-width:225px!important;padding:16px 14px!important}.main:has(.securelife-reference-hero){margin-left:225px!important;width:calc(100vw - 225px)!important}.sidebar-brand{grid-template-columns:52px 1fr!important}.sidebar-logo{width:52px!important;height:52px!important}.sidebar-title h2{font-size:20px!important}.customer-topnav{gap:18px!important}.securelife-reference-hero{padding-left:28px!important}.reference-hero-copy{width:78%!important}}
