@@ -266,7 +266,7 @@ router.post("/firebase-phone-login", authRateLimit, async (req, res) => {
   try {
     const phone = normalizeIndianMobile(req.body?.phone);
     const idToken = typeof req.body?.idToken === "string" ? req.body.idToken.trim() : "";
-    if (!/^[6-9]\\d{9}$/.test(phone) || !idToken) {
+    if (!/^[6-9]\d{9}$/.test(phone) || !idToken) {
       return res.status(400).json({ message: "Valid mobile verification is required" });
     }
 
