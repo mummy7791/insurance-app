@@ -8,21 +8,26 @@ type MainLayoutProps = {
   children: ReactNode;
 };
 
-export default function MainLayout({
-  title,
-  subtitle,
-  children,
-}: MainLayoutProps) {
+export default function MainLayout({ title, subtitle, children }: MainLayoutProps) {
+  let role = "";
+  try {
+    role = JSON.parse(localStorage.getItem("insuranceUser") || "{}")?.role || "";
+  } catch {
+    role = "";
+  }
+
+  const portalClass =
+    role === "customer"
+      ? "customer-portal"
+      : role === "advisor"
+        ? "advisor-portal"
+        : "staff-portal";
+
   return (
-    <div className="layout">
+    <div className={`layout ${portalClass}`}>
       <Sidebar />
-
       <main className="main">
-        <Topbar
-          title={title}
-          subtitle={subtitle}
-        />
-
+        <Topbar title={title} subtitle={subtitle} />
         {children}
       </main>
     </div>
