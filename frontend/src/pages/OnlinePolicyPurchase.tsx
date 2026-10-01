@@ -20,6 +20,7 @@ const errorMessage=(error:unknown,fallback:string)=>typeof error==="object"&&err
 const digits=(v:string)=>v.replace(/\D/g,"");
 const validPan=(v:string)=>/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v.trim().toUpperCase());
 const validAadhaar=(v:string)=>/^\d{12}$/.test(digits(v));
+const validEmail=(v:string)=>{const s=v.trim();const at=s.indexOf("@");const dot=s.lastIndexOf(".");return at>0&&dot>at+1&&dot<s.length-1;};
 const fileLabel=(f:File|null)=>f?f.name:"Choose file";
 
 export default function OnlinePolicyPurchase(){
@@ -48,7 +49,7 @@ setForm(p=>({...p,...saved,customerName:saved.customerName||profileRes.data?.nam
  const continueToPayment=async()=>{
   const required=[form.customerName,form.customerEmail,form.customerPhone,form.address,...(isMotorInsurance?[]:[form.dateOfBirth]),form.aadhaarNumber,form.panNumber,form.accountHolderName,form.bankName,form.accountNumber,form.ifscCode,form.nomineeName,form.nomineeRelation,form.nomineeDateOfBirth,form.nomineePhone,form.nomineeEmail,form.nomineeAddress,form.nomineeAadhaar,form.nomineePan];
   if(required.some(v=>!String(v).trim())||!form.proposalConsent){alert("Please complete policyholder, Aadhaar/PAN KYC, bank, nominee and consent details");return;}
-  if(!validAadhaar(form.aadhaarNumber)||!validAadhaar(form.nomineeAadhaar)||!validPan(form.panNumber)||!validPan(form.nomineePan)){alert("Enter valid 12-digit Aadhaar and PAN details");return;}
+  if(!validEmail(form.customerEmail)||!validEmail(form.nomineeEmail)){alert("Enter valid email IDs for policyholder and nominee");return;} if(!validAadhaar(form.aadhaarNumber)||!validAadhaar(form.nomineeAadhaar)||!validPan(form.panNumber)||!validPan(form.nomineePan)){alert("Enter valid 12-digit Aadhaar and PAN details");return;}
   if(!/^[6-9]\d{9}$/.test(digits(form.customerPhone).slice(-10))||!/^[6-9]\d{9}$/.test(digits(form.nomineePhone).slice(-10))){alert("Enter valid 10-digit Indian mobile numbers for policyholder and nominee");return;}
   if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(form.ifscCode.trim().toUpperCase())){alert("Enter a valid IFSC code");return;}
   const requiredUploads=(Object.entries(uploads) as [UploadKey,File|null][]).filter(([key])=>isMotorInsurance||!["bikePhotoFront","bikePhotoRear","bikePhotoLeft","bikePhotoRight","bikeRC"].includes(key));
