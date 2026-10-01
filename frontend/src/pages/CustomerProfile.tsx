@@ -17,6 +17,7 @@ export default function CustomerProfile() {
   const [profile, setProfile] = useState<CustomerProfileData>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{type:"success"|"error";text:string}|null>(null);
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState("");
@@ -77,7 +78,7 @@ export default function CustomerProfile() {
       }
     } catch (error) {
       console.error("Profile load error:", error);
-      alert("Profile load failed");
+      setMessage({type:"error",text:"Profile could not be loaded. Please try again."});
     } finally {
       setLoading(false);
     }
@@ -101,6 +102,7 @@ export default function CustomerProfile() {
   }, []);
 
   const updateProfile = async () => {
+    setMessage(null);
     try {
       setSaving(true);
 
@@ -111,18 +113,19 @@ export default function CustomerProfile() {
       });
 
       setProfile(res.data);
-      alert("Profile updated");
+      setMessage({type:"success",text:"Profile updated successfully."});
     } catch (error) {
       console.error("Profile update error:", error);
-      alert("Profile update failed");
+      setMessage({type:"error",text:"Profile update failed. Please try again."});
     } finally {
       setSaving(false);
     }
   };
 
   const uploadPhoto = async () => {
+    setMessage(null);
     if (!photo) {
-      alert("Please select photo");
+      setMessage({type:"error",text:"Please select a profile photo first."});
       return;
     }
 
@@ -141,16 +144,17 @@ export default function CustomerProfile() {
       setProfile(res.data);
       setPhoto(null);
       await loadProfilePhoto();
-      alert("Photo uploaded");
+      setMessage({type:"success",text:"Profile photo uploaded successfully."});
     } catch (error) {
       console.error("Photo upload error:", error);
-      alert("Photo upload failed");
+      setMessage({type:"error",text:"Profile photo upload failed."});
     }
   };
 
   const changePassword = async () => {
+    setMessage(null);
     if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(newPassword)) {
-      alert("New password must be at least 8 characters and include a letter and number");
+      setMessage({type:"error",text:"New password must be at least 8 characters and include a letter and number."});
       return;
     }
 
@@ -162,10 +166,10 @@ export default function CustomerProfile() {
 
       setOldPassword("");
       setNewPassword("");
-      alert("Password updated");
+      setMessage({type:"success",text:"Password updated successfully."});
     } catch (error) {
       console.error("Password update error:", error);
-      alert("Password update failed");
+      setMessage({type:"error",text:"Password update failed. Check your current password and try again."});
     }
   };
 
@@ -174,7 +178,8 @@ export default function CustomerProfile() {
       title="Customer Profile"
       subtitle="Manage your personal details, KYC identity and account security"
     >
-      {loading && <p>Loading profile...</p>}
+      {loading && <div className="profile-status-banner">Loading profile...</div>}
+      {message && <div className={message.type === "success" ? "admin-success-state" : "checkout-inline-error"} role="status">{message.text}</div>}
 
       <div className="profile-hero"><div className="profile-avatar-large">{profile.photo && photoUrl ? <img src={photoUrl} alt="" /> : <span>👤</span>}</div><div><span className="eyebrow">POLICYHOLDER ACCOUNT</span><h2>{profile.name || "Customer"}</h2><p>{profile.email || "Verified customer account"}</p></div><span className="secure-chip">✓ Secure account</span></div>
 
