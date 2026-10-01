@@ -1488,25 +1488,89 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body,#root{width:1
 }
 
 
-/* ===== SECURELIFE LIGHT GOVERNMENT-DOME WATERMARK =====
-   A subtle fixed watermark is visible across public, login, customer,
-   advisor and admin pages without blocking clicks or reducing readability. */
+
+
+/* ===== SECURELIFE RESPONSIVE NATIONAL HERITAGE BACKDROP =====
+   Common decorative backdrop for public, login, customer, advisor and admin screens. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(240,253,244,.96), rgba(255,255,255,.94) 48%, rgba(236,253,245,.96)),
+    linear-gradient(90deg, rgba(255,153,51,.06), transparent 35%, rgba(19,136,8,.07));
+}
+
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 2147483000;
+  z-index: -1;
   pointer-events: none;
-  background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Vidhana_Soudha_(Bengaluru)_-_Architectural_close-up_of_the_central_dome_with_the_State_Emblem_of_India.jpg");
   background-repeat: no-repeat;
-  background-position: center center;
-  background-size: min(38vw, 520px) auto;
-  opacity: 0.045;
-  filter: saturate(0.7);
+  background-position: center;
+  background-size: min(74vw, 1180px) auto;
+  opacity: .105;
+  filter: saturate(.9) contrast(.96);
+  animation: securelifeHeritageBackdrop 36s infinite ease-in-out;
+  will-change: opacity, transform, background-image;
 }
-@media (max-width: 768px) {
-  body::after {
-    background-size: min(72vw, 380px) auto;
-    opacity: 0.04;
+
+@keyframes securelifeHeritageBackdrop {
+  0%, 14% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20bhavan%20IND.jpg");
+    opacity: .105; transform: scale(1);
   }
+  16%, 30% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Dome%20with%20Lion%20Capital%20of%20Ashoka%2C%20Vidhana%20Soudha%20%2801%29.jpg");
+    opacity: .11; transform: scale(1.025);
+  }
+  32%, 46% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhawan%20from%20the%20forecourt.jpg");
+    opacity: .10; transform: scale(1);
+  }
+  48%, 62% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%2C%20New%20Delhi%20%282018%29.jpg");
+    opacity: .09; transform: scale(1.02);
+  }
+  64%, 78% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Back%20of%20Rashtrapati%20Bhavan%2C%20New%20Delhi.jpg");
+    opacity: .10; transform: scale(1);
+  }
+  80%, 100% {
+    background-image: url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Dome%20with%20Lion%20Capital%20of%20Ashoka%2C%20Vidhana%20Soudha%20%2801%29.jpg");
+    opacity: .11; transform: scale(1.025);
+  }
+}
+
+/* Keep cards readable while allowing the backdrop to show through softly. */
+.main-content,
+.dashboard-main,
+.customer-main,
+.advisor-main,
+.admin-main {
+  background-color: rgba(255,255,255,.86);
+}
+
+@media (max-width: 1024px) {
+  body::after {
+    background-size: min(92vw, 820px) auto;
+    background-position: center 18%;
+    opacity: .085;
+  }
+}
+
+@media (max-width: 640px) {
+  body::after {
+    background-size: 135vw auto;
+    background-position: center 16%;
+    opacity: .075;
+    animation-duration: 42s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
 }
