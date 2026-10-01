@@ -1685,3 +1685,20 @@ body::after {
  .patriotic-search{margin-top:20px}.patriotic-search input{min-width:0}.patriotic-search a{padding:11px 15px}
  .patriotic-quick-links{gap:7px}.patriotic-quick-links a{font-size:13px;padding:8px 10px}
 }
+
+
+/* ===== CUSTOMER DASHBOARD — REFERENCE LAYOUT V2 ===== */
+.securelife-reference-hero{position:relative;min-height:390px;margin:-18px -24px 22px;padding:155px 34px 22px;overflow:hidden;border-radius:0 0 26px 26px;background:linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(255,255,255,.50) 45%,rgba(245,255,248,.97) 77%),url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Rashtrapati%20Bhavan%20from%20the%20forecourt.jpg") center top/cover no-repeat;box-shadow:0 15px 35px rgba(9,91,54,.10)}
+.securelife-reference-hero:before,.securelife-reference-hero:after{content:"";position:absolute;left:-4%;width:108%;height:58px;border-radius:50%;pointer-events:none;transform:rotate(-2deg)}
+.securelife-reference-hero:before{top:108px;background:rgba(255,153,51,.32);box-shadow:0 34px 0 rgba(255,255,255,.48),0 68px 0 rgba(19,136,8,.24)}
+.securelife-reference-hero:after{bottom:-28px;background:rgba(19,136,8,.18);box-shadow:0 -34px 0 rgba(255,255,255,.45),0 -68px 0 rgba(255,153,51,.20)}
+.reference-hero-copy{position:relative;z-index:2;width:min(780px,72%)}
+.reference-hero-copy h1{font-size:clamp(34px,3.5vw,52px);line-height:.98;margin:0 0 10px;color:#101c32;letter-spacing:-1.7px}.reference-hero-copy h1 strong{color:#087a43}.reference-hero-copy p{font-size:17px;margin:0 0 18px;color:#17233b}
+.reference-search{height:52px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.95);border:1px solid #d6eadf;border-radius:14px;padding:6px 7px 6px 15px;box-shadow:0 8px 22px rgba(7,93,52,.10)}.reference-search input{min-width:0;flex:1;border:0;outline:0;background:transparent;font-size:15px}.reference-search a{padding:11px 28px;border-radius:10px;background:#078747;color:#fff;text-decoration:none;font-weight:800}
+.reference-categories{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.reference-categories a{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.96);border:1px solid #dbece2;color:#163528;text-decoration:none;font-weight:750;box-shadow:0 5px 12px rgba(7,93,52,.06)}
+.reference-trust-strip{position:absolute;right:22px;bottom:20px;z-index:3;width:min(440px,35%);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:15px;background:rgba(255,255,255,.94);border:1px solid #e0ece5;border-radius:18px;box-shadow:0 14px 32px rgba(7,93,52,.12)}.reference-trust-strip div{text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}.reference-trust-strip b{font-size:22px}.reference-trust-strip strong{font-size:12px;color:#10271d}.reference-trust-strip small{font-size:9px;color:#607268}
+.customer-section-title{margin-top:8px}.customer-summary-grid{gap:12px}.customer-summary-card{border-radius:16px!important;background:rgba(255,255,255,.95)!important}.customer-health-grid{gap:12px}.customer-health-card{background:rgba(255,255,255,.94)!important}
+.customer-dashboard-grid .section,.featured-cover,.section{border-radius:18px!important}
+@media(min-width:1100px){.main{padding-top:20px!important}.customer-summary-grid{grid-template-columns:repeat(4,1fr)!important}}
+@media(max-width:1100px){.reference-hero-copy{width:100%}.reference-trust-strip{position:relative;right:auto;bottom:auto;width:100%;margin-top:16px}.securelife-reference-hero{padding-top:125px;min-height:480px}}
+@media(max-width:768px){.securelife-reference-hero{margin:-12px -12px 18px;padding:110px 16px 18px;min-height:520px;border-radius:0 0 22px 22px;background-position:center top}.reference-hero-copy h1{font-size:36px}.reference-hero-copy p{font-size:14px}.reference-search a{padding:10px 14px}.reference-categories{gap:6px}.reference-categories a{font-size:12px;padding:7px 9px}.reference-trust-strip{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}.reference-trust-strip strong{font-size:11px}}
