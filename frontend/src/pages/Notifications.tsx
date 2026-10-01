@@ -76,6 +76,7 @@ export default function Notifications() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | NotificationType>("All");
+  const [feedback, setFeedback] = useState<{type:"success"|"error";text:string}|null>(null);
 
   const user = useMemo<StoredUser>(() => {
     try {
@@ -94,7 +95,7 @@ export default function Notifications() {
       setNotifications(res.data);
     } catch (error) {
       console.error("Notifications load error:", error);
-      alert("Notifications load failed");
+      setFeedback({type:"error",text:"Notifications could not be loaded. Please try again."});
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,7 @@ export default function Notifications() {
       setRecipients(res.data);
     } catch (error) {
       console.error("Notification recipients load error:", error);
-      alert("Customer recipients load failed");
+      setFeedback({type:"error",text:"Customer list could not be loaded."});
     }
   }, []);
 
@@ -154,14 +155,15 @@ export default function Notifications() {
 
   const addNotification = async () => {
     if (!isStaff) return;
+    setFeedback(null);
 
     if (!form.recipientId) {
-      alert("Please select a customer");
+      setFeedback({type:"error",text:"Please select a customer."});
       return;
     }
 
     if (!form.title.trim() || !form.message.trim()) {
-      alert("Title and Message required");
+      setFeedback({type:"error",text:"Title and message are required."});
       return;
     }
 
@@ -181,9 +183,10 @@ export default function Notifications() {
       });
 
       setForm(initialForm);
+      setFeedback({type:"success",text:"Notification sent successfully."});
     } catch (error) {
       console.error("Notification add error:", error);
-      alert("Notification add failed");
+      setFeedback({type:"error",text:"Notification could not be sent."});
     }
   };
 
@@ -198,7 +201,7 @@ export default function Notifications() {
       );
     } catch (error) {
       console.error("Notification update error:", error);
-      alert("Mark read failed");
+      setFeedback({type:"error",text:"Notification could not be marked as read."});
     }
   };
 
@@ -213,7 +216,7 @@ export default function Notifications() {
       setNotifications((prev) => prev.filter((item) => item._id !== id));
     } catch (error) {
       console.error("Notification delete error:", error);
-      alert("Notification delete failed");
+      setFeedback({type:"error",text:"Notification could not be deleted."});
     }
   };
 
@@ -239,6 +242,7 @@ export default function Notifications() {
       title="Notification Center"
       subtitle={isStaff ? "Manage customer alerts and service updates" : "Important updates about your policy, premium, claim and KYC"}
     >
+      {feedback && <div className={feedback.type === "success" ? "admin-success-state" : "checkout-inline-error"} role="status">{feedback.text}</div>}
       <div className="cards">
         <div className="card">
           <h3>Total Alerts</h3>
