@@ -29,12 +29,14 @@ export default function AdminCreateStaff() {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
 
   const createStaff = async () => {
     setSuccess("");
+    setError("");
 
     if (!form.name || !form.email || !form.password || !form.role) {
-      alert("Name, email, password and role required");
+      setError("Name, email, password and role required");
       return;
     }
 
@@ -46,13 +48,13 @@ export default function AdminCreateStaff() {
       setSuccess(res.data.message || "Staff created successfully");
       setForm(initialForm);
 
-      alert("Staff created. OTP sent to email.");
+
     } catch (error: unknown) {
       if (typeof error === "object" && error !== null && "response" in error) {
         const err = error as { response?: { data?: { message?: string } } };
-        alert(err.response?.data?.message || "Staff create failed");
+        setError(err.response?.data?.message || "Staff create failed");
       } else {
-        alert("Staff create failed");
+        setError("Staff create failed");
       }
     } finally {
       setLoading(false);
@@ -64,12 +66,13 @@ export default function AdminCreateStaff() {
       title="Create Staff"
       subtitle="Admin can create BM, Unit Manager, Agency Manager, Advisor and Agent"
     >
-      <div className="section">
-        <h2>Create Staff User</h2>
+      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS MANAGEMENT</span><h2>Create staff access</h2><p>Create controlled SecureLife accounts for operations roles. Credentials and access remain role-based.</p></div><span className="secure-chip">Admin only</span></div>
 
-        {success && (
-          <p style={{ color: "green", fontWeight: 700 }}>{success}</p>
-        )}
+      <div className="section">
+        <span className="eyebrow">NEW STAFF ACCOUNT</span><h2>Create Staff User</h2><p className="section-copy">Enter staff identity, branch and role. The configured verification workflow will be triggered after account creation.</p>
+
+        {success && <div className="admin-success-state">✓ {success}</div>}
+        {error && <div className="checkout-inline-error" role="alert">{error}</div>}
 
         <div className="form-grid">
           <input
