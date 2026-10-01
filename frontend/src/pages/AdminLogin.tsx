@@ -20,15 +20,17 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const login = async () => {
     if (!email || !password) {
-      alert("Email and password required");
+      setError("Email and password required");
       return;
     }
 
     try {
       setLoading(true);
+      setError("");
 
       const res = await api.post<LoginResponse>("/auth/admin-login", {
         email,
@@ -41,7 +43,7 @@ export default function AdminLogin() {
       navigate("/dashboard");
     } catch (error) {
       console.error(error);
-      alert("Admin login failed");
+      setError("Admin login failed. Check your email and password.");
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,7 @@ export default function AdminLogin() {
           <span className="auth-kicker">STAFF SIGN IN</span>
           <h2>Welcome back</h2>
           <p className="auth-form-intro">Use your existing SecureLife staff credentials.</p>
+          {error && <div className="auth-error">{error}</div>}
           <div className="auth-form">
             <label className="auth-field-label">Email address</label>
             <input className="auth-input" type="email" placeholder="Staff email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
@@ -71,7 +74,8 @@ export default function AdminLogin() {
             <button className="auth-btn" onClick={() => void login()} disabled={loading}>{loading ? "Signing in..." : "Sign in to operations"}</button>
           </div>
           <div className="staff-login-note"><strong>Existing account preserved</strong><span>Your admin email and password are not changed by this redesign.</span></div>
-          <p className="auth-links">Advisor account? <Link to="/advisor-login">Advisor Login</Link></p>\n          <p className="auth-links">Customer account? <Link to="/login">Customer Login</Link></p>
+          <p className="auth-links">Advisor account? <Link to="/advisor-login">Advisor Login</Link></p>
+          <p className="auth-links">Customer account? <Link to="/login">Customer Login</Link></p>
         </div>
       </section>
     </div>
