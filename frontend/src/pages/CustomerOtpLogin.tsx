@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { confirmFirebasePhoneOtp, sendFirebasePhoneOtp } from "../services/firebasePhone";
 import "../styles/Auth.css";
 
 type AuthResponse = {
@@ -26,9 +27,9 @@ export default function CustomerOtpLogin() {
   const [phone, setPhone] = useState(state.phone || pendingPhone);
   const [otp, setOtp] = useState("");
   const mode: "verify" | "login" = state.mode || (pendingPhone ? "verify" : "login");
-  const [sent, setSent] = useState(Boolean((state.mode === "verify" && state.phone) || pendingPhone));
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState(sent ? "Verification code sent to your mobile number." : "");
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -42,12 +43,13 @@ export default function CustomerOtpLogin() {
     if (!/^[6-9]\d{9}$/.test(mobile)) return setError("Enter your registered 10-digit mobile number.");
     try {
       setLoading(true); setError(""); setNotice("");
-      await api.post("/auth/send-login-otp", { phone: mobile });
+      await sendFirebasePhoneOtp(mobile);
       setPhone(mobile);
       setSent(true);
       setNotice("A fresh 6-digit OTP was sent to your mobile number.");
     } catch (error: unknown) {
-      setError(getMessage(error, "Could not send OTP. Please try again."));
+      const message = error instanceof Error ? error.message : getMessage(error, "Could not send OTP. Please try again.");
+      setError(message);
     } finally { setLoading(false); }
   };
 
@@ -55,8 +57,8 @@ export default function CustomerOtpLogin() {
     if (!/^\d{6}$/.test(otp)) return setError("Enter the 6-digit OTP from your SMS.");
     try {
       setLoading(true); setError("");
-      const endpoint = mode === "verify" ? "/auth/verify-otp" : "/auth/login-with-otp";
-      const res = await api.post<AuthResponse>(endpoint, { phone: normalizedPhone(), otp });
+      const idToken = await confirmFirebasePhoneOtp(otp);
+      const res = await api.post<AuthResponse>("/auth/firebase-phone-login", { phone: normalizedPhone(), idToken });
       localStorage.setItem("insuranceToken", res.data.token);
       localStorage.setItem("insuranceUser", JSON.stringify(res.data.user));
       sessionStorage.removeItem("pendingVerificationPhone");
@@ -64,7 +66,8 @@ export default function CustomerOtpLogin() {
       const hasEstimate = Boolean(sessionStorage.getItem("premiumEstimate"));
       navigate(res.data.user.role === "advisor" ? "/insurance-plans" : hasEstimate ? "/insurance-plans" : "/customer-dashboard", { replace: true });
     } catch (error: unknown) {
-      setError(getMessage(error, "Invalid or expired OTP."));
+      const message = error instanceof Error ? error.message : getMessage(error, "Invalid or expired OTP.");
+      setError(message);
     } finally { setLoading(false); }
   };
 
@@ -76,6 +79,7 @@ export default function CustomerOtpLogin() {
         <h1>{mode === "verify" ? "Verify your mobile" : "Login with OTP"}</h1>
         <p className="otp-copy">{sent ? <>Enter the 6-digit code sent to <strong>+91 {phone}</strong>.</> : "Enter your registered mobile number and we will send a secure login code."}</p>
 
+        <div id="firebase-recaptcha" />
         {error && <div className="auth-error">{error}</div>}
         {notice && <div className="auth-success">{notice}</div>}
 
