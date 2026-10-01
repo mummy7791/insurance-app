@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../styles/Auth.css";
 
-type AuthResponse = { email?: string; message?: string };
+type AuthResponse = { phone?: string; message?: string };
 
 const errorMessage = (error: unknown) => {
   if (typeof error === "object" && error !== null && "response" in error) {
@@ -25,11 +25,11 @@ export default function Register() {
     const email = form.email.trim().toLowerCase();
     const phone = form.phone.trim();
 
-    if (!name || !email || !form.password) {
-      setError("Please enter your name, email and password.");
+    if (!name || !email || !phone || !form.password) {
+      setError("Please enter your name, email, mobile number and password.");
       return;
     }
-    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
+    if (!/^[6-9]\\d{9}$/.test(phone)) {\n      setError("Please enter a valid 10-digit Indian mobile number.");\n      return;\n    }\n    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
       setError("Password must be at least 8 characters with a letter and number.");
       return;
     }
@@ -39,9 +39,10 @@ export default function Register() {
       const res = await api.post<AuthResponse>("/auth/register", {
         name, email, phone, password: form.password,
       });
-      sessionStorage.setItem("pendingVerificationEmail", res.data.email || email);
+      sessionStorage.setItem("pendingVerificationPhone", res.data.phone || phone);
+      sessionStorage.removeItem("pendingVerificationEmail");
       navigate("/customer-otp-login", {
-        state: { email: res.data.email || email, mode: "verify" },
+        state: { phone: res.data.phone || phone, mode: "verify" },
       });
     } catch (error: unknown) {
       setError(errorMessage(error));
@@ -57,7 +58,7 @@ export default function Register() {
           <span className="auth-badge">SECURE • SIMPLE • DIGITAL</span>
           <h1>Protect what matters most.</h1>
           <p>Create your policyholder account to manage cover, premiums, claims and documents from one secure place.</p>
-          <div className="auth-trust-row"><span>✓ Email verified access</span><span>✓ Secure policy dashboard</span><span>✓ Digital claims support</span></div>
+          <div className="auth-trust-row"><span>✓ Mobile OTP verified access</span><span>✓ Secure policy dashboard</span><span>✓ Digital claims support</span></div>
         </section>
 
         <section className="auth-card modern-auth-card">
@@ -78,11 +79,11 @@ export default function Register() {
             <input className="auth-input" type="password" autoComplete="new-password" placeholder="Minimum 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
 
             <button type="button" className="auth-btn" onClick={() => void register()} disabled={loading}>
-              {loading ? "Creating secure account..." : "Create account & verify email"}
+              {loading ? "Creating secure account..." : "Create account & verify mobile"}
             </button>
           </div>
 
-          <p className="auth-note">We will send a 6-digit verification code to your email.</p>
+          <p className="auth-note">We will send a 6-digit verification code to your mobile number.</p>
           <p className="auth-link">Already registered? <Link to="/login">Sign in</Link></p>
           <p className="auth-link small"><Link to="/admin-login">Staff / Admin login</Link></p>
         </section>
