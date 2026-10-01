@@ -1889,3 +1889,49 @@ body::after {
 .reference-dashboard-columns{grid-template-columns:minmax(0,2.18fr) minmax(355px,.82fr)!important;gap:16px!important;padding:18px 0 0!important}.reference-popular,.reference-summary-panel{padding:16px!important;border:1px solid #d9ebe1!important;box-shadow:0 5px 18px rgba(14,93,58,.04)!important}
 .reference-section-heading h2{font-size:21px!important}.reference-section-heading p{font-size:12px!important}.reference-plan-grid{gap:12px!important}.reference-plan-card{padding:12px!important;border-radius:13px!important}.reference-plan-card h3{font-size:15px!important}.plan-visual{height:112px!important}.reference-plan-card p{font-size:11px!important}.reference-plan-card>a{font-size:12px!important;padding:9px!important}
 .reference-summary-panel h2{font-size:20px!important}.reference-summary-cards{gap:10px!important}.reference-summary-cards>a{min-height:100px!important}.reference-promo{min-height:118px!important}
+
+
+/* ===== FINAL REFERENCE LAYOUT FIX — keep hero controls fully visible ===== */
+@media(min-width:769px){
+  .sidebar{width:268px!important;min-width:268px!important}
+  .main:has(.securelife-reference-hero){margin-left:268px!important;width:calc(100vw - 268px)!important;padding:0!important;overflow-x:hidden!important}
+  .main:has(.securelife-reference-hero)>.topbar{margin:0!important;height:62px!important;min-height:62px!important;padding:0 34px!important}
+}
+.securelife-reference-hero{
+  box-sizing:border-box!important;
+  height:390px!important;
+  min-height:390px!important;
+  margin:0!important;
+  padding:160px 36px 18px!important;
+  overflow:visible!important;
+  border-radius:0!important;
+}
+.reference-hero-copy{position:relative!important;z-index:10!important;width:min(820px,72%)!important}
+.reference-hero-copy h1{font-size:40px!important;line-height:1.02!important;margin:0 0 7px!important}
+.reference-search{height:48px!important;margin-top:12px!important}
+.reference-categories{
+  position:relative!important;
+  z-index:20!important;
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  gap:8px!important;
+  margin-top:10px!important;
+  overflow:visible!important;
+}
+.reference-categories a{display:flex!important;align-items:center!important;min-height:38px!important;padding:8px 13px!important;white-space:nowrap!important}
+.reference-dashboard-columns{
+  position:relative!important;
+  z-index:2!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin:0!important;
+  padding:28px 20px 24px!important;
+  grid-template-columns:minmax(0,2.2fr) minmax(350px,.8fr)!important;
+  background:#f1fbf6!important;
+}
+.reference-popular,.reference-summary-panel{box-sizing:border-box!important}
+.reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(max-width:1200px) and (min-width:769px){
+ .reference-categories{gap:5px!important}.reference-categories a{padding:7px 9px!important;font-size:10px!important}
+ .reference-dashboard-columns{grid-template-columns:1fr!important}
+}
