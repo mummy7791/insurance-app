@@ -5,7 +5,7 @@ import MainLayout from "../layouts/MainLayout";
 export default function HelpCenter() {
   const [query, setQuery] = useState("");
   const faqs = [
-    ["How do I verify my email?", "After registration, enter the 6-digit OTP sent to your registered email. You can resend a fresh OTP from the verification screen."],
+    ["How do I verify my mobile number?", "After registration, enter the 6-digit OTP sent to your registered mobile number. You can request a fresh OTP from the mobile verification screen."],
     ["How do I buy a policy?", "Open Insurance Plans, review the cover and premium, then continue to secure payment. Your policy appears in My Policies after successful payment."],
     ["Where can I track a claim?", "Open Claims to submit a request and view its latest status, amount and remarks."],
     ["How do I upload KYC?", "Open Documents / KYC, select the document type and upload the requested file securely."],
