@@ -1996,3 +1996,31 @@ body::after {
 .reference-dashboard-columns ~ *{display:none!important}
 @media(max-width:1200px) and (min-width:769px){.reference-dashboard-columns{grid-template-columns:1fr!important}.reference-categories{gap:4px!important}.reference-categories a{padding:7px 8px!important;font-size:10px!important}}
 @media(max-width:768px){.reference-dashboard-columns ~ *{display:none!important}.sidebar-secure-card{display:none!important}}
+
+
+/* ===== GENERATED HD REFERENCE — POLISHED FLAGS/TRICOLOR ===== */
+.securelife-reference-hero{
+  isolation:isolate!important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.01) 0 45%,rgba(244,255,249,.18) 58%,rgba(244,255,249,.97) 100%),
+    url("https://www.myindianproducts.com/images/travel/places/rashtrapati-bhavan-delhi-india.png") center 44%/cover no-repeat!important;
+}
+.securelife-reference-hero:before{
+  content:""!important;position:absolute!important;inset:auto -3% -10px -3%!important;height:185px!important;z-index:1!important;pointer-events:none!important;
+  background:
+   radial-gradient(115% 78% at 20% 100%,transparent 56%,rgba(255,153,51,.98) 57% 63%,transparent 64%),
+   radial-gradient(115% 78% at 48% 105%,transparent 56%,rgba(255,255,255,.98) 57% 64%,transparent 65%),
+   radial-gradient(115% 78% at 76% 110%,transparent 55%,rgba(19,136,8,.93) 56% 64%,transparent 65%)!important;
+  transform:rotate(-1deg)!important;
+}
+.securelife-reference-hero:after{
+  content:""!important;position:absolute!important;left:-2%!important;right:-2%!important;bottom:-33px!important;height:150px!important;z-index:2!important;pointer-events:none!important;opacity:.95!important;
+  background:linear-gradient(7deg,transparent 12%,rgba(255,153,51,.95) 13% 24%,rgba(255,255,255,.98) 25% 37%,rgba(19,136,8,.91) 38% 50%,transparent 51%)!important;
+  filter:drop-shadow(0 7px 8px rgba(0,100,60,.08))!important;
+}
+.reference-hero-copy{z-index:4!important}
+.reference-search,.reference-categories{position:relative!important;z-index:6!important}
+.reference-search{box-shadow:0 7px 22px rgba(0,95,55,.10)!important;border:1px solid rgba(10,128,72,.10)!important}
+.reference-categories a{box-shadow:0 4px 12px rgba(0,80,50,.07)!important;border:1px solid rgba(10,128,72,.08)!important}
+.reference-popular,.reference-summary-panel{box-shadow:0 8px 24px rgba(0,85,50,.055)!important}
+.reference-plan-card{box-shadow:0 5px 15px rgba(0,70,45,.055)!important}
