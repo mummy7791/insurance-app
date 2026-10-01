@@ -1718,3 +1718,15 @@ body::after {
     background-color:#f4fff7!important;
   }
 }
+
+/* HD hero clarity tuning */
+.securelife-reference-hero{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(255,255,255,.10) 38%,rgba(245,255,248,.88) 82%),
+    url("/securelife-heritage.svg") center 35%/cover no-repeat!important;
+}
+.securelife-reference-hero:before{opacity:.45!important}
+.securelife-reference-hero:after{opacity:.35!important}
+@media(max-width:768px){
+ .securelife-reference-hero{background-size:cover!important;background-position:center top!important}
+}
