@@ -51,7 +51,7 @@ export default function Landing() {
           <Link to="/premium-calculator" className="customer-primary-action">Calculate premium →</Link>
         </section>
       </main>
-      <footer className="public-footer"><div><strong>SecureLife</strong><span>Digital insurance customer portal</span></div><div className="public-footer-links"><Link to="/privacy-policy">Privacy Policy</Link><Link to="/verify-claim">Verify Claim Receipt</Link><Link to="/advisor-login">Advisor Login</Link><Link to="/admin-login">Staff Login</Link></div></footer>
+      <footer className="public-footer"><div><strong>SecureLife</strong><span>Digital insurance customer portal</span></div><div className="public-footer-links"><Link to="/privacy-policy">Privacy Policy</Link><Link to="/terms">Terms</Link><Link to="/refund-policy">Cancellation & Refund</Link><Link to="/grievance">Grievance</Link><Link to="/verify-claim">Verify Claim Receipt</Link><Link to="/advisor-login">Advisor Login</Link><Link to="/admin-login">Staff Login</Link></div></footer>
     </div>
   );
 }
