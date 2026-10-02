@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import SecureLifeLoader from "../components/SecureLifeLoader";
 ChartJS.register(CategoryScale,LinearScale,BarElement,Title,Tooltip,Legend);
 
 type PaymentMode = "UPI" | "Cash" | "Card" | "Net Banking";
@@ -423,7 +424,7 @@ export default function Premiums() {
         </button>
 
         {loading ? (
-          <p>Loading...</p>
+          <SecureLifeLoader label="Loading premiums..." />
         ) : premiums.length === 0 ? (
           <p>No premium records found.</p>
         ) : (
