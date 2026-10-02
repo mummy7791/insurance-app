@@ -109,7 +109,7 @@ export default function InsurancePlans() {
         <h2>Plans designed around your protection needs</h2>
 
         {loading ? (
-          <div className="plan-loading-state">Loading protection plans...</div>
+          <div className="plan-loading-state"><div className="securelife-loading-logo" aria-label="Loading SecureLife plans"><img src="/securelife-logo.jpg" alt="SecureLife Insurance"/><span className="securelife-loading-ring" /></div><strong>Loading protection plans...</strong><span>Please wait while we prepare your plans</span></div>
         ) : plans.length === 0 ? (
           <div className="plan-empty-state"><strong>No insurance plans are available right now.</strong><span>Please check again later or use the premium calculator.</span><button className="mini-btn" onClick={() => navigate("/premium-calculator")}>Premium Calculator</button></div>
         ) : (
