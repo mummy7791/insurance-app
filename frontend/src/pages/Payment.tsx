@@ -89,7 +89,7 @@ export default function Payment() {
 
           const proposalRaw = sessionStorage.getItem(`proposal:${planId}`);
           if (!proposalRaw) {
-            alert("Please complete your proposal before payment");
+            setCheckoutError("Please complete your proposal before payment.");
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
             return;
           }
@@ -100,7 +100,7 @@ export default function Payment() {
           } catch {
             sessionStorage.removeItem(`proposal:${planId}`);
             sessionStorage.removeItem("premiumEstimate");
-            alert("Proposal data is invalid. Please complete it again.");
+            setCheckoutError("Proposal data is invalid. Please complete it again.");
             navigate(`/online-policy-purchase?plan=${planId}`, { replace: true });
             return;
           }
@@ -168,7 +168,7 @@ export default function Payment() {
 
   const startPayment = async () => {
     if (!order || !planId) {
-      alert("Order not ready");
+      setCheckoutError("Secure payment order is not ready yet. Please wait or review the proposal.");
       return;
     }
 
