@@ -2344,3 +2344,7 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 
 .proposal-notice{position:sticky;top:10px;z-index:1200;margin:0 0 14px;padding:13px 16px;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:12px;background:#fff7f7;color:#991b1b;box-shadow:0 10px 28px rgba(127,29,29,.12);display:flex;align-items:center;justify-content:space-between;gap:16px;font-weight:700}
 .proposal-notice button{border:0;background:transparent;color:#991b1b;font-size:24px;line-height:1;cursor:pointer}
+
+.quote-notice{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:3000;width:min(620px,calc(100% - 28px));padding:14px 16px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:800;box-shadow:0 16px 40px rgba(15,23,42,.18);animation:quoteNoticeIn .2s ease-out}
+.quote-notice.success{background:#ecfdf3;border:1px solid #86efac;color:#08783d}.quote-notice.error{background:#fff7f7;border:1px solid #fecaca;color:#991b1b}.quote-notice button{border:0;background:transparent;color:inherit;font-size:23px;cursor:pointer;line-height:1}
+@keyframes quoteNoticeIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
