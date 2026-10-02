@@ -212,9 +212,11 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
               id: plan._id,
               planName: plan.planName,
               category: plan.category,
-              coverageAmount: plan.coverageAmount || 0,
-              yearlyPremium: amount,
-              paymentYears: plan.paymentYears || 1,
+              coverageAmount: Number(existingPending.coverageAmount || cover),
+              yearlyPremium: Number(existingPending.yearlyPremium || amount),
+              paymentYears: Number(existingPending.paymentYears || quotation?.paymentYears || plan.paymentYears || 1),
+              policyTermYears: Number(existingPending.policyTermYears || quotation?.policyTermYears || plan.policyTermYears || plan.paymentYears || 1),
+              premiumFrequency: existingPending.premiumFrequency || quotation?.frequency || "Yearly",
             },
           });
         }
@@ -297,9 +299,11 @@ router.post("/create-order/:planId", auth(["customer"]), async (req, res) => {
         id: plan._id,
         planName: plan.planName,
         category: plan.category,
-        coverageAmount: plan.coverageAmount || 0,
+        coverageAmount: cover,
         yearlyPremium: amount,
-        paymentYears: plan.paymentYears || 1,
+        paymentYears: Number(quotation?.paymentYears || plan.paymentYears || 1),
+        policyTermYears: Number(quotation?.policyTermYears || plan.policyTermYears || plan.paymentYears || 1),
+        premiumFrequency: quotation?.frequency || "Yearly",
       },
     });
   } catch (error) {
