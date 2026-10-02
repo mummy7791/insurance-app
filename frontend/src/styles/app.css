@@ -2331,3 +2331,13 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 
 /* ===== INSURANCE PLAN RESILIENCE STATES ===== */
 .plan-loading-state,.plan-empty-state{min-height:150px;display:flex;align-items:center;justify-content:center;border:1px dashed #c7dfcf;border-radius:14px;background:#f8fcf9;color:#526174}.plan-loading-state{font-weight:800}.plan-empty-state{flex-direction:column;gap:7px;text-align:center;padding:24px}.plan-empty-state strong{color:#10223d;font-size:16px}.plan-empty-state span{font-size:12px}.plan-empty-state .mini-btn{margin-top:5px}.customer-portal .checkout-inline-error>.mini-btn{margin-left:10px}
+
+
+/* ===== Production polish: legal, error and resilient responsive surfaces ===== */
+.legal-page{min-height:100vh;padding:48px 20px;background:linear-gradient(135deg,#f2fbf6 0%,#fff 55%,#f7fafc 100%);display:grid;place-items:center}
+.legal-card{width:min(920px,100%);background:#fff;border:1px solid #dcefe3;border-top:5px solid #12a150;border-radius:24px;padding:36px;box-shadow:0 20px 55px rgba(15,78,45,.10)}
+.legal-card h1{margin:14px 0 8px;color:#10213d;font-size:clamp(30px,5vw,48px);letter-spacing:-.03em}.legal-intro{color:#5e6d82;font-size:17px;line-height:1.7;max-width:760px}
+.legal-points{display:grid;gap:12px;margin:26px 0}.legal-points>div{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px;border:1px solid #e7efe9;border-radius:14px;background:#fbfefc}.legal-points b{color:#0b8e46}.legal-points p{margin:0;color:#334155;line-height:1.6}
+.legal-actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}.not-found-card{text-align:center;max-width:640px}.not-found-card .btn{display:inline-flex;text-decoration:none}
+.app-route-loading{min-height:100vh;display:grid;place-items:center;font-weight:800;color:#08783d;background:#f3fbf6}
+@media(max-width:720px){.legal-page{padding:20px 12px}.legal-card{padding:24px 18px;border-radius:18px}.legal-points>div{grid-template-columns:34px 1fr}}
