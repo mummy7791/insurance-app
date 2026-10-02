@@ -180,8 +180,10 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const configuredPolicyTerm = Number(plan.policyTermYears || plan.paymentYears || 1);
     const policyTermYears = isMotorInsurance ? 1 : (isSuperStarHealth && requestedPpt === 3 ? 3 : (maturityAges.length || coverTillAge ? selectedMaturityAge - age : configuredPolicyTerm));
     if (!Number.isFinite(policyTermYears) || policyTermYears < 1) return res.status(400).json({ message: "Policy term is not valid for the selected age" });
-    const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
-    const paymentYears = requestedPpt || allowedPpts[0];
+    const flexiblePptNames = ["IPsmart Plus", "IPsmart Plus ROP", "Glod 1 32", "Gift P1 32"];
+    const isFlexiblePptPlan = flexiblePptNames.includes(plan.planName);
+    const allowedPpts = isFlexiblePptPlan ? [1, 2, 5, 6, 7, 10] : (Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)]);
+    const paymentYears = requestedPpt || Number(plan.paymentYears || allowedPpts[0]);
     if (!allowedPpts.includes(paymentYears) || (!isSuperStarHealth && paymentYears > policyTermYears)) return res.status(400).json({ message: "Selected premium paying term is not available for this policy term" });
     const agePremiums = rules.agePremiums || {};
     const agePremiumValue = Number(agePremiums[String(age)] ?? agePremiums.get?.(String(age)) ?? 0);
