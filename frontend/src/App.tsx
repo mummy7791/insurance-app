@@ -37,6 +37,8 @@ const Payment = lazy(() => import("./pages/Payment"));
 const VerifyClaim = lazy(() => import("./pages/VerifyClaim"));
 const Quotations = lazy(() => import("./pages/Quotations"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const LegalInfo = lazy(() => import("./pages/LegalInfo"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function App() {
   return (
@@ -52,6 +54,9 @@ function App() {
           <Route path="/premium-calculator" element={<PremiumCalculator />} />
           <Route path="/verify-claim" element={<VerifyClaim />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<LegalInfo />} />
+          <Route path="/refund-policy" element={<LegalInfo />} />
+          <Route path="/grievance" element={<LegalInfo />} />
 
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent"]}><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute allowedRoles={["admin", "bm", "unit_manager", "agency_manager", "agent", "advisor"]}><Profile /></ProtectedRoute>} />
@@ -80,7 +85,7 @@ function App() {
           <Route path="/customer-profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
           <Route path="/help" element={<ProtectedRoute allowedRoles={["customer"]}><HelpCenter /></ProtectedRoute>} />
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
