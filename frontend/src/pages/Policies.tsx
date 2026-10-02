@@ -43,6 +43,7 @@ const initialForm: PolicyForm = {
 export default function Policies() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
@@ -52,20 +53,38 @@ export default function Policies() {
   const visiblePolicies = isCustomer ? policies.filter((policy) => !policy.policyNumber || !purchasedPolicyNumbers.has(policy.policyNumber)) : policies;
 
   const loadPolicies = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
     try {
-      setTimeout(() => setLoading(true), 0);
+      const policyRequest = api.get<Policy[]>("/policies");
+      const purchaseRequest = isCustomer
+        ? api.get<PurchasedPlan[]>("/plan-purchases/my-plans")
+        : Promise.resolve({ data: [] as PurchasedPlan[] });
 
-      const [res, purchaseRes] = await Promise.all([api.get<Policy[]>("/policies"), isCustomer ? api.get<PurchasedPlan[]>("/plan-purchases/my-plans") : Promise.resolve({ data: [] as PurchasedPlan[] })]);
+      const [policyResult, purchaseResult] = await Promise.allSettled([policyRequest, purchaseRequest]);
+      let loaded = false;
 
-      setTimeout(() => {
-        setPolicies(res.data);
-        setPurchasedPlans(purchaseRes.data);
-        setLoading(false);
-      }, 0);
-    } catch (error) {
-      console.error("Policies load error:", error);
-      setTimeout(() => setLoading(false), 0);
-      alert("Policies load failed");
+      if (policyResult.status === "fulfilled") {
+        setPolicies(policyResult.value.data);
+        loaded = true;
+      } else {
+        console.error("Policies load error:", policyResult.reason);
+      }
+
+      if (purchaseResult.status === "fulfilled") {
+        setPurchasedPlans(purchaseResult.value.data);
+        loaded = true;
+      } else {
+        console.error("Purchased plans load error:", purchaseResult.reason);
+      }
+
+      if (!loaded) {
+        setLoadError("Policies could not be loaded. Please retry.");
+      } else if (policyResult.status === "rejected" || purchaseResult.status === "rejected") {
+        setLoadError("Some policy information is still loading. Retry to refresh the missing details.");
+      }
+    } finally {
+      setLoading(false);
     }
   }, [isCustomer]);
 
@@ -286,6 +305,8 @@ export default function Policies() {
         <button className="btn small-btn" onClick={addPolicy}>Add Policy</button>
       </div>
       )}
+
+      {loadError && <div className="data-load-error"><span>{loadError}</span><button className="mini-btn" onClick={loadPolicies}>Retry</button></div>}
 
       {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Total Premium ({plan.paymentYears || 1} years):</b> ₹{Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}</p><p><b>Next Premium:</b> {plan.nextPremiumDate ? new Date(plan.nextPremiumDate).toLocaleDateString("en-IN") : "No further premium due"}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions">{plan.paymentStatus === "Paid" && plan.policyNumber ? <button className="policy-download-btn primary" onClick={() => downloadCertificate(plan)}>Download Policy</button> : <span className="status-pill due">Certificate after payment</span>}{plan.paymentStatus === "Paid" && plan.receiptNumber && <button className="policy-download-btn secondary" onClick={() => downloadReceipt(plan)}>Download Receipt</button>}<button className="policy-download-btn secondary" onClick={()=>setJourneyPlan(plan)}>View Policy Journey</button></div></div>)}</div></div>}
 
