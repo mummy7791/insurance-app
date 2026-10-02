@@ -177,7 +177,8 @@ router.post("/:id/quote", auth(), async (req, res) => {
     const maturityAges = Array.isArray(plan.maturityAges) ? plan.maturityAges.map(Number).filter(x=>x>age) : [];
     const selectedMaturityAge = isMotorInsurance ? 1 : (coverTillAge || (maturityAges.length ? maturityAges[0] : age + Number(plan.policyTermYears || plan.paymentYears || 1)));
     if (maturityAges.length && !maturityAges.includes(selectedMaturityAge)) return res.status(400).json({ message: "Selected cover till age is not available for this plan" });
-    const policyTermYears = isMotorInsurance ? 1 : (isSuperStarHealth && requestedPpt === 3 ? 3 : selectedMaturityAge - age);
+    const configuredPolicyTerm = Number(plan.policyTermYears || plan.paymentYears || 1);
+    const policyTermYears = isMotorInsurance ? 1 : (isSuperStarHealth && requestedPpt === 3 ? 3 : (maturityAges.length || coverTillAge ? selectedMaturityAge - age : configuredPolicyTerm));
     if (!Number.isFinite(policyTermYears) || policyTermYears < 1) return res.status(400).json({ message: "Policy term is not valid for the selected age" });
     const allowedPpts = Array.isArray(plan.premiumPayingTerms) && plan.premiumPayingTerms.length ? plan.premiumPayingTerms.map(Number) : [Number(plan.paymentYears || 1)];
     const paymentYears = requestedPpt || allowedPpts[0];
