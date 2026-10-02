@@ -2,6 +2,7 @@ import {useEffect,useState} from "react";
 import {useNavigate} from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
+import SecureLifeLoader from "../components/SecureLifeLoader";
 
 type Q={_id:string;quotationNumber:string;status?:string;planId?:string;customerName?:string;mobile?:string;planName:string;coverageAmount:number;annualPremium:number;frequency:string;instalmentPremium:number;createdAt:string;validUntil:string};
 const money=(n:number)=>"₹"+Number(n||0).toLocaleString("en-IN");
@@ -14,7 +15,7 @@ export default function Quotations(){
  return <MainLayout title="Quotation History" subtitle="Saved Smart Quote records">
   <div className="section customer-portal-section">
    <div className="section-heading-row"><div><span className="eyebrow">SMART QUOTES</span><h2>Quotation history</h2><p className="section-copy">Review your saved quotations, validity and premium before continuing to purchase.</p></div></div>
-   {loading?<p>Loading...</p>:items.length===0?<div className="portal-empty-state"><strong>No saved quotations yet.</strong><span>Create a premium estimate to start a new quote.</span><button className="mini-btn" onClick={()=>navigate("/premium-calculator")}>Estimate Premium →</button></div>:
+   {loading?<SecureLifeLoader label="Loading quotations..." />:items.length===0?<div className="portal-empty-state"><strong>No saved quotations yet.</strong><span>Create a premium estimate to start a new quote.</span><button className="mini-btn" onClick={()=>navigate("/premium-calculator")}>Estimate Premium →</button></div>:
    <div className="quotation-card-grid">{items.map(q=>{const expired=new Date(q.validUntil)<new Date()&&q.status!=="Converted";const status=expired?"Expired":q.status||"Generated";return <article className="quotation-card" key={q._id}>
     <div className="quotation-card-head"><div><span className="plan-category">SMART QUOTE</span><h3>{q.planName}</h3></div><span className={"quote-status "+status.toLowerCase()}>{status}</span></div>
     <div className="quotation-number">{q.quotationNumber}</div>
