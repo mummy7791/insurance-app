@@ -2348,3 +2348,13 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 .quote-notice{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:3000;width:min(620px,calc(100% - 28px));padding:14px 16px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:800;box-shadow:0 16px 40px rgba(15,23,42,.18);animation:quoteNoticeIn .2s ease-out}
 .quote-notice.success{background:#ecfdf3;border:1px solid #86efac;color:#08783d}.quote-notice.error{background:#fff7f7;border:1px solid #fecaca;color:#991b1b}.quote-notice button{border:0;background:transparent;color:inherit;font-size:23px;cursor:pointer;line-height:1}
 @keyframes quoteNoticeIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* SecureLife branded loading state */
+.plan-loading-state{min-height:250px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center}
+.plan-loading-state>strong{font-size:18px;color:#193454}.plan-loading-state>span{font-size:13px;color:#718096}
+.securelife-loading-logo{position:relative;width:92px;height:92px;margin-bottom:8px;display:grid;place-items:center}
+.securelife-loading-logo img{width:72px;height:72px;object-fit:cover;border-radius:20px;box-shadow:0 10px 28px rgba(10,126,65,.18);animation:secureLifeBlink 1.05s ease-in-out infinite}
+.securelife-loading-ring{position:absolute;inset:0;border:3px solid rgba(18,161,80,.14);border-top-color:#12a150;border-radius:50%;animation:secureLifeSpin 1s linear infinite}
+@keyframes secureLifeBlink{0%,100%{opacity:.42;transform:scale(.94)}50%{opacity:1;transform:scale(1.04)}}
+@keyframes secureLifeSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.securelife-loading-logo img,.securelife-loading-ring{animation:none}}
