@@ -46,6 +46,7 @@ export default function Payment() {
     }
   });
   const [checkoutError, setCheckoutError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -128,7 +129,7 @@ export default function Payment() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [planId, navigate, confirmation]);
+  }, [planId, navigate, confirmation, retryKey]);
 
   const verifyPayment = async (orderId: string) => {
     if (!planId) return;
@@ -226,7 +227,7 @@ export default function Payment() {
         {loading ? (
           <div className="checkout-loading"><span className="checkout-spinner" /><div><strong>Preparing secure checkout</strong><p>Creating a protected payment order for your selected plan.</p></div></div>
         ) : !order ? (
-          <div className="checkout-recovery"><strong>Checkout needs your attention</strong><p>{checkoutError || "No payment order found."}</p><button className="btn small-btn" onClick={() => navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans")}>Review proposal</button></div>
+          <div className="checkout-recovery"><strong>Checkout needs your attention</strong><p>{checkoutError || "No payment order found."}</p><div className="success-actions"><button className="btn small-btn" onClick={() => setRetryKey((v) => v + 1)}>Try payment again</button><button className="mini-btn" onClick={() => navigate(planId ? `/online-policy-purchase?plan=${planId}` : "/insurance-plans")}>Review proposal</button></div></div>
         ) : (
           <>
             <div className="checkout-heading"><div><span className="eyebrow">SECURE CHECKOUT</span><h2>{order.plan.planName}</h2><p>Review your cover before continuing to the payment gateway.</p>{order.reused && <small className="order-resumed">Existing secure checkout resumed — no duplicate order created.</small>}</div><div className="secure-payment-badge">Secure payment</div></div>
