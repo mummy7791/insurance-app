@@ -2358,3 +2358,6 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 @keyframes secureLifeBlink{0%,100%{opacity:.42;transform:scale(.94)}50%{opacity:1;transform:scale(1.04)}}
 @keyframes secureLifeSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.securelife-loading-logo img,.securelife-loading-ring{animation:none}}
+
+.securelife-inline-loader{min-height:210px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+.securelife-inline-loader>strong{font-size:17px;color:#173554}.securelife-inline-loader>span{font-size:13px;color:#718096}
