@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 import jsPDF from "jspdf";
+import SecureLifeLoader from "../components/SecureLifeLoader";
 
 type Policy = {
   _id: string;
@@ -302,7 +303,7 @@ export default function Policies() {
         </button>
 
         {loading ? (
-          <p>Loading...</p>
+          <SecureLifeLoader label="Loading policies..." />
         ) : visiblePolicies.length === 0 ? (
           <p>{isCustomer && purchasedPlans.length > 0 ? "All your current policies are shown in Digital Policies above." : "No policies found."}</p>
         ) : (
