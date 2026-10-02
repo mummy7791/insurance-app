@@ -23,9 +23,9 @@ export default function PremiumCalculator(){
  const selected=plans.find(p=>p._id===planId);
  const isBike=selected?.planName==="Bike Insurance"; const isCar=selected?.planName==="Car Insurance"; const isMotor=isBike||isCar;
  const availableMaturityAges=(selected?.maturityAges||[]).filter(x=>x>Number(age));
- const availablePpts=(selected?.premiumPayingTerms?.length?selected.premiumPayingTerms:[selected?.paymentYears||1]).filter(x=>!coverTillAge||x<=Number(coverTillAge)-Number(age));
+ const flexiblePptPlans=["IPsmart Plus","IPsmart Plus ROP","Glod 1 32","Gift P1 32"]; const isFlexiblePpt=flexiblePptPlans.includes(selected?.planName||""); const availablePpts=(isFlexiblePpt?[1,2,5,6,7,10]:(selected?.premiumPayingTerms?.length?selected.premiumPayingTerms:[selected?.paymentYears||1])).filter(x=>!coverTillAge||x<=Number(coverTillAge)-Number(age));
  useEffect(()=>{void api.get<Plan[]>("/insurance-plans").then(r=>{const data=Array.isArray(r.data)?r.data:[];setPlans(data);if(data[0]){setPlanId(data[0]._id);setCover(String(data[0].coverageAmount||""));}}).catch(()=>setPlans([]));},[]);
- const choose=(id:string)=>{setPlanId(id);const p=plans.find(x=>x._id===id);if(p){setCover(String(p.coverageAmount||""));setFrequency(p.premiumFrequencies?.[0]||"Yearly");const ages=(p.maturityAges||[]).filter(x=>x>Number(age));setCoverTillAge(ages[0]?String(ages[0]):"");setPpt(String(p.premiumPayingTerms?.[0]||p.paymentYears||1));}setQuote(null);};
+ const choose=(id:string)=>{setPlanId(id);const p=plans.find(x=>x._id===id);if(p){setCover(String(p.coverageAmount||""));setFrequency(p.premiumFrequencies?.[0]||"Yearly");const ages=(p.maturityAges||[]).filter(x=>x>Number(age));setCoverTillAge(ages[0]?String(ages[0]):"");setPpt(String(["IPsmart Plus","IPsmart Plus ROP","Glod 1 32","Gift P1 32"].includes(p.planName)?(p.paymentYears||10):(p.premiumPayingTerms?.[0]||p.paymentYears||1)));}setQuote(null);};
  const downloadQuote=()=>{if(!quote)return;
   const doc=new jsPDF({unit:"mm",format:"a4"}), W=210, margin=16; const moneyPdf=(n:number)=>"Rs. "+Number(n||0).toLocaleString("en-IN");
   const red=[159,18,57] as [number,number,number], orange=[245,130,32] as [number,number,number], dark=[30,41,59] as [number,number,number], muted=[100,116,139] as [number,number,number];
