@@ -2953,3 +2953,58 @@ textarea:focus {
   .customer-portal .product-dashboard-hero h1{font-size:40px!important;letter-spacing:-1.7px!important}
   .customer-portal .dashboard-category-row a{min-width:auto!important}
 }
+
+
+/* ===== HOTFIX: dashboard hero artwork collision / overflow ===== */
+.customer-portal .product-dashboard-hero{
+  min-height:420px!important;
+  height:auto!important;
+  background:linear-gradient(118deg,#071f30 0%,#064638 55%,#087a4b 100%)!important;
+}
+.customer-portal .product-dashboard-hero .reference-hero-copy{
+  position:relative!important;
+  z-index:2!important;
+  max-width:720px!important;
+  overflow:visible!important;
+}
+.customer-portal .product-dashboard-hero .reference-hero-copy:before,
+.customer-portal .product-dashboard-hero .reference-hero-copy:after,
+.customer-portal .product-dashboard-hero .reference-hero-copy>*:before,
+.customer-portal .product-dashboard-hero .reference-hero-copy>*:after{
+  background-image:none!important;
+}
+.customer-portal .product-dashboard-hero h1{
+  max-width:690px!important;
+  font-size:clamp(44px,4vw,62px)!important;
+  line-height:1.04!important;
+}
+.customer-portal .product-dashboard-hero p{
+  position:relative!important;
+  z-index:3!important;
+  color:#dcebe4!important;
+  text-shadow:none!important;
+}
+.customer-portal .dashboard-hero-actions,
+.customer-portal .dashboard-category-row{
+  position:relative!important;
+  z-index:4!important;
+}
+.customer-portal .dashboard-hero-insight{
+  position:relative!important;
+  z-index:5!important;
+  align-self:center!important;
+}
+.customer-portal .product-dashboard-hero img,
+.customer-portal .product-dashboard-hero svg{
+  max-width:100%!important;
+}
+/* Kill legacy tricolour/wave pseudo artwork inherited from the old dashboard hero. */
+.customer-portal .securelife-reference-hero.product-dashboard-hero .reference-hero-copy::before,
+.customer-portal .securelife-reference-hero.product-dashboard-hero .reference-hero-copy::after{
+  content:none!important;
+  display:none!important;
+}
+@media(max-width:1250px){
+ .customer-portal .product-dashboard-hero{grid-template-columns:minmax(0,1fr) 280px!important;padding:38px!important;gap:28px!important}
+ .customer-portal .product-dashboard-hero h1{font-size:48px!important}
+}
