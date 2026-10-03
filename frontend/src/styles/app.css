@@ -2365,3 +2365,277 @@ body:has(.securelife-reference-hero) .sidebar-user-card{
 .policy-journey-overlay{position:fixed;inset:0 0 0 287px;background:rgba(15,23,42,.6);z-index:2200;display:flex;align-items:center;justify-content:center;padding:20px}.policy-journey-modal{width:min(980px,calc(100vw - 330px));max-height:90vh;overflow-y:auto;margin:0!important;border-radius:22px;box-shadow:0 24px 70px rgba(15,23,42,.3)}.policy-journey-modal>.section-heading-row{position:sticky;top:0;z-index:4;background:#fff;padding-bottom:14px}.policy-journey-modal .cards{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:1050px){.policy-journey-overlay{inset:0;padding:12px}.policy-journey-modal{width:min(920px,100%)}.policy-journey-modal .cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.policy-journey-modal{padding:16px!important;border-radius:16px}.policy-journey-modal .cards{grid-template-columns:1fr}.policy-journey-modal .table-wrap{overflow-x:auto}}
 
 .data-load-error{margin:0 0 16px;padding:14px 16px;border:1px solid #f5d38a;border-left:5px solid #d99a16;border-radius:12px;background:#fffaf0;color:#76520b;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:700}.data-load-error .mini-btn{flex:0 0 auto}@media(max-width:620px){.data-load-error{align-items:flex-start;flex-direction:column}}
+
+
+/* ================= SECURELIFE SIGNATURE UI 2026 ================= */
+:root {
+  --sl-ink: #102319;
+  --sl-muted: #66756c;
+  --sl-green: #087443;
+  --sl-green-2: #12a562;
+  --sl-deep: #063d28;
+  --sl-mint: #eaf8f0;
+  --sl-line: #dce9e1;
+  --sl-surface: rgba(255,255,255,.92);
+  --sl-shadow: 0 18px 55px rgba(10,55,34,.09);
+}
+
+body {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(18,165,98,.08), transparent 24rem),
+    linear-gradient(180deg, #f8fbf9 0%, #f3f8f5 100%);
+  color: var(--sl-ink);
+}
+
+.main,
+.dashboard-content,
+.content,
+.main-content {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(18,165,98,.07), transparent 28rem),
+    #f6faf7;
+}
+
+.sidebar {
+  background:
+    radial-gradient(circle at 10% 2%, rgba(255,255,255,.14), transparent 12rem),
+    linear-gradient(180deg, #073f2a 0%, #075a37 58%, #087443 100%);
+  border-right: 1px solid rgba(255,255,255,.12);
+  box-shadow: 12px 0 45px rgba(5,52,31,.14);
+}
+
+.sidebar a {
+  min-height: 46px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.sidebar a:hover,
+.active-link {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.16) !important;
+  backdrop-filter: blur(12px);
+}
+
+.topbar {
+  position: sticky;
+  top: 16px;
+  z-index: 100;
+  min-height: 76px;
+  border: 1px solid rgba(220,233,225,.9);
+  border-top: 1px solid rgba(220,233,225,.9);
+  border-radius: 20px;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 40px rgba(15,65,40,.07);
+}
+
+.card,
+.section,
+.chart-card,
+.customer-summary-card,
+.customer-health-card,
+.insurance-plan-card {
+  border: 1px solid var(--sl-line);
+  border-top: 1px solid var(--sl-line);
+  box-shadow: var(--sl-shadow);
+}
+
+.card,
+.customer-summary-card,
+.customer-health-card {
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.card:hover,
+.customer-summary-card:hover,
+.customer-health-card:hover {
+  transform: translateY(-3px);
+  border-color: #b9d9c6;
+  box-shadow: 0 22px 60px rgba(10,55,34,.12);
+}
+
+.customer-welcome,
+.plan-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(125deg, #063d28 0%, #087443 60%, #14a865 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 28px 70px rgba(6,61,40,.20);
+}
+
+.customer-welcome::before,
+.plan-hero::before {
+  content: "";
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  right: -100px;
+  top: -150px;
+  border-radius: 50%;
+  border: 55px solid rgba(255,255,255,.07);
+  z-index: -1;
+}
+
+.customer-welcome::after,
+.plan-hero::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  right: 150px;
+  bottom: -130px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.055);
+  z-index: -1;
+}
+
+.section {
+  border-radius: 24px;
+  background: var(--sl-surface);
+}
+
+.section h2 {
+  letter-spacing: -.45px;
+}
+
+.eyebrow {
+  color: var(--sl-green);
+  letter-spacing: 1.7px;
+}
+
+.insurance-plan-grid {
+  gap: 22px;
+}
+
+.insurance-plan-card {
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 26px;
+  background: linear-gradient(180deg,#fff 0%,#fbfdfc 100%);
+}
+
+.insurance-plan-card::before {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 5px;
+  border-radius: 99px;
+  margin-bottom: 18px;
+  background: linear-gradient(90deg,var(--sl-green),#4fd18b);
+}
+
+.insurance-plan-card:hover {
+  transform: translateY(-6px);
+  border-color: #b9d9c6;
+  box-shadow: 0 26px 65px rgba(8,72,43,.13);
+}
+
+.plan-category,
+.secure-chip {
+  background: var(--sl-mint);
+  color: var(--sl-deep);
+  border: 1px solid #cce8d7;
+}
+
+.btn,
+.buy-btn,
+.mini-btn,
+.logout,
+.customer-primary-action {
+  background: linear-gradient(110deg,#075c39,#0c8c51 65%,#18aa66);
+  border: 0;
+  box-shadow: 0 10px 24px rgba(8,116,67,.20);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.btn:hover,
+.buy-btn:hover,
+.mini-btn:hover,
+.customer-primary-action:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.05);
+  box-shadow: 0 15px 30px rgba(8,116,67,.27);
+}
+
+input,
+select,
+textarea,
+.form-grid input,
+.form-grid select {
+  background: #fbfdfc;
+  border-color: #d9e7de;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #35ad70;
+  box-shadow: 0 0 0 4px rgba(18,165,98,.10);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background: #f0f7f3;
+  color: #264b37;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+.table th:first-child { border-radius: 12px 0 0 12px; }
+.table th:last-child { border-radius: 0 12px 12px 0; }
+
+.status-pill,
+.badge {
+  letter-spacing: .3px;
+}
+
+.public-nav {
+  backdrop-filter: blur(18px);
+}
+
+.auth-page,
+.login-page,
+.register-page,
+.admin-login-page {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(18,165,98,.16), transparent 26rem),
+    radial-gradient(circle at 92% 88%, rgba(8,116,67,.10), transparent 28rem),
+    linear-gradient(135deg,#f4faf6,#ffffff 55%,#edf8f2);
+}
+
+.auth-card,
+.login-card,
+.register-card,
+.admin-login-card {
+  border: 1px solid #dce9e1;
+  border-top: 1px solid #dce9e1;
+  box-shadow: 0 30px 80px rgba(7,63,42,.12);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .customer-welcome,
+  .plan-hero,
+  .section,
+  .customer-summary-card {
+    animation: sl-enter .45s ease both;
+  }
+  @keyframes sl-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar { top: 8px; border-radius: 16px; }
+  .section { border-radius: 18px; }
+  .customer-welcome, .plan-hero { border-radius: 20px; }
+  .insurance-plan-card { border-radius: 20px; padding: 21px; }
+}
