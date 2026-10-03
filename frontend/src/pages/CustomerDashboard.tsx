@@ -108,21 +108,29 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
-      <section className="securelife-reference-hero">
+      <section className="securelife-reference-hero product-dashboard-hero">
         <div className="reference-hero-copy">
-          <h1>Your Protection<br/><strong>Our Responsibility</strong></h1>
-          <p>SecureLife Insurance – Trusted Protection for a Safer Tomorrow.</p>
-          <div className="reference-search">
-            <span>⌕</span>
-            <input aria-label="Search insurance plans" placeholder="Search plans (e.g. Car, Bike, Health, Term, etc.)..." />
-            <Link to="/insurance-plans">Search</Link>
+          <span className="dashboard-kicker">SECURELIFE POLICYHOLDER PORTAL</span>
+          <h1>Protection that stays<br/><strong>one step ahead.</strong></h1>
+          <p>Manage cover, renew premiums, track claims and keep your policy documents ready from one secure workspace.</p>
+          <div className="dashboard-hero-actions">
+            <Link to="/insurance-plans" className="dashboard-primary-action">Explore protection <span>→</span></Link>
+            <Link to="/policies" className="dashboard-secondary-action">View my policies</Link>
           </div>
-          <div className="reference-categories">
-            <Link to="/insurance-plans">🚗 Car</Link><Link to="/insurance-plans">🏍 Bike</Link>
-            <Link to="/insurance-plans">🛡 Health</Link><Link to="/insurance-plans">✈ Travel</Link>
-            <Link to="/insurance-plans">♥ Term Life</Link><Link to="/insurance-plans">♟ Child</Link>
-            <Link to="/insurance-plans">▣ Pension</Link><Link to="/insurance-plans">▦ All Plans</Link>
+          <div className="reference-categories dashboard-category-row">
+            <Link to="/insurance-plans"><b>🚗</b><span>Car</span></Link><Link to="/insurance-plans"><b>🏍</b><span>Bike</span></Link>
+            <Link to="/insurance-plans"><b>✚</b><span>Health</span></Link><Link to="/insurance-plans"><b>♥</b><span>Life</span></Link>
+            <Link to="/premiums"><b>₹</b><span>Premiums</span></Link><Link to="/claims"><b>✓</b><span>Claims</span></Link>
           </div>
+        </div>
+        <div className="dashboard-hero-insight">
+          <span className="insight-label">YOUR PROTECTION</span>
+          <strong>{money(totalCoverage)}</strong>
+          <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small>
+          <div className="insight-divider" />
+          <div><span>Premium due</span><b>{money(dueAmount)}</b></div>
+          <div><span>Open claims</span><b>{openClaims.length}</b></div>
+          <div><span>KYC verified</span><b>{kycProgress}%</b></div>
         </div>
         </section>
 
