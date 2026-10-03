@@ -3129,3 +3129,67 @@ textarea:focus {
 @media(min-width:901px){
  .customer-portal .reference-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+
+/* ===== MY POLICIES — DIGITAL POLICY WALLET 2026 ===== */
+.customer-portal .policy-wallet-card{
+ position:relative!important; overflow:hidden!important; border:1px solid #dce9e2!important;
+ border-radius:22px!important; padding:22px!important; background:linear-gradient(180deg,#fff 0%,#fbfefc 100%)!important;
+ box-shadow:0 10px 28px rgba(15,45,36,.07)!important; min-height:0!important;
+}
+.customer-portal .policy-wallet-card::before{
+ content:""!important; position:absolute!important; inset:0 auto auto 0!important; width:100%!important; height:4px!important;
+ background:linear-gradient(90deg,#0b8f57,#36c47d)!important;
+}
+.customer-portal .policy-wallet-card:hover{transform:translateY(-3px)!important;box-shadow:0 16px 38px rgba(15,45,36,.11)!important}
+.customer-portal .policy-wallet-card .plan-category{
+ display:inline-flex!important; width:max-content!important; padding:7px 11px!important; border-radius:999px!important;
+ background:#edf9f2!important; border:1px solid #cfe9d9!important; color:#075b3a!important; font-size:11px!important;
+ letter-spacing:.08em!important; font-weight:800!important;
+}
+.customer-portal .policy-wallet-card h3{font-size:24px!important;line-height:1.15!important;margin:14px 0 18px!important;color:#10243f!important}
+.customer-portal .policy-wallet-card>p{
+ margin:0!important;padding:9px 0!important;border-bottom:1px solid #edf2ef!important;
+ display:flex!important;justify-content:space-between!important;gap:16px!important;font-size:13px!important;line-height:1.4!important;color:#53657b!important
+}
+.customer-portal .policy-wallet-card>p b{color:#718096!important;font-weight:650!important;flex:0 0 auto!important}
+.customer-portal .policy-wallet-card>p:not(:first-of-type){text-align:right!important}
+.customer-portal .policy-proposal-mini{
+ margin:16px 0 14px!important;padding:13px 15px!important;border:1px solid #dce9e2!important;border-radius:14px!important;
+ background:#f6fbf8!important;display:grid!important;grid-template-columns:auto 1fr!important;gap:2px 8px!important;align-items:center!important
+}
+.customer-portal .policy-proposal-mini span{font-size:10px!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:#718096!important}
+.customer-portal .policy-proposal-mini strong{font-size:14px!important;color:#132b22!important;overflow-wrap:anywhere!important}
+.customer-portal .policy-proposal-mini small{grid-column:2!important;color:#718096!important}
+.customer-portal .policy-wallet-status{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:14px 0!important}
+.customer-portal .policy-wallet-status .status-pill,.customer-portal .policy-wallet-status .payment-verified{
+ padding:7px 11px!important;border-radius:999px!important;font-size:11px!important;font-weight:800!important;text-transform:uppercase!important
+}
+.customer-portal .policy-wallet-status .payment-verified{background:#e8fbef!important;color:#08743f!important}
+.customer-portal .policy-document-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;margin-top:15px!important}
+.customer-portal .policy-document-actions .policy-download-btn{
+ margin:0!important;min-height:44px!important;border-radius:11px!important;font-size:12px!important;font-weight:800!important;padding:10px 12px!important
+}
+.customer-portal .policy-document-actions .primary{grid-column:1/-1!important;background:#078b50!important;color:white!important;border:1px solid #078b50!important}
+.customer-portal .policy-document-actions .secondary{background:#fff!important;color:#12633f!important;border:1px solid #cfe4d7!important}
+.customer-portal .policy-document-actions>.status-pill{grid-column:1/-1!important;width:max-content!important}
+.customer-portal .insurance-plan-grid{gap:18px!important;align-items:stretch!important}
+.customer-portal .section:has(.policy-wallet-card){
+ border-radius:24px!important;padding:28px!important;background:#fff!important;border:1px solid #dce9e2!important;
+ box-shadow:0 14px 40px rgba(20,55,44,.06)!important
+}
+.customer-portal .section:has(.policy-wallet-card) .section-heading-row{margin-bottom:22px!important}
+.customer-portal .section:has(.policy-wallet-card) .eyebrow{color:#08794b!important;letter-spacing:.16em!important;font-size:11px!important}
+.customer-portal .section:has(.policy-wallet-card) h2{font-size:32px!important;color:#10243f!important;margin-top:5px!important}
+.customer-portal .section:last-child{border-radius:22px!important;border:1px solid #dce9e2!important;box-shadow:0 10px 28px rgba(15,45,36,.05)!important}
+.customer-portal .section:last-child>h2{color:#10243f!important}
+.customer-portal .section:last-child>.mini-btn{border-radius:10px!important;background:#078b50!important}
+@media(max-width:1100px){.customer-portal .insurance-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:720px){
+ .customer-portal .insurance-plan-grid{grid-template-columns:1fr!important}
+ .customer-portal .section:has(.policy-wallet-card){padding:16px!important}
+ .customer-portal .policy-document-actions{grid-template-columns:1fr!important}
+ .customer-portal .policy-document-actions .primary{grid-column:auto!important}
+ .customer-portal .policy-wallet-card>p{display:block!important;text-align:left!important}
+ .customer-portal .policy-wallet-card>p:not(:first-of-type){text-align:left!important}
+}
