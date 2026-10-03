@@ -3193,3 +3193,33 @@ textarea:focus {
  .customer-portal .policy-wallet-card>p{display:block!important;text-align:left!important}
  .customer-portal .policy-wallet-card>p:not(:first-of-type){text-align:left!important}
 }
+
+
+/* ===== POLICY STATUS GROUPS + ACTION FIX ===== */
+.policy-group-section{overflow:visible!important}
+.policy-count-chip{display:inline-flex;align-items:center;white-space:nowrap;padding:8px 12px;border-radius:999px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:12px;font-weight:900}
+.policy-count-chip.pending{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.policy-detail-rows{display:grid;margin-top:4px}
+.policy-detail-rows p{display:grid!important;grid-template-columns:minmax(115px,1fr) minmax(0,1.15fr);gap:12px;align-items:start;margin:0!important;padding:9px 0;border-bottom:1px solid #eef2f7}
+.policy-detail-rows p b{color:#64748b}.policy-detail-rows p span{text-align:right;overflow-wrap:anywhere;word-break:break-word;color:#475569}
+.policy-document-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:10px!important;margin-top:16px}
+.policy-document-actions .policy-download-btn{min-width:0!important;width:100%!important;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25;text-align:center}
+.policy-document-actions .primary{grid-column:1/-1}
+.policy-document-actions .status-pill{grid-column:1/-1;justify-self:start}
+.policy-pending-section{border-top-color:#f59e0b!important}
+.policy-state-failed{border-color:#fecaca!important;background:linear-gradient(155deg,#fff 0%,#fff7f7 100%)!important}
+.policy-state-failed:before{background:#dc2626!important}
+.policy-state-pending{border-color:#fed7aa!important;background:linear-gradient(155deg,#fff 0%,#fffaf2 100%)!important}
+.policy-state-pending:before,.policy-state-processing:before{background:#f59e0b!important}
+.status-pill.failed,.payment-state.failed{background:#fee2e2;color:#b91c1c}
+.status-pill.pending,.status-pill.processing,.payment-state.pending,.payment-state.processing{background:#ffedd5;color:#c2410c}
+.payment-state{font-size:11px;font-weight:900;padding:7px 10px;border-radius:999px;white-space:nowrap}
+.policy-payment-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff7ed;color:#9a3412;font-size:12px;font-weight:700;line-height:1.45}
+.policy-state-failed .policy-payment-note{background:#fef2f2;color:#b91c1c}
+@media(max-width:620px){
+  .policy-detail-rows p{grid-template-columns:1fr;gap:4px}
+  .policy-detail-rows p span{text-align:left}
+  .policy-document-actions{grid-template-columns:1fr!important}
+  .policy-document-actions .primary,.policy-document-actions .status-pill{grid-column:auto}
+  .policy-count-chip{align-self:flex-start}
+}
