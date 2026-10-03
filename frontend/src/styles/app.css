@@ -3109,3 +3109,23 @@ textarea:focus {
 @media(max-width:900px){
  .customer-portal .reference-plan-grid{grid-template-columns:1fr!important}
 }
+
+/* Dashboard plan-card readability hotfix */
+.customer-portal .reference-plan-card{
+ display:flex!important;flex-direction:column!important;padding:18px!important;min-height:360px!important;overflow:hidden!important
+}
+.customer-portal .reference-plan-card>span{align-self:flex-start!important}
+.customer-portal .reference-plan-card h3{margin:10px 0!important;min-height:42px!important}
+.customer-portal .reference-plan-card .plan-visual{
+ width:100%!important;height:105px!important;min-height:105px!important;margin:0 0 12px!important;display:flex!important;align-items:center!important;justify-content:center!important
+}
+.customer-portal .reference-plan-card .plan-visual img{max-width:110px!important;max-height:88px!important;object-fit:contain!important}
+.customer-portal .reference-plan-card>p{
+ margin:3px 0!important;font-size:12px!important;line-height:1.4!important;white-space:normal!important;overflow:visible!important
+}
+.customer-portal .reference-plan-card>a:last-child{
+ margin-top:auto!important;width:100%!important;min-height:42px!important;display:flex!important;align-items:center!important;justify-content:center!important
+}
+@media(min-width:901px){
+ .customer-portal .reference-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
