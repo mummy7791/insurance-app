@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
           <div>
             <span className="eyebrow">LEGAL & PRIVACY</span>
             <h1>Privacy Policy</h1>
-            <p>Last updated: 29 September 2026</p>
+            <p>Last updated: 3 October 2026</p>
           </div>
           <article className="public-cover-card" style={{ marginTop: 24 }}>
             <h2>SecureLife Privacy Policy</h2>
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
             <h3>Changes to this policy</h3>
             <p>We may update this Privacy Policy as the service or applicable requirements change. The latest version will be published on this page with an updated date.</p>
             <h3>Contact</h3>
-            <p>For privacy or support questions, contact: <a href="mailto:srinunaidu5556@gmail.com">srinunaidu5556@gmail.com</a></p>
+            <p>For privacy or support questions, contact: <a href="mailto:arriyotechnologies@gmail.com">arriyotechnologies@gmail.com</a></p>
           </article>
         </section>
       </main>
