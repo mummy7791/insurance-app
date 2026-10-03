@@ -34,6 +34,8 @@ export default function InsurancePlans() {
   const [buyingId, setBuyingId] = useState("");
   const [estimate, setEstimate] = useState<{ category?: string; coverageAmount?: number; yearlyPremium?: number } | null>(null);
   const [error, setError] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [search, setSearch] = useState("");
 
   const fetchPlans = useCallback(async (): Promise<Plan[]> => {
     const res = await api.get<Plan[]>("/insurance-plans");
@@ -88,6 +90,15 @@ export default function InsurancePlans() {
     }, 300);
   };
 
+  const categories = ["All", ...Array.from(new Set(plans.map((plan) => plan.category).filter(Boolean)))];
+  const visiblePlans = [...plans]
+    .filter((plan) => categoryFilter === "All" || plan.category === categoryFilter)
+    .filter((plan) => `${plan.planName} ${plan.category}`.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (!estimate?.category) return 0;
+      return Number(b.category === estimate.category) - Number(a.category === estimate.category);
+    });
+
   const getBenefits = (benefits?: string | string[]) => {
     if (Array.isArray(benefits)) return benefits.join(", ");
     return benefits || "N/A";
@@ -106,18 +117,16 @@ export default function InsurancePlans() {
       {estimate && <div className="estimate-reminder"><div><span className="eyebrow">YOUR PREMIUM ESTIMATE</span><h3>{estimate.category || "Protection plan"}</h3><p>You estimated {estimate.coverageAmount ? `₹${estimate.coverageAmount.toLocaleString("en-IN")} cover` : "your cover"}{estimate.yearlyPremium ? ` at about ₹${estimate.yearlyPremium.toLocaleString("en-IN")} per year` : ""}.</p></div><button className="mini-btn" onClick={() => { sessionStorage.removeItem("premiumEstimate"); setEstimate(null); }}>Dismiss</button></div>}
 
       <div className="section">
-        <h2>Plans designed around your protection needs</h2>
+        <div className="plan-browser-heading"><div><span className="eyebrow">EXPLORE PLANS</span><h2>Plans designed around your protection needs</h2><p>Choose a category or search by plan name to find the right proposal faster.</p></div><span className="plan-result-count">{visiblePlans.length} plans</span></div>
+        <div className="plan-browser-tools"><input aria-label="Search insurance plans" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search plan name or category..." /><div className="plan-category-filters">{categories.map((category) => <button key={category} className={categoryFilter === category ? "active" : ""} onClick={() => setCategoryFilter(category)}>{category}</button>)}</div></div>
 
         {loading ? (
           <div className="plan-loading-state"><div className="securelife-loading-logo" aria-label="Loading SecureLife plans"><img src="/securelife-logo.jpg" alt="SecureLife Insurance"/><span className="securelife-loading-ring" /></div><strong>Loading protection plans...</strong><span>Please wait while we prepare your plans</span></div>
         ) : plans.length === 0 ? (
           <div className="plan-empty-state"><strong>No insurance plans are available right now.</strong><span>Please check again later or use the premium calculator.</span><button className="mini-btn" onClick={() => navigate("/premium-calculator")}>Premium Calculator</button></div>
         ) : (
-          <div className="insurance-plan-grid">
-            {[...plans].sort((a, b) => {
-              if (!estimate?.category) return 0;
-              return Number(b.category === estimate.category) - Number(a.category === estimate.category);
-            }).map((plan) => {
+          visiblePlans.length === 0 ? <div className="plan-empty-state"><strong>No matching plans found.</strong><span>Try another plan name or category.</span><button className="mini-btn" onClick={() => { setSearch(""); setCategoryFilter("All"); }}>Show all plans</button></div> : <div className="insurance-plan-grid">
+            {visiblePlans.map((plan) => {
               const premium = plan.yearlyPremium || plan.yearlyAmount || 0;
 
               return (
