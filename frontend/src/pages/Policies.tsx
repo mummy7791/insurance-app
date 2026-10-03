@@ -49,6 +49,14 @@ export default function Policies() {
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
+  const activePurchasedPlans = purchasedPlans.filter((plan) => String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid");
+  const pendingPurchasedPlans = purchasedPlans.filter((plan) => !(String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid"));
+  const purchaseStatusClass = (plan: PurchasedPlan) => {
+    const payment = String(plan.paymentStatus || "").toLowerCase();
+    if (payment === "failed") return "failed";
+    if (payment === "pending") return "pending";
+    return "processing";
+  };
   const purchasedPolicyNumbers = new Set(purchasedPlans.map((plan) => plan.policyNumber).filter(Boolean));
   const visiblePolicies = isCustomer ? policies.filter((policy) => !policy.policyNumber || !purchasedPolicyNumbers.has(policy.policyNumber)) : policies;
 
@@ -308,7 +316,51 @@ export default function Policies() {
 
       {loadError && <div className="data-load-error"><span>{loadError}</span><button className="mini-btn" onClick={loadPolicies}>Retry</button></div>}
 
-      {isCustomer && purchasedPlans.length > 0 && <div className="section"><div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2></div></div><div className="insurance-plan-grid">{purchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}><span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3><p><b>Policy No:</b> {plan.policyNumber || "Processing"}</p><p><b>Coverage:</b> ₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</p><p><b>Yearly Premium:</b> ₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</p><p><b>Total Premium ({plan.paymentYears || 1} years):</b> ₹{Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}</p><p><b>Next Premium:</b> {plan.nextPremiumDate ? new Date(plan.nextPremiumDate).toLocaleDateString("en-IN") : "No further premium due"}</p><p><b>Validity:</b> {plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</p>{plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}<div className="policy-wallet-status"><span className="status-pill active">● {plan.policyStatus}</span><span className="payment-verified">✓ {plan.paymentStatus}</span></div><div className="policy-document-actions">{plan.paymentStatus === "Paid" && plan.policyNumber ? <button className="policy-download-btn primary" onClick={() => downloadCertificate(plan)}>Download Policy</button> : <span className="status-pill due">Certificate after payment</span>}{plan.paymentStatus === "Paid" && plan.receiptNumber && <button className="policy-download-btn secondary" onClick={() => downloadReceipt(plan)}>Download Receipt</button>}<button className="policy-download-btn secondary" onClick={()=>setJourneyPlan(plan)}>View Policy Journey</button></div></div>)}</div></div>}
+      {isCustomer && purchasedPlans.length > 0 && (
+        <>
+          {activePurchasedPlans.length > 0 && <div className="section policy-group-section">
+            <div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2><p className="section-copy">Your active, paid policies and policy documents.</p></div><span className="policy-count-chip">${activePurchasedPlans.length} Active</span></div>
+            <div className="insurance-plan-grid">
+              {activePurchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}>
+                <span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3>
+                <div className="policy-detail-rows">
+                  <p><b>Policy No:</b><span>{plan.policyNumber || "Processing"}</span></p>
+                  <p><b>Coverage:</b><span>₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</span></p>
+                  <p><b>Yearly Premium:</b><span>₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</span></p>
+                  <p><b>Total Premium ({plan.paymentYears || 1} years):</b><span>₹{Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}</span></p>
+                  <p><b>Next Premium:</b><span>{plan.nextPremiumDate ? new Date(plan.nextPremiumDate).toLocaleDateString("en-IN") : "No further premium due"}</span></p>
+                  <p><b>Validity:</b><span>{plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"} – {plan.endDate ? new Date(plan.endDate).toLocaleDateString("en-IN") : "N/A"}</span></p>
+                </div>
+                {plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}
+                <div className="policy-wallet-status"><span className="status-pill active">● ACTIVE</span><span className="payment-verified">✓ PAID</span></div>
+                <div className="policy-document-actions">
+                  <button className="policy-download-btn primary" onClick={() => downloadCertificate(plan)}>Download Policy</button>
+                  {plan.receiptNumber && <button className="policy-download-btn secondary" onClick={() => downloadReceipt(plan)}>Download Receipt</button>}
+                  <button className="policy-download-btn secondary" onClick={()=>setJourneyPlan(plan)}>View Policy Journey</button>
+                </div>
+              </div>)}
+            </div>
+          </div>}
+          {pendingPurchasedPlans.length > 0 && <div className="section policy-group-section policy-pending-section">
+            <div className="section-heading-row"><div><span className="eyebrow">ACTION / HISTORY</span><h2>Processing & Failed Policies</h2><p className="section-copy">Pending or unsuccessful purchases are kept separate from active cover.</p></div><span className="policy-count-chip pending">${pendingPurchasedPlans.length} Records</span></div>
+            <div className="insurance-plan-grid">
+              {pendingPurchasedPlans.map((plan) => <div className={`insurance-plan-card policy-wallet-card policy-state-${purchaseStatusClass(plan)}`} key={plan._id}>
+                <span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3>
+                <div className="policy-detail-rows">
+                  <p><b>Policy No:</b><span>{plan.policyNumber || "Processing"}</span></p>
+                  <p><b>Coverage:</b><span>₹{Number(plan.coverageAmount || 0).toLocaleString("en-IN")}</span></p>
+                  <p><b>Yearly Premium:</b><span>₹{Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}</span></p>
+                  <p><b>Total Premium ({plan.paymentYears || 1} years):</b><span>₹{Number(plan.totalPremiumPayable || (plan.yearlyPremium * (plan.paymentYears || 1))).toLocaleString("en-IN")}</span></p>
+                </div>
+                {plan.proposal?.nomineeName && <div className="policy-proposal-mini"><span>Nominee</span><strong>{plan.proposal.nomineeName}</strong><small>{plan.proposal.nomineeRelation || ""}</small></div>}
+                <div className="policy-wallet-status"><span className={`status-pill ${purchaseStatusClass(plan)}`}>● {String(plan.policyStatus || "Processing").toUpperCase()}</span><span className={`payment-state ${purchaseStatusClass(plan)}`}>{String(plan.paymentStatus || "Pending").toUpperCase()}</span></div>
+                <div className="policy-payment-note">{String(plan.paymentStatus).toLowerCase() === "failed" ? "Payment failed — policy certificate was not issued." : "Payment / policy issuance is still pending."}</div>
+                <div className="policy-document-actions"><span className="status-pill due">Certificate after payment</span><button className="policy-download-btn secondary" onClick={()=>setJourneyPlan(plan)}>View Policy Journey</button></div>
+              </div>)}
+            </div>
+          </div>}
+        </>
+      )}
 
       {isCustomer&&journeyPlan&&<div className="policy-journey-overlay" onClick={()=>setJourneyPlan(null)}><div className="section policy-journey-modal" onClick={e=>e.stopPropagation()}><div className="section-heading-row"><div><span className="eyebrow">POLICY JOURNEY</span><h2>{journeyPlan.planName}</h2><p className="section-copy">{journeyPlan.policyNumber}</p></div><button className="mini-btn" onClick={()=>setJourneyPlan(null)}>Close</button></div>
       <div className="cards admin-kpi-grid"><div className="card"><h3>Entry Age</h3><h1>{journeyPlan.entryAge||"-"}</h1></div><div className="card"><h3>Cover Till Age</h3><h1>{journeyPlan.coverTillAge||"-"}</h1></div><div className="card"><h3>Policy Term</h3><h1>{journeyPlan.policyTermYears||journeyPlan.paymentYears} yrs</h1></div><div className="card"><h3>Premium Paying Term</h3><h1>{journeyPlan.paymentYears} yrs</h1></div></div>
