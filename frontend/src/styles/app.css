@@ -3358,3 +3358,39 @@ textarea:focus {
     margin-right:0!important;
   }
 }
+
+
+/* ===== SECURELIFE CLEAN REFERENCE-STYLE HOME ===== */
+@media (min-width:901px){
+ .customer-portal>.main{padding:0 0 60px!important;background:#fff!important}
+ .customer-portal .topbar{border-radius:0!important;box-shadow:none!important;border-bottom:1px solid #e6e6e6!important;padding-left:5.5%!important;padding-right:5.5%!important}
+ .sl-home-strip{margin:0!important;border-radius:0!important;background:#075c43!important;overflow:hidden!important}
+ .sl-home-strip-track{animation:none!important;display:flex!important;justify-content:center!important;gap:0!important;min-width:100%!important}
+ .sl-home-strip-track>*{padding:16px 27px!important;white-space:nowrap!important;color:#fff!important}
+ .securelife-reference-hero,.sl-goals-section,.sl-customer-corner,.sl-benefits-section,
+ .customer-dashboard-grid,.customer-section-title,.customer-summary-grid,.customer-health-grid,.featured-cover,.section{
+   width:min(1420px,calc(100% - 80px))!important;max-width:1420px!important;margin-left:auto!important;margin-right:auto!important
+ }
+}
+.securelife-reference-hero{margin-top:24px!important;min-height:430px!important;border-radius:26px!important;position:relative!important;overflow:hidden!important;padding-bottom:76px!important}
+.sl-hero-servicebar{position:absolute;left:0;right:0;bottom:0;height:66px;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.25)}
+.sl-hero-servicebar a{display:flex;align-items:center;justify-content:center;gap:12px;color:#fff;text-decoration:none;font-weight:800;font-size:17px;border-right:1px solid rgba(255,255,255,.3)}
+.sl-goals-section,.sl-customer-corner,.sl-benefits-section{margin-top:28px!important;border:1px solid #e7e7e7;border-radius:22px;background:#fff;padding:30px!important;box-shadow:0 8px 30px rgba(20,50,40,.05)}
+.sl-goal-track{display:grid!important;grid-template-columns:repeat(6,1fr)!important;overflow:visible!important;gap:14px!important}
+.sl-goal-track a{min-width:0!important;height:180px!important;border:1px solid #e4e7e6!important;border-radius:16px!important;padding:24px 18px!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;background:linear-gradient(180deg,#fff,#f7fbf9)!important}
+.sl-goal-track a b{font-size:30px!important;margin-bottom:auto!important;color:#087a52!important}
+.sl-customer-corner>div:first-child span{font-size:13px;font-weight:900;letter-spacing:2px;color:#07834f}
+.sl-customer-corner>div:first-child h2{font-size:30px;margin:7px 0 22px;color:#10233d}
+.sl-customer-corner-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.sl-customer-corner-grid a{min-height:145px;border:1px solid #d9e4df;border-radius:16px;padding:20px;text-decoration:none;color:#10233d;background:#f7fbf9;display:flex;flex-direction:column}
+.sl-customer-corner-grid b{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#e2f5ec;color:#087a52;font-size:22px;margin-bottom:18px}
+.sl-customer-corner-grid strong{font-size:17px}.sl-customer-corner-grid small{margin-top:6px;color:#68778b}
+.sl-benefit-grid{grid-template-columns:repeat(5,1fr)!important}
+.reference-dashboard-columns{display:none!important}
+@media(max-width:900px){
+ .sl-home-strip-track{animation:slTicker 24s linear infinite!important}
+ .securelife-reference-hero,.sl-goals-section,.sl-customer-corner,.sl-benefits-section{width:calc(100% - 24px)!important;margin-left:12px!important;margin-right:12px!important}
+ .sl-goal-track{display:flex!important;overflow-x:auto!important}
+ .sl-customer-corner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .sl-hero-servicebar{height:auto;min-height:58px}.sl-hero-servicebar a{font-size:12px;padding:10px 5px}
+}
