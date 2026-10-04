@@ -154,20 +154,33 @@ export default function Policies() {
   };
 
   const addBondHeader = (doc: jsPDF, title: string, policyNo: string) => {
-    doc.setDrawColor(136, 19, 55); doc.setLineWidth(1.4); doc.rect(7, 7, 196, 283);
-    doc.setDrawColor(245, 130, 32); doc.setLineWidth(.35); doc.rect(10, 10, 190, 277);
-    doc.setTextColor(136, 19, 55); doc.setFont("helvetica","bold"); doc.setFontSize(18); doc.text("SecureLife Insurance", 105, 18, {align:"center"});
-    doc.setFontSize(7.5); doc.setTextColor(71,85,105); doc.text("DIGITAL POLICY DOCUMENT",105,24,{align:"center"});
-    doc.setDrawColor(136,19,55); doc.line(15,29,195,29);
-    doc.setFontSize(14); doc.setTextColor(30,41,59); doc.text(title,15,39);
-    doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(100,116,139); doc.text(`Policy No: ${policyNo}`,195,39,{align:"right"});
+    // Premium SecureLife corporate policy-bond masthead.
+    doc.setFillColor(4, 78, 57); doc.rect(0, 0, 210, 35, "F");
+    doc.setFillColor(8, 139, 80); doc.rect(0, 35, 210, 2.4, "F");
+    doc.setFillColor(255, 255, 255); doc.roundedRect(14, 8, 22, 22, 3, 3, "F");
+    doc.setTextColor(8, 139, 80); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text("SL",25,22,{align:"center"});
+    doc.setTextColor(255,255,255); doc.setFontSize(19); doc.text("SecureLife",42,17);
+    doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.text("INSURANCE • DIGITAL POLICY SERVICES",42,24);
+    doc.setFontSize(7); doc.text("Trusted Protection for a Safer Tomorrow",42,29);
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.text("POLICY BOND",195,15,{align:"right"});
+    doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.text(policyNo,195,22,{align:"right",maxWidth:62});
+    doc.setDrawColor(8,139,80); doc.setLineWidth(.8); doc.rect(7,7,196,283);
+    doc.setDrawColor(214,231,220); doc.setLineWidth(.25); doc.rect(10,40,190,247);
+    doc.setTextColor(15,35,55); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text(title,15,49);
+    doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
+    doc.text("Official digitally generated SecureLife policy document",15,55);
+    doc.text("VERIFY • SECURE • AUTHENTIC",195,49,{align:"right"});
   };
-  const bondSection=(doc:jsPDF,title:string,y:number)=>{doc.setFillColor(248,250,252);doc.rect(15,y,180,9,"F");doc.setTextColor(136,19,55);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text(title.toUpperCase(),19,y+6);return y+15;};
-  const bondRows=(doc:jsPDF,rows:Array<[string,string]>,y:number)=>{doc.setFontSize(8.5);rows.forEach(([l,v],i)=>{doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text(l,19,y);doc.setFont("helvetica","bold");doc.setTextColor(30,41,59);doc.text(String(v||"N/A"),78,y,{maxWidth:112});y+=8;if(i%2===1){doc.setDrawColor(241,245,249);doc.line(19,y-4,191,y-4);}});return y;};
-  const bondFooter=(doc:jsPDF,policyNo:string)=>{doc.setDrawColor(226,232,240);doc.line(15,276,195,276);doc.setFont("helvetica","normal");doc.setFontSize(6.8);doc.setTextColor(100,116,139);doc.text("SecureLife Insurance | Digitally generated policy document",15,282);doc.text(policyNo,195,282,{align:"right"});};
-
+  const bondSection=(doc:jsPDF,title:string,y:number)=>{doc.setFillColor(235,248,241);doc.roundedRect(15,y,180,9,1.5,1.5,"F");doc.setTextColor(4,100,67);doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text(title.toUpperCase(),19,y+6);return y+15;};
+  const bondRows=(doc:jsPDF,rows:Array<[string,string]>,y:number)=>{doc.setFontSize(8.3);rows.forEach(([l,v],i)=>{if(i%2===0){doc.setFillColor(250,252,251);doc.rect(18,y-5.5,174,8,"F");}doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text(l,20,y);doc.setFont("helvetica","bold");doc.setTextColor(25,45,55);doc.text(String(v||"N/A"),78,y,{maxWidth:110});y+=8;});return y;};
+  const bondFooter=(doc:jsPDF,policyNo:string)=>{
+    doc.setDrawColor(214,231,220);doc.line(15,274,195,274);
+    doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(4,100,67);doc.text("SECURELIFE INSURANCE",15,280);
+    doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text("Computer-generated policy bond • No physical signature required",15,285);
+    doc.text(policyNo,195,280,{align:"right"});doc.text("Customer Copy",195,285,{align:"right"});
+  };
   const addPolicyTermsPage = (doc: jsPDF, plan: PurchasedPlan) => {
-    doc.addPage(); addBondHeader(doc,"Policy Terms & Conditions",plan.policyNumber||"N/A"); let y=49;
+    doc.addPage(); addBondHeader(doc,"Policy Terms & Conditions",plan.policyNumber||"N/A"); let y=63;
     y=bondSection(doc,"Important Policy Information",y);
     const terms=[
       "Coverage and benefits are governed by the issued policy schedule, accepted proposal details, exclusions and applicable endorsements.",
@@ -187,7 +200,7 @@ export default function Policies() {
   };
 
   const addPolicySchedulePage = (doc:jsPDF,plan:PurchasedPlan) => {
-    doc.addPage();addBondHeader(doc,"Policy Schedule",plan.policyNumber||"N/A");let y=49;
+    doc.addPage();addBondHeader(doc,"Premium Schedule",plan.policyNumber||"N/A");let y=63;
     y=bondSection(doc,"Policy & Premium Schedule",y);
     const years=Math.max(1,Number(plan.paymentYears||1));doc.setFillColor(248,250,252);doc.rect(19,y,172,8,"F");doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(51,65,85);doc.text("POLICY YEAR",22,y+5);doc.text("PREMIUM",72,y+5);doc.text("PAYMENT STATUS",122,y+5);y+=13;
     for(let i=1;i<=years;i++){doc.setFont("helvetica","normal");doc.setTextColor(30,41,59);doc.text(String(i),22,y);doc.text(`INR ${Number(plan.yearlyPremium||0).toLocaleString("en-IN")}`,72,y);doc.text(i===1&&plan.paymentStatus==="Paid"?"Paid":"Scheduled",122,y);y+=8;if(y>265)break;}
@@ -224,7 +237,7 @@ export default function Policies() {
   const downloadCertificate = (plan: PurchasedPlan) => {
     if (Number(plan.yearlyPremium || 0) <= 0 || Number(plan.coverageAmount || 0) <= 0) { alert("This policy does not have a valid plan premium/coverage. Please contact SecureLife servicing."); return; }
     if (plan.paymentStatus !== "Paid" || !plan.policyNumber) { alert("Policy bond will be available after payment is verified and the policy number is issued."); return; }
-    const doc=new jsPDF();addBondHeader(doc,"Policy Bond / Policy Schedule",plan.policyNumber);let y=49;
+    const doc=new jsPDF();addBondHeader(doc,"Certificate of Insurance / Policy Schedule",plan.policyNumber);let y=63;
     y=bondSection(doc,"Policyholder & Policy Details",y);
     y=bondRows(doc,[["Policyholder",plan.proposal?.customerName||user.name||"Customer"],["Policy Number",plan.policyNumber],["Document Reference",`BOND-${plan.policyNumber.slice(-12)}`],["Issue Date",new Date(plan.startDate||plan.createdAt||Date.now()).toLocaleDateString("en-IN")],["Plan Name",plan.planName],["Product Category",plan.category],["Policy Status",plan.policyStatus],["Payment Status",plan.paymentStatus]],y);
     y=bondSection(doc,"Insurance Benefits",y+2);
