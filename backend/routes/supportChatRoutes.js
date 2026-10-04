@@ -35,8 +35,29 @@ router.post("/messages",auth(["customer"]),async(req,res)=>{
 });
 
 router.get("/whatsapp/webhook",(req,res)=>{
-  const mode=req.query["hub.mode"],verifyToken=req.query["hub.verify_token"],challenge=req.query["hub.challenge"];
-  if(mode==="subscribe"&&verifyToken===process.env.WHATSAPP_VERIFY_TOKEN)return res.status(200).send(challenge);
+  // Meta webhook verification: return hub.challenge exactly as plain text.
+  // Trim the configured token to avoid accidental whitespace/newlines in Render env vars.
+  const mode=String(req.query["hub.mode"]||"").trim();
+  const verifyToken=String(req.query["hub.verify_token"]||"").trim();
+  const challenge=String(req.query["hub.challenge"]||"");
+  const configuredToken=String(process.env.WHATSAPP_VERIFY_TOKEN||"").trim();
+
+  if(!configuredToken){
+    console.error("WhatsApp webhook verification failed: WHATSAPP_VERIFY_TOKEN is not configured");
+    return res.sendStatus(503);
+  }
+
+  if(mode==="subscribe"&&verifyToken===configuredToken){
+    console.log("WhatsApp webhook verified successfully");
+    res.type("text/plain");
+    return res.status(200).send(challenge);
+  }
+
+  console.warn("WhatsApp webhook verification rejected",{
+    mode,
+    tokenProvided:Boolean(verifyToken),
+    challengeProvided:Boolean(challenge)
+  });
   return res.sendStatus(403);
 });
 
