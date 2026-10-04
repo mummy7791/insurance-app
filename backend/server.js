@@ -64,6 +64,9 @@ const allowedOrigins = new Set([
   CLIENT_URL,
   PRODUCTION_CLIENT_URL,
   "http://localhost:5173",
+  "https://localhost",
+  "http://localhost",
+  "capacitor://localhost",
 ]);
 
 const isAllowedOrigin = (origin) => {
