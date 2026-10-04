@@ -53,7 +53,7 @@ export default function Topbar({ title, subtitle }: Props) {
   return (
     <div className="topbar">
       {showNotifications ? (
-        <nav className="customer-topnav" aria-label="Customer navigation">
+        <div className="customer-desktop-brand"><img src="/securelife-logo.jpg" alt="SecureLife" /><div><strong>SecureLife</strong><small>INSURANCE</small></div></div>\n        <nav className="customer-topnav" aria-label="Customer navigation">
           <Link to="/customer-dashboard">Home</Link>
           <Link to="/insurance-plans">Insurance Plans</Link>
           <Link to="/policies">My Policies</Link>
