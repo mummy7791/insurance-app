@@ -3294,3 +3294,42 @@ textarea:focus {
 @media(max-width:900px){
  .customer-portal>.sidebar{display:block}
 }
+
+
+/* ===== CUSTOMER HOME V2 — CLEAN ICICI-INSPIRED DESKTOP COMPOSITION ===== */
+.customer-desktop-brand{display:none}
+@media(min-width:901px){
+ body{overflow-x:hidden!important}
+ .customer-portal>.main{padding:0 24px 56px!important}
+ .customer-portal .topbar{max-width:1480px!important;height:82px!important;min-height:82px!important;padding:0 20px!important;display:flex!important;gap:18px!important;overflow:visible!important}
+ .customer-desktop-brand{display:flex!important;align-items:center;gap:10px;flex:0 0 210px}
+ .customer-desktop-brand img{width:48px;height:48px;object-fit:contain;border-radius:10px}
+ .customer-desktop-brand>div{display:flex;flex-direction:column;line-height:1}
+ .customer-desktop-brand strong{font-size:22px;color:#07543a;font-weight:900}
+ .customer-desktop-brand small{margin-top:7px;font-size:9px;letter-spacing:.22em;color:#65756e}
+ .customer-portal .customer-topnav{min-width:0!important;overflow:visible!important;justify-content:flex-start!important;gap:0!important}
+ .customer-portal .customer-topnav a{padding:31px 13px 26px!important;font-size:13px!important}
+ .customer-portal .topbar-actions{flex:0 0 auto!important}
+ .customer-portal .user-box{min-width:135px!important}
+ .customer-portal .sl-home-strip{max-width:1480px!important;margin:0 auto!important;border-radius:0 0 12px 12px!important}
+ .customer-portal .sl-quick-nav{max-width:1480px!important;top:82px!important;margin:10px auto 18px!important;justify-content:center!important;overflow:hidden!important;padding:5px 8px!important;border-radius:10px!important;box-shadow:none!important}
+ .customer-portal .sl-quick-nav a{padding:10px 18px!important}
+ .customer-portal .securelife-reference-hero{max-width:1480px!important;min-height:410px!important;margin:0 auto 24px!important;border-radius:18px!important}
+ .customer-portal .securelife-reference-hero .reference-hero-copy{padding-left:10px!important}
+ .customer-portal .securelife-reference-hero h1{font-size:50px!important;line-height:1.04!important;max-width:620px!important}
+ .customer-portal .securelife-reference-hero p{max-width:570px!important}
+ .customer-portal .sl-goals-section,.customer-portal .sl-benefits-section,.customer-portal .reference-dashboard-columns{max-width:1480px!important}
+ .customer-portal .sl-goals-section,.customer-portal .sl-benefits-section{padding:28px 30px!important;border-radius:16px!important}
+ .customer-portal .sl-goal-track{display:grid!important;grid-template-columns:repeat(8,minmax(130px,1fr))!important;overflow:visible!important;transform:none!important;animation:none!important}
+ .customer-portal .sl-goal-track>a{min-width:0!important;min-height:145px!important}
+ .customer-portal .sl-benefit-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ .customer-portal .reference-dashboard-columns{grid-template-columns:minmax(0,2fr) minmax(330px,.8fr)!important;gap:20px!important}
+ .customer-portal .reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important}
+ .customer-portal .reference-plan-card{min-width:0!important}
+}
+@media(min-width:901px) and (max-width:1200px){
+ .customer-desktop-brand{flex-basis:170px}.customer-desktop-brand strong{font-size:18px}
+ .customer-portal .customer-topnav a{padding-left:8px!important;padding-right:8px!important;font-size:12px!important}
+ .customer-portal .sl-goal-track{grid-template-columns:repeat(4,1fr)!important}
+ .customer-portal .reference-plan-grid{grid-template-columns:repeat(2,1fr)!important}
+}
