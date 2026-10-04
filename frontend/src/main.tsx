@@ -26,7 +26,7 @@ function MobileNetworkGate() {
         display: "grid",
         placeItems: "center",
         padding: "24px",
-        backgroundImage: "linear-gradient(rgba(4, 24, 13, 0.42), rgba(4, 24, 13, 0.58)), url(\"/India%E2%80%99s%20SecureLife%20Insurance%20Banner.png\")",
+        backgroundImage: "linear-gradient(rgba(4, 24, 13, 0.42), rgba(4, 24, 13, 0.58)), url(\"/offline-bg.jfif\")",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
