@@ -108,6 +108,15 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
+      <section className="sl-home-strip">
+        <div className="sl-home-strip-track">
+          <span>SecureLife Insurance</span><b>Life Protection</b><b>Health Insurance</b><b>Car Insurance</b><b>Bike Insurance</b><b>Policy Services</b><b>Pay Premium</b><b>Claims & KYC</b>
+          <span>SecureLife Insurance</span><b>Life Protection</b><b>Health Insurance</b><b>Car Insurance</b><b>Bike Insurance</b><b>Policy Services</b><b>Pay Premium</b><b>Claims & KYC</b>
+        </div>
+      </section>
+      <nav className="sl-quick-nav" aria-label="SecureLife quick navigation">
+        <Link to="/insurance-plans">Plans</Link><Link to="/policies">My Policies</Link><Link to="/premiums">Pay Premium</Link><Link to="/claims">Claims</Link><Link to="/policy-services">Customer Services</Link><Link to="/documents">KYC & Documents</Link><Link to="/customer-profile">Profile</Link>
+      </nav>
       <section className="securelife-reference-hero product-dashboard-hero">
         <div className="reference-hero-copy">
           <span className="dashboard-kicker">SECURELIFE POLICYHOLDER PORTAL</span>
@@ -137,7 +146,7 @@ export default function CustomerDashboard() {
       <div className="reference-dashboard-columns">
         <section className="reference-popular">
           <div className="reference-section-heading"><div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div><Link to="/insurance-plans">View All Plans →</Link></div>
-          <div className="reference-plan-grid">
+          <div className="reference-plan-grid sl-auto-plan-slider">
             <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual plan-car"><img src="https://pngimg.com/uploads/toyota/toyota_PNG1937.png" alt="Car insurance" /></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
             <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual plan-bike"><img src="https://pngimg.com/uploads/motorcycle/motorcycle_PNG5342.png" alt="Bike insurance" /></div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
             <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual plan-health"><span className="family-art">👨‍👩‍👧</span></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
