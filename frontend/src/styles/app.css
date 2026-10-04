@@ -3291,3 +3291,41 @@ textarea:focus {
 @media(max-width:650px){
   .customer-portal .dashboard-hero-banner{border-radius:14px}
 }
+
+/* SecureLife responsive reference home */
+.customer-portal .main{padding:0 22px 36px!important;background:#f4fcf7!important}
+.customer-portal .topbar{position:sticky!important;top:0!important;z-index:80!important;margin:0 -22px!important;border-radius:0 0 20px 20px!important}
+.customer-portal .securelife-showcase-hero{margin:0 -22px;overflow:hidden}
+.customer-portal .securelife-showcase-image{display:block;width:100%;height:auto;max-height:460px;object-fit:cover}
+.customer-portal .securelife-plan-browser{padding:18px 0 0;margin-bottom:24px}
+.customer-portal .securelife-plan-search{height:48px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;border:1px solid #cfe5d8;background:#fff;border-radius:14px;padding-left:14px;color:#607080}
+.customer-portal .securelife-plan-search>a{height:48px;padding:0 24px;display:flex;align-items:center;background:#078b50;color:#fff;text-decoration:none;font-weight:800;border-radius:0 14px 14px 0}
+.customer-portal .securelife-category-strip{display:flex;gap:9px;margin-top:13px;overflow-x:auto;padding-bottom:5px}
+.customer-portal .securelife-category-strip>a{flex:0 0 auto;padding:10px 15px;border-radius:999px;border:1px solid #e1ebe5;background:#fff;color:#20352d;text-decoration:none;font-size:12px;font-weight:800}
+.customer-portal .securelife-home-plans,.customer-portal .securelife-why{margin:22px 0}
+.customer-portal .securelife-home-plans .reference-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important}
+.customer-portal .securelife-home-plans .reference-plan-card{min-height:330px!important;border-radius:14px!important;padding:15px!important}
+.customer-portal .securelife-trust-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.customer-portal .securelife-trust-grid>div{display:flex;align-items:center;gap:13px;padding:17px;border:1px solid #dbe9e1;border-radius:13px;background:#fff}
+.customer-portal .securelife-trust-grid span{display:flex;flex-direction:column;gap:4px}
+.customer-portal .securelife-trust-grid small{font-size:11px;color:#64748b}
+@media(max-width:1180px){
+.customer-portal .securelife-home-plans .reference-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.customer-portal .securelife-trust-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:768px){
+.customer-portal .main{padding:64px 12px 24px!important}
+.customer-portal .topbar{position:relative!important;margin:-64px -12px 0!important;padding-left:62px!important;border-radius:0!important}
+.customer-portal .customer-topnav{display:none!important}
+.customer-portal .securelife-showcase-hero{margin:0 -12px}
+.customer-portal .securelife-showcase-image{max-height:none;aspect-ratio:2048/684;object-fit:cover}
+.customer-portal .securelife-plan-search{height:44px;font-size:11px}
+.customer-portal .securelife-plan-search>a{height:44px;padding:0 13px}
+.customer-portal .securelife-home-plans .reference-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+.customer-portal .securelife-trust-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+}
+@media(max-width:480px){
+.customer-portal .securelife-home-plans .reference-plan-grid{grid-template-columns:1fr!important}
+.customer-portal .securelife-home-plans .reference-plan-card{min-height:0!important}
+.customer-portal .securelife-trust-grid{grid-template-columns:1fr 1fr}
+}
