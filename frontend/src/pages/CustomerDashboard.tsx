@@ -122,13 +122,10 @@ export default function CustomerDashboard() {
     >
       <section className="sl-home-strip">
         <div className="sl-home-strip-track">
-          <span>SecureLife Insurance</span><b>Life Protection</b><b>Health Insurance</b><b>Car Insurance</b><b>Bike Insurance</b><b>Policy Services</b><b>Pay Premium</b><b>Claims & KYC</b>
-          <span>SecureLife Insurance</span><b>Life Protection</b><b>Health Insurance</b><b>Car Insurance</b><b>Bike Insurance</b><b>Policy Services</b><b>Pay Premium</b><b>Claims & KYC</b>
+          <span>SecureLife Insurance</span><b>Plans</b><b>Life Insurance</b><b>Health Insurance</b><b>Car Insurance</b><b>Bike Insurance</b><b>Claims</b><b>Customer Services</b><b>Pay Premium</b>
         </div>
       </section>
-      <nav className="sl-quick-nav" aria-label="SecureLife quick navigation">
-        <Link to="/insurance-plans">Plans</Link><Link to="/policies">My Policies</Link><Link to="/premiums">Pay Premium</Link><Link to="/claims">Claims</Link><Link to="/policy-services">Customer Services</Link><Link to="/documents">KYC & Documents</Link><Link to="/customer-profile">Profile</Link>
-      </nav>
+
       <section className={`securelife-reference-hero product-dashboard-hero sl-hero-slide sl-hero-${currentHero.art}`}>
         <button className="sl-hero-arrow prev" onClick={() => setHeroSlide((heroSlide + heroSlides.length - 1) % heroSlides.length)} aria-label="Previous banner">‹</button>
         <div className="reference-hero-copy" key={heroSlide}>
@@ -137,12 +134,7 @@ export default function CustomerDashboard() {
           <p>{currentHero.copy}</p>
           <div className="dashboard-hero-actions">
             <Link to={currentHero.to} className="dashboard-primary-action">{currentHero.cta} <span>→</span></Link>
-            <Link to="/policies" className="dashboard-secondary-action">View my policies</Link>
-          </div>
-          <div className="reference-categories dashboard-category-row">
-            <Link to="/insurance-plans"><b>🚗</b><span>Car</span></Link><Link to="/insurance-plans"><b>🏍</b><span>Bike</span></Link>
-            <Link to="/insurance-plans"><b>✚</b><span>Health</span></Link><Link to="/insurance-plans"><b>♥</b><span>Life</span></Link>
-            <Link to="/premiums"><b>₹</b><span>Premiums</span></Link><Link to="/claims"><b>✓</b><span>Claims</span></Link>
+            <Link to="/policies" className="dashboard-secondary-action">Know More</Link>
           </div>
         </div>
         <div className="dashboard-hero-insight">
@@ -152,48 +144,40 @@ export default function CustomerDashboard() {
         </div>
         <button className="sl-hero-arrow next" onClick={() => setHeroSlide((heroSlide + 1) % heroSlides.length)} aria-label="Next banner">›</button>
         <div className="sl-hero-dots">{heroSlides.map((_,i)=><button key={i} className={i===heroSlide?"active":""} onClick={()=>setHeroSlide(i)} aria-label={`Banner ${i+1}`}/>)}</div>
+        <div className="sl-hero-servicebar">
+          <Link to="/insurance-plans">ⓘ <span>Know More</span></Link>
+          <Link to="/help">▣ <span>Talk To Experts</span></Link>
+          <Link to="/policy-services">⌂ <span>Customer Services</span></Link>
+        </div>
       </section>
 
       <section className="sl-goals-section">
-        <div className="sl-section-head"><div><span>INSURANCE PLANS FOR ALL YOUR GOALS</span><h2>Everything you need, in one place</h2></div><Link to="/insurance-plans">View all plans →</Link></div>
+        <div className="sl-section-head"><div><span>INSURANCE PLANS FOR ALL YOUR GOALS</span><h2>Protection for every stage of life</h2></div><Link to="/insurance-plans">View all plans →</Link></div>
         <div className="sl-goal-track">
-          <Link to="/insurance-plans"><b>♥</b><strong>Life Insurance</strong><small>High life cover</small></Link>
+          <Link to="/insurance-plans"><b>↗</b><strong>Life Insurance</strong><small>Protect your family's future</small></Link>
+          <Link to="/insurance-plans"><b>☂</b><strong>Term Life Insurance</strong><small>High life cover</small></Link>
           <Link to="/insurance-plans"><b>✚</b><strong>Health Insurance</strong><small>Health protection</small></Link>
           <Link to="/insurance-plans"><b>🚗</b><strong>Car Insurance</strong><small>Drive protected</small></Link>
           <Link to="/insurance-plans"><b>🏍</b><strong>Bike Insurance</strong><small>Ride protected</small></Link>
-          <Link to="/policies"><b>▣</b><strong>My Policies</strong><small>Digital policy wallet</small></Link>
           <Link to="/premiums"><b>₹</b><strong>Pay Premium</strong><small>Fast & secure</small></Link>
-          <Link to="/claims"><b>✓</b><strong>Claims</strong><small>Track your claim</small></Link>
-          <Link to="/policy-services"><b>↻</b><strong>More Services</strong><small>Policy servicing</small></Link>
+        </div>
+      </section>
+
+      <section className="sl-customer-corner">
+        <div><span>EXISTING CUSTOMER CORNER</span><h2>Everything you need, right here</h2></div>
+        <div className="sl-customer-corner-grid">
+          <Link to="/premiums"><b>₹</b><strong>Pay Premium</strong><small>Quick online payment</small></Link>
+          <Link to="/policies"><b>▣</b><strong>My Policies</strong><small>View policy details</small></Link>
+          <Link to="/claims"><b>✓</b><strong>Claims</strong><small>File & track claims</small></Link>
+          <Link to="/documents"><b>⌑</b><strong>KYC & Documents</strong><small>Manage documents</small></Link>
+          <Link to="/policy-services"><b>↻</b><strong>Policy Services</strong><small>Manage your policy</small></Link>
         </div>
       </section>
 
       <section className="sl-benefits-section">
-        <div className="sl-section-head"><div><span>WHY SECURELIFE ONLINE</span><h2>Choosing digital protection has benefits</h2></div></div>
+        <div className="sl-section-head"><div><span>WHY BUY ONLINE</span><h2>Choosing to buy online has benefits</h2></div></div>
         <div className="sl-benefit-grid"><article><b>₹</b><strong>Simple Premiums</strong><small>Clear premium information</small></article><article><b>⚡</b><strong>Hassle-Free Purchase</strong><small>Quick digital journey</small></article><article><b>🔒</b><strong>Secure Transactions</strong><small>Protected online experience</small></article><article><b>💬</b><strong>Reliable Assistance</strong><small>Support when you need it</small></article><article><b>🤝</b><strong>Policy Services</strong><small>Manage cover in one place</small></article></div>
       </section>
-
-      <div className="reference-dashboard-columns">
-        <section className="reference-popular">
-          <div className="reference-section-heading"><div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div><Link to="/insurance-plans">View All Plans →</Link></div>
-          <div className="reference-plan-grid sl-auto-plan-slider">
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual plan-car"><img src="https://pngimg.com/uploads/toyota/toyota_PNG1937.png" alt="Car insurance" /></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual plan-bike"><img src="https://pngimg.com/uploads/motorcycle/motorcycle_PNG5342.png" alt="Bike insurance" /></div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual plan-health"><span className="family-art">👨‍👩‍👧</span></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual plan-life"><span className="family-art">☂️</span></div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-          </div>
-        </section>
-        <aside className="reference-summary-panel">
-          <div className="reference-section-heading"><h2>Your Insurance Summary</h2><span className="secure-chip">● Secure session</span></div>
-          <div className="reference-summary-cards">
-            <Link to="/policies"><small>Active Policies</small><strong>{activePolicyCount}</strong><span>View policies →</span></Link>
-            <Link to="/insurance-plans"><small>Total Protection</small><strong>{money(totalCoverage)}</strong><span>Explore plans →</span></Link>
-            <Link to="/premiums"><small>Premium Due</small><strong>{money(dueAmount)}</strong><span>Pay now →</span></Link>
-            <Link to="/claims"><small>Open Claims</small><strong>{openClaims.length}</strong><span>Track claims →</span></Link>
-          </div>
-          <Link to="/insurance-plans" className="reference-promo"><b>Protection<br/>for a Brighter<br/>Tomorrow</b><span>Explore Plans →</span></Link>
-        </aside>
-      </div>
 
       {loading ? <div className="section"><p>Loading your insurance summary...</p></div> : (
         <>
