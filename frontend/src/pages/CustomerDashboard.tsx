@@ -102,6 +102,21 @@ export default function CustomerDashboard() {
   const kycProgress = documents.length === 0 ? 0 : Math.round((verifiedDocuments / documents.length) * 100);
   const recentClaim = claims[0];
   const primaryPlan = activePurchased[0];
+  const daysUntil = (date: string) => Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
+  const renewalBuckets = {
+    overdue: duePremiums.filter((p) => daysUntil(p.dueDate) < 0),
+    seven: duePremiums.filter((p) => daysUntil(p.dueDate) >= 0 && daysUntil(p.dueDate) <= 7),
+    fifteen: duePremiums.filter((p) => daysUntil(p.dueDate) > 7 && daysUntil(p.dueDate) <= 15),
+    thirty: duePremiums.filter((p) => daysUntil(p.dueDate) > 15 && daysUntil(p.dueDate) <= 30),
+  };
+  const lifecycle = [
+    { label: "Proposal Submitted", done: Boolean(primaryPlan) },
+    { label: "Payment", done: primaryPlan?.paymentStatus === "Paid" },
+    { label: "KYC Verification", done: kycProgress === 100 },
+    { label: "Underwriting", done: Boolean(primaryPlan?.policyNumber) },
+    { label: "Policy Issued", done: primaryPlan?.policyStatus === "Active" },
+    { label: "Active", done: primaryPlan?.policyStatus === "Active" },
+  ];
 
   return (
     <MainLayout
@@ -202,6 +217,38 @@ export default function CustomerDashboard() {
             <div className="featured-cover-metrics"><div><span>Protection</span><strong>{money(primaryPlan.coverageAmount)}</strong></div><div><span>Annual premium</span><strong>{money(primaryPlan.yearlyPremium)}</strong></div><div><span>Policy status</span><strong>{primaryPlan.policyStatus}</strong></div></div>
             <Link className="mini-btn" to="/policies">Open digital policy →</Link>
           </section>}
+
+          <section className="section customer-action-center">
+            <div className="section-heading-row"><div><span className="eyebrow">QUICK ACTIONS</span><h2>Everything you need, one tap away</h2><p className="section-copy">Policy documents, renewals, claims and servicing from one secure workspace.</p></div><span className="secure-chip">● Secure services</span></div>
+            <div className="customer-action-grid">
+              <Link to="/policies"><b>↓</b><span>Download Policy</span><small>Policy bond & receipt</small></Link>
+              <Link to="/premiums"><b>₹</b><span>Pay Premium</span><small>Secure online payment</small></Link>
+              <Link to="/claims"><b>✓</b><span>Raise Claim</span><small>Submit & track claim</small></Link>
+              <Link to="/documents"><b>▤</b><span>Upload KYC</span><small>Private document vault</small></Link>
+              <Link to="/policy-services"><b>↻</b><span>Policy Services</span><small>Nominee & service requests</small></Link>
+              <Link to="/premiums"><b>◷</b><span>Renewal</span><small>Due dates & payment history</small></Link>
+            </div>
+          </section>
+
+          <div className="customer-feature-grid">
+            <section className="section renewal-center">
+              <div className="section-heading-row"><div><span className="eyebrow">RENEWAL CENTER</span><h2>Never miss a premium</h2></div><Link to="/premiums">Payment history →</Link></div>
+              <div className="renewal-bucket-grid">
+                <Link to="/premiums" className="renewal-bucket urgent"><span>Overdue</span><strong>{renewalBuckets.overdue.length}</strong><small>Pay immediately</small></Link>
+                <Link to="/premiums" className="renewal-bucket"><span>Due in 7 days</span><strong>{renewalBuckets.seven.length}</strong><small>Upcoming</small></Link>
+                <Link to="/premiums" className="renewal-bucket"><span>Due in 15 days</span><strong>{renewalBuckets.fifteen.length}</strong><small>Plan ahead</small></Link>
+                <Link to="/premiums" className="renewal-bucket"><span>Due in 30 days</span><strong>{renewalBuckets.thirty.length}</strong><small>Future due</small></Link>
+              </div>
+              {nextDue && <div className="next-renewal-row"><div><small>NEXT PAYMENT</small><strong>{nextDue.policyNumber}</strong><span>{nextDue.dueDate}</span></div><b>{money(nextDue.amount)}</b><Link to="/premiums">Renew Now →</Link></div>}
+            </section>
+
+            <section className="section policy-lifecycle-card">
+              <div className="section-heading-row"><div><span className="eyebrow">POLICY TRACKER</span><h2>Policy journey</h2></div><Link to="/policies">View details →</Link></div>
+              {!primaryPlan ? <div className="empty-state"><h3>No online policy yet</h3><p>Purchase a plan to start your digital policy journey.</p></div> :
+              <><div className="lifecycle-policy"><strong>{primaryPlan.planName}</strong><small>{primaryPlan.policyNumber || "Policy number processing"}</small></div>
+              <div className="policy-lifecycle">{lifecycle.map((stage, index) => <div className={stage.done ? "done" : ""} key={stage.label}><i>{stage.done ? "✓" : index + 1}</i><span>{stage.label}</span></div>)}</div></>}
+            </section>
+          </div>
 
           <div className="customer-dashboard-grid">
             <section className="section">
