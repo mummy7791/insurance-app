@@ -229,24 +229,60 @@ export default function Policies() {
       return;
     }
     const doc = new jsPDF();
-    addPdfHeader(doc, "Premium Payment Receipt", `Receipt: ${plan.receiptNumber}`);
-    addPdfDetails(doc, [
-      ["Receipt Number", plan.receiptNumber || "N/A"],
-      ["Policy Number", plan.policyNumber || "Processing"],
-      ["Policyholder", plan.proposal?.customerName || user.name || "Customer"],
-      ["Insurance Plan", plan.planName],
-      ["Premium Paid", `INR ${Number(plan.yearlyPremium || 0).toLocaleString("en-IN")}`],
-      ["Transaction ID", plan.transactionId || "N/A"],
-      ["Payment Status", plan.paymentStatus],
-      ["Payment Date", plan.startDate ? new Date(plan.startDate).toLocaleDateString("en-IN") : "N/A"],
-    ]);
-    doc.setFillColor(236, 253, 245);
-    doc.roundedRect(18, 174, 174, 22, 3, 3, "F");
-    doc.setTextColor(22, 101, 52);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("PAYMENT VERIFIED", 24, 187);
-    addPdfFooter(doc, "This computer-generated receipt confirms the payment recorded against the policy shown above.");
+    // SecureLife premium corporate receipt.
+    doc.setFillColor(4,78,57); doc.rect(0,0,210,38,"F");
+    doc.setFillColor(8,139,80); doc.rect(0,38,210,2.5,"F");
+    doc.setFillColor(255,255,255); doc.roundedRect(12,6.5,27,25,3,3,"F");
+    if (policyLogoDataUrl) {
+      try { doc.addImage(policyLogoDataUrl,"JPEG",14,8,23,21,undefined,"FAST"); }
+      catch { doc.setTextColor(8,139,80);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("SL",25.5,22,{align:"center"}); }
+    } else {
+      doc.setTextColor(8,139,80);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("SL",25.5,22,{align:"center"});
+    }
+    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text("SecureLife",44,17);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.text("INSURANCE • DIGITAL POLICY SERVICES",44,24);
+    doc.setFontSize(7);doc.text("Trusted Protection for a Safer Tomorrow",44,29);
+    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.text("PREMIUM RECEIPT",195,15,{align:"right"});
+    doc.setFont("helvetica","normal");doc.setFontSize(6.8);doc.text(plan.receiptNumber,195,22,{align:"right",maxWidth:65});
+
+    doc.setDrawColor(8,139,80);doc.setLineWidth(.8);doc.rect(7,7,196,283);
+    doc.setDrawColor(214,231,220);doc.setLineWidth(.25);doc.rect(10,43,190,244);
+    doc.setTextColor(15,35,55);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("Premium Payment Receipt",15,54);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,116,139);doc.text("Official payment acknowledgement issued by SecureLife Insurance",15,60);
+    doc.setTextColor(4,100,67);doc.setFont("helvetica","bold");doc.text("PAID • VERIFIED",195,54,{align:"right"});
+
+    doc.setFillColor(235,248,241);doc.roundedRect(15,68,180,10,2,2,"F");
+    doc.setTextColor(4,100,67);doc.setFontSize(8.5);doc.text("PAYMENT & POLICY DETAILS",20,74.5);
+    const rows:Array<[string,string]> = [
+      ["Receipt Number",plan.receiptNumber||"N/A"],
+      ["Policy Number",plan.policyNumber||"Processing"],
+      ["Policyholder",plan.proposal?.customerName||user.name||"Customer"],
+      ["Insurance Plan",plan.planName],
+      ["Premium Paid",`INR ${Number(plan.yearlyPremium||0).toLocaleString("en-IN")}`],
+      ["Transaction ID",plan.transactionId||"N/A"],
+      ["Payment Status",plan.paymentStatus],
+      ["Payment Date",plan.startDate?new Date(plan.startDate).toLocaleDateString("en-IN"):"N/A"],
+    ];
+    let y=90;
+    rows.forEach(([label,value],i)=>{
+      if(i%2===0){doc.setFillColor(249,252,250);doc.roundedRect(18,y-6,174,10,1.5,1.5,"F");}
+      doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(100,116,139);doc.text(label,22,y);
+      doc.setFont("helvetica","bold");doc.setTextColor(25,45,55);doc.text(String(value),78,y,{maxWidth:108});y+=12;
+    });
+
+    doc.setFillColor(232,249,239);doc.roundedRect(15,190,180,34,3,3,"F");
+    doc.setTextColor(4,100,67);doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("✓  PAYMENT SUCCESSFULLY VERIFIED",22,203);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(55,90,75);
+    doc.text(doc.splitTextToSize("This receipt confirms that the above premium payment has been recorded against the stated SecureLife policy.",160),22,212);
+
+    doc.setFillColor(248,250,252);doc.roundedRect(15,233,180,20,2,2,"F");
+    doc.setTextColor(71,85,105);doc.setFontSize(7.3);doc.text("DIGITAL RECEIPT",20,241);
+    doc.text("This is a system-generated payment acknowledgement and does not require a physical signature.",20,247,{maxWidth:165});
+
+    doc.setDrawColor(214,231,220);doc.line(15,270,195,270);
+    doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(4,100,67);doc.text("SECURELIFE INSURANCE",15,278);
+    doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text("Digital Policy Services • Customer Copy",15,284);
+    doc.text(plan.receiptNumber,195,278,{align:"right"});doc.text("Payment Verified",195,284,{align:"right"});
     doc.save(`${plan.receiptNumber || "SecureLife-Receipt"}.pdf`);
   };
 
