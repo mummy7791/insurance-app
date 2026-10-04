@@ -51,6 +51,7 @@ const customerRoutes = require("./routes/customer");
 const advisorBankRoutes = require("./routes/advisorBankRoutes");
 const policyServiceRoutes = require("./routes/policyServiceRoutes");
 const quotationRoutes = require("./routes/quotationRoutes");
+const supportChatRoutes = require("./routes/supportChatRoutes");
 const { runPremiumReminders } = require("./services/premiumReminderService");
 
 const app = express();
@@ -189,6 +190,7 @@ useRoute("/api/policy-purchases", policyPurchaseRoutes);
 useRoute("/api/advisor-bank", advisorBankRoutes);
 useRoute("/api/policy-services", policyServiceRoutes);
 useRoute("/api/quotations", quotationRoutes);
+useRoute("/api/support-chat", supportChatRoutes);
 
 /* Customer policy assignment routes */
 useRoute("/api/customer", customerRoutes);
