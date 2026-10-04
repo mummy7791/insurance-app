@@ -47,6 +47,7 @@ export default function Policies() {
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
+  const [policyLogoDataUrl,setPolicyLogoDataUrl]=useState("");
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
   const activePurchasedPlans = purchasedPlans.filter((plan) => String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid");
@@ -99,6 +100,16 @@ export default function Policies() {
   useEffect(() => {
     void loadPolicies();
   }, [loadPolicies]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/securelife-logo.jpg").then((response) => response.blob()).then((blob) => {
+      const reader = new FileReader();
+      reader.onloadend = () => { if (!cancelled) setPolicyLogoDataUrl(String(reader.result || "")); };
+      reader.readAsDataURL(blob);
+    }).catch((error) => console.warn("Policy logo load failed:", error));
+    return () => { cancelled = true; };
+  }, []);
 
   const addPdfHeader = (doc: jsPDF, documentTitle: string, reference: string) => {
     doc.setFillColor(127, 29, 29);
@@ -157,8 +168,13 @@ export default function Policies() {
     // Premium SecureLife corporate policy-bond masthead.
     doc.setFillColor(4, 78, 57); doc.rect(0, 0, 210, 35, "F");
     doc.setFillColor(8, 139, 80); doc.rect(0, 35, 210, 2.4, "F");
-    doc.setFillColor(255, 255, 255); doc.roundedRect(14, 8, 22, 22, 3, 3, "F");
-    doc.setTextColor(8, 139, 80); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text("SL",25,22,{align:"center"});
+    doc.setFillColor(255, 255, 255); doc.roundedRect(12, 6.5, 27, 25, 3, 3, "F");
+    if (policyLogoDataUrl) {
+      try { doc.addImage(policyLogoDataUrl, "JPEG", 14, 8, 23, 21, undefined, "FAST"); }
+      catch { doc.setTextColor(8,139,80); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text("SL",25.5,22,{align:"center"}); }
+    } else {
+      doc.setTextColor(8,139,80); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text("SL",25.5,22,{align:"center"});
+    }
     doc.setTextColor(255,255,255); doc.setFontSize(19); doc.text("SecureLife",42,17);
     doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.text("INSURANCE • DIGITAL POLICY SERVICES",42,24);
     doc.setFontSize(7); doc.text("Trusted Protection for a Safer Tomorrow",42,29);
