@@ -47,6 +47,7 @@ export default function CustomerDashboard() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroSlide, setHeroSlide] = useState(0);
 
   const user = useMemo(() => {
     try {
@@ -102,6 +103,17 @@ export default function CustomerDashboard() {
   const kycProgress = documents.length === 0 ? 0 : Math.round((verifiedDocuments / documents.length) * 100);
   const recentClaim = claims[0];
   const primaryPlan = activePurchased[0];
+  const heroSlides = [
+    { kicker:"SECURELIFE POLICYHOLDER PORTAL", title:"Protection that stays", accent:"one step ahead.", copy:"Manage cover, renew premiums, track claims and keep your policy documents ready from one secure workspace.", cta:"Explore protection", to:"/insurance-plans", art:"family" },
+    { kicker:"PROTECTION FOR EVERY JOURNEY", title:"Drive with confidence.", accent:"We cover the road.", copy:"Explore car and bike protection with simple digital purchase, policy access and renewal support.", cta:"Explore motor plans", to:"/insurance-plans", art:"motor" },
+    { kicker:"HEALTH & LIFE PROTECTION", title:"Protect what matters", accent:"today and tomorrow.", copy:"Bring health and life protection together with easy servicing, premium tracking and secure documents.", cta:"View protection plans", to:"/insurance-plans", art:"health" }
+  ];
+  const currentHero = heroSlides[heroSlide];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setHeroSlide((slide) => (slide + 1) % heroSlides.length), 4800);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <MainLayout
@@ -117,13 +129,14 @@ export default function CustomerDashboard() {
       <nav className="sl-quick-nav" aria-label="SecureLife quick navigation">
         <Link to="/insurance-plans">Plans</Link><Link to="/policies">My Policies</Link><Link to="/premiums">Pay Premium</Link><Link to="/claims">Claims</Link><Link to="/policy-services">Customer Services</Link><Link to="/documents">KYC & Documents</Link><Link to="/customer-profile">Profile</Link>
       </nav>
-      <section className="securelife-reference-hero product-dashboard-hero">
-        <div className="reference-hero-copy">
-          <span className="dashboard-kicker">SECURELIFE POLICYHOLDER PORTAL</span>
-          <h1>Protection that stays<br/><strong>one step ahead.</strong></h1>
-          <p>Manage cover, renew premiums, track claims and keep your policy documents ready from one secure workspace.</p>
+      <section className={`securelife-reference-hero product-dashboard-hero sl-hero-slide sl-hero-${currentHero.art}`}>
+        <button className="sl-hero-arrow prev" onClick={() => setHeroSlide((heroSlide + heroSlides.length - 1) % heroSlides.length)} aria-label="Previous banner">‹</button>
+        <div className="reference-hero-copy" key={heroSlide}>
+          <span className="dashboard-kicker">{currentHero.kicker}</span>
+          <h1>{currentHero.title}<br/><strong>{currentHero.accent}</strong></h1>
+          <p>{currentHero.copy}</p>
           <div className="dashboard-hero-actions">
-            <Link to="/insurance-plans" className="dashboard-primary-action">Explore protection <span>→</span></Link>
+            <Link to={currentHero.to} className="dashboard-primary-action">{currentHero.cta} <span>→</span></Link>
             <Link to="/policies" className="dashboard-secondary-action">View my policies</Link>
           </div>
           <div className="reference-categories dashboard-category-row">
@@ -133,15 +146,32 @@ export default function CustomerDashboard() {
           </div>
         </div>
         <div className="dashboard-hero-insight">
-          <span className="insight-label">YOUR PROTECTION</span>
-          <strong>{money(totalCoverage)}</strong>
-          <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small>
-          <div className="insight-divider" />
-          <div><span>Premium due</span><b>{money(dueAmount)}</b></div>
-          <div><span>Open claims</span><b>{openClaims.length}</b></div>
-          <div><span>KYC verified</span><b>{kycProgress}%</b></div>
+          <span className="insight-label">YOUR PROTECTION</span><strong>{money(totalCoverage)}</strong>
+          <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small><div className="insight-divider" />
+          <div><span>Premium due</span><b>{money(dueAmount)}</b></div><div><span>Open claims</span><b>{openClaims.length}</b></div><div><span>KYC verified</span><b>{kycProgress}%</b></div>
         </div>
-        </section>
+        <button className="sl-hero-arrow next" onClick={() => setHeroSlide((heroSlide + 1) % heroSlides.length)} aria-label="Next banner">›</button>
+        <div className="sl-hero-dots">{heroSlides.map((_,i)=><button key={i} className={i===heroSlide?"active":""} onClick={()=>setHeroSlide(i)} aria-label={`Banner ${i+1}`}/>)}</div>
+      </section>
+
+      <section className="sl-goals-section">
+        <div className="sl-section-head"><div><span>INSURANCE PLANS FOR ALL YOUR GOALS</span><h2>Everything you need, in one place</h2></div><Link to="/insurance-plans">View all plans →</Link></div>
+        <div className="sl-goal-track">
+          <Link to="/insurance-plans"><b>♥</b><strong>Life Insurance</strong><small>High life cover</small></Link>
+          <Link to="/insurance-plans"><b>✚</b><strong>Health Insurance</strong><small>Health protection</small></Link>
+          <Link to="/insurance-plans"><b>🚗</b><strong>Car Insurance</strong><small>Drive protected</small></Link>
+          <Link to="/insurance-plans"><b>🏍</b><strong>Bike Insurance</strong><small>Ride protected</small></Link>
+          <Link to="/policies"><b>▣</b><strong>My Policies</strong><small>Digital policy wallet</small></Link>
+          <Link to="/premiums"><b>₹</b><strong>Pay Premium</strong><small>Fast & secure</small></Link>
+          <Link to="/claims"><b>✓</b><strong>Claims</strong><small>Track your claim</small></Link>
+          <Link to="/policy-services"><b>↻</b><strong>More Services</strong><small>Policy servicing</small></Link>
+        </div>
+      </section>
+
+      <section className="sl-benefits-section">
+        <div className="sl-section-head"><div><span>WHY SECURELIFE ONLINE</span><h2>Choosing digital protection has benefits</h2></div></div>
+        <div className="sl-benefit-grid"><article><b>₹</b><strong>Simple Premiums</strong><small>Clear premium information</small></article><article><b>⚡</b><strong>Hassle-Free Purchase</strong><small>Quick digital journey</small></article><article><b>🔒</b><strong>Secure Transactions</strong><small>Protected online experience</small></article><article><b>💬</b><strong>Reliable Assistance</strong><small>Support when you need it</small></article><article><b>🤝</b><strong>Policy Services</strong><small>Manage cover in one place</small></article></div>
+      </section>
 
       <div className="reference-dashboard-columns">
         <section className="reference-popular">
