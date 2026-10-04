@@ -11,7 +11,7 @@ export default function SecureLifeAIChat() {
   const [input,setInput]=useState("");
   const [busy,setBusy]=useState(false);
   const [messages,setMessages]=useState<ChatMessage[]>([
-    { role:"assistant", text:"Hi! I’m SecureLife AI Assistant. I can help with plans, premiums, claims, KYC and policy services." }
+    { role:"assistant", text:"Hi! Welcome to SecureLife Chat. I can help with plans, premiums, claims, KYC and policy services." }
   ]);
   const user=useMemo(()=>{try{return JSON.parse(localStorage.getItem("insuranceUser")||"{}");}catch{return {}; }},[]);
   if(user.role && user.role!=="customer") return null;
@@ -29,18 +29,18 @@ export default function SecureLifeAIChat() {
   const submit=(e:FormEvent)=>{e.preventDefault();void ask(input);};
 
   return <>
-    {open&&<section className="securelife-ai-panel" aria-label="SecureLife AI Assistant">
-      <header><img src="/securelife-logo.jpg" alt="SecureLife"/><div><strong>SecureLife AI Assistant</strong><small><i/> Online • Customer Support</small></div><button onClick={()=>setOpen(false)} aria-label="Close assistant">×</button></header>
+    {open&&<section className="securelife-ai-panel" aria-label="SecureLife Chat">
+      <header><img src="/securelife-logo.jpg" alt="SecureLife"/><div><strong>SecureLife Chat</strong><small><i/> Online • Customer Support</small></div><button onClick={()=>setOpen(false)} aria-label="Close assistant">×</button></header>
       <div className="securelife-ai-messages">
         {messages.map((m,i)=><div key={i} className={"securelife-ai-message "+m.role}>{m.role==="assistant"&&<img src="/securelife-logo.jpg" alt=""/>}<span>{m.text}</span></div>)}
-        {busy&&<div className="securelife-ai-typing">SecureLife AI is typing…</div>}
+        {busy&&<div className="securelife-ai-typing">SecureLife Chat is typing…</div>}
       </div>
       <div className="securelife-ai-quick">{QUICK.map(q=><button key={q} onClick={()=>void ask(q)}>{q}</button>)}</div>
       <form onSubmit={submit}><input value={input} onChange={e=>setInput(e.target.value)} placeholder="Ask about your insurance…" maxLength={300}/><button type="submit" disabled={busy||!input.trim()}>➤</button></form>
-      <footer>SecureLife AI can make mistakes. Verify important policy information.</footer>
+      <footer>Automated assistance may make mistakes. Verify important policy information.</footer>
     </section>}
-    <button className={"securelife-ai-fab "+(open?"open":"")} onClick={()=>setOpen(v=>!v)} aria-label="Open SecureLife AI Assistant">
-      {open?"×":<><span>✦</span><b>AI</b></>}
+    <button className={"securelife-ai-fab "+(open?"open":"")} onClick={()=>setOpen(v=>!v)} aria-label="Open SecureLife Chat">
+      {open?"×":<><span>💬</span><b>Chat</b></>}
     </button>
   </>;
 }
