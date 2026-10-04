@@ -26,9 +26,12 @@ function MobileNetworkGate() {
         display: "grid",
         placeItems: "center",
         padding: "24px",
-        background: "#f5faf6",
+        backgroundImage: "linear-gradient(rgba(4, 24, 13, 0.42), rgba(4, 24, 13, 0.58)), url(\"/India%E2%80%99s%20SecureLife%20Insurance%20Banner.png\")",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#102a1b",
+        color: "#ffffff",
         textAlign: "center",
       }}
     >
@@ -39,7 +42,7 @@ function MobileNetworkGate() {
           style={{ width: "88px", height: "88px", objectFit: "contain", borderRadius: "22px", marginBottom: "18px" }}
         />
         <h1 style={{ margin: "0 0 10px", fontSize: "26px" }}>No Internet Connection</h1>
-        <p style={{ margin: "0 0 22px", lineHeight: 1.6, color: "#587063" }}>
+        <p style={{ margin: "0 0 22px", lineHeight: 1.6, color: "rgba(255,255,255,.9)" }}>
           Please check your mobile data or Wi-Fi connection and try again.
         </p>
         <button
