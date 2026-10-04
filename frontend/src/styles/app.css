@@ -3256,3 +3256,38 @@ textarea:focus {
 .claim-document-check{margin:12px 0;padding:12px 14px;border-radius:12px;border:1px solid #fed7aa;background:#fffaf2;display:grid;gap:6px;color:#9a3412}.claim-document-check span{font-size:11px;font-weight:800;text-transform:uppercase}.claim-document-check ul{margin:0;padding-left:20px}.claim-document-check small{line-height:1.4}
 @media(max-width:1150px){.customer-action-grid{grid-template-columns:repeat(3,1fr)}.customer-feature-grid{grid-template-columns:1fr}.renewal-bucket-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.customer-action-grid{grid-template-columns:repeat(2,1fr);gap:9px}.customer-action-grid>a{padding:14px 12px}.renewal-bucket-grid{grid-template-columns:1fr 1fr}.next-renewal-row{grid-template-columns:1fr auto}.next-renewal-row>a{grid-column:1/-1}.customer-feature-grid{gap:12px}}
+
+
+/* ===== CUSTOMER DASHBOARD RIGHT-SIDE SECURELIFE BANNER ===== */
+.customer-portal .dashboard-hero-right{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  align-self:stretch;
+}
+.customer-portal .dashboard-hero-banner{
+  display:block;
+  width:100%;
+  max-width:430px;
+  aspect-ratio:2048/684;
+  object-fit:cover;
+  object-position:center;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 14px 32px rgba(0,0,0,.18);
+}
+.customer-portal .dashboard-hero-right .dashboard-hero-insight{
+  width:100%!important;
+  max-width:430px!important;
+  margin:0!important;
+}
+@media(max-width:900px){
+  .customer-portal .product-dashboard-hero{grid-template-columns:1fr!important}
+  .customer-portal .dashboard-hero-right{width:100%}
+  .customer-portal .dashboard-hero-banner,
+  .customer-portal .dashboard-hero-right .dashboard-hero-insight{max-width:none!important}
+}
+@media(max-width:650px){
+  .customer-portal .dashboard-hero-banner{border-radius:14px}
+}
