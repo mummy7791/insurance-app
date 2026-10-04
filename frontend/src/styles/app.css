@@ -3333,3 +3333,28 @@ textarea:focus {
  .customer-portal .sl-goal-track{grid-template-columns:repeat(4,1fr)!important}
  .customer-portal .reference-plan-grid{grid-template-columns:repeat(2,1fr)!important}
 }
+
+
+/* ===== CUSTOMER PORTAL FULL-BLEED DESKTOP FIX ===== */
+@media (min-width: 901px) {
+  html, body, #root { width:100%; max-width:none; margin:0; padding:0; }
+  .customer-portal { width:100%!important; max-width:none!important; margin:0!important; }
+  .customer-portal > .main {
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0 28px 56px!important;
+  }
+  .customer-portal .topbar,
+  .customer-portal .sl-home-strip,
+  .customer-portal .sl-quick-nav,
+  .customer-portal .securelife-reference-hero,
+  .customer-portal .sl-goals-section,
+  .customer-portal .sl-benefits-section,
+  .customer-portal .reference-dashboard-columns {
+    width:100%!important;
+    max-width:none!important;
+    margin-left:0!important;
+    margin-right:0!important;
+  }
+}
