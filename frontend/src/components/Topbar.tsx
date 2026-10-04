@@ -10,20 +10,28 @@ export default function Topbar({ title, subtitle }: Props) {
   const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
   let user: { name?: string; role?: string } = {};
+
   try {
     user = JSON.parse(localStorage.getItem("insuranceUser") || "{}");
   } catch {
     localStorage.removeItem("insuranceUser");
   }
+
   const showNotifications = user.role === "customer";
 
   useEffect(() => {
-    if (!showNotifications) { setUnread(0); return; }
+    if (!showNotifications) {
+      setUnread(0);
+      return;
+    }
+
     let active = true;
     const load = async () => {
       try {
         const res = await api.get<Notice[]>("/notifications");
-        if (active) setUnread(res.data.filter((item) => item.status === "Unread").length);
+        if (active) {
+          setUnread(res.data.filter((item) => item.status === "Unread").length);
+        }
       } catch (error) {
         console.error("Notification badge load error:", error);
       }
@@ -53,28 +61,45 @@ export default function Topbar({ title, subtitle }: Props) {
   return (
     <div className="topbar">
       {showNotifications ? (
-        <div className="customer-desktop-brand"><img src="/securelife-logo.jpg" alt="SecureLife" /><div><strong>SecureLife</strong><small>INSURANCE</small></div></div>\n        <nav className="customer-topnav" aria-label="Customer navigation">
-          <Link to="/customer-dashboard">Home</Link>
-          <Link to="/insurance-plans">Insurance Plans</Link>
-          <Link to="/policies">My Policies</Link>
-          <Link to="/claims">Claims</Link>
-          <Link to="/premiums">Payments</Link>
-          <Link to="/policy-services">Services</Link>
-        </nav>
+        <>
+          <div className="customer-desktop-brand">
+            <img src="/securelife-logo.jpg" alt="SecureLife" />
+            <div>
+              <strong>SecureLife</strong>
+              <small>INSURANCE</small>
+            </div>
+          </div>
+
+          <nav className="customer-topnav" aria-label="Customer navigation">
+            <Link to="/customer-dashboard">Home</Link>
+            <Link to="/insurance-plans">Insurance Plans</Link>
+            <Link to="/policies">My Policies</Link>
+            <Link to="/claims">Claims</Link>
+            <Link to="/premiums">Payments</Link>
+            <Link to="/policy-services">Services</Link>
+          </nav>
+        </>
       ) : (
-        <div className="topbar-title"><h2>{title}</h2><p>{subtitle}</p></div>
+        <div className="topbar-title">
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
       )}
 
       <div className="topbar-actions">
-        {showNotifications && <button
-          type="button"
-          className="notification-bell"
-          aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-          onClick={() => navigate("/notifications")}
-        >
-          <span aria-hidden="true">🔔</span>
-          {unread > 0 && <span className="notification-count">{unread > 99 ? "99+" : unread}</span>}
-        </button>}
+        {showNotifications && (
+          <button
+            type="button"
+            className="notification-bell"
+            aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+            onClick={() => navigate("/notifications")}
+          >
+            <span aria-hidden="true">🔔</span>
+            {unread > 0 && (
+              <span className="notification-count">{unread > 99 ? "99+" : unread}</span>
+            )}
+          </button>
+        )}
 
         <div className="user-box">
           <strong>{user.name}</strong>
