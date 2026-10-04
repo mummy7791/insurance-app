@@ -3394,3 +3394,60 @@ textarea:focus {
  .sl-customer-corner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
  .sl-hero-servicebar{height:auto;min-height:58px}.sl-hero-servicebar a{font-size:12px;padding:10px 5px}
 }
+
+
+/* ===== 2026-10-04 FULL-WIDTH CUSTOMER PORTAL ALIGNMENT ===== */
+@media (min-width: 901px){
+  .customer-portal,
+  .customer-portal .main{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  .customer-portal .main{
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  .customer-portal .topbar,
+  .customer-portal .sl-home-strip{
+    width:100%!important;
+    max-width:none!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    border-radius:0!important;
+  }
+  .securelife-reference-hero,
+  .sl-goals-section,
+  .sl-customer-corner,
+  .sl-benefits-section,
+  .customer-dashboard-grid,
+  .customer-section-title,
+  .customer-summary-grid,
+  .customer-health-grid,
+  .featured-cover,
+  .customer-portal .section{
+    width:calc(100% - 48px)!important;
+    max-width:none!important;
+    margin-left:24px!important;
+    margin-right:24px!important;
+  }
+  .securelife-reference-hero{
+    margin-top:24px!important;
+  }
+}
+@media (min-width: 1400px){
+  .securelife-reference-hero,
+  .sl-goals-section,
+  .sl-customer-corner,
+  .sl-benefits-section,
+  .customer-dashboard-grid,
+  .customer-section-title,
+  .customer-summary-grid,
+  .customer-health-grid,
+  .featured-cover,
+  .customer-portal .section{
+    width:calc(100% - 64px)!important;
+    margin-left:32px!important;
+    margin-right:32px!important;
+  }
+}
