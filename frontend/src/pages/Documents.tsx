@@ -1,6 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
+import { Capacitor, registerPlugin } from "@capacitor/core";
+
+type PickedDocument = {
+  name: string;
+  mimeType: string;
+  base64: string;
+};
+
+interface SecureLifeFilePlugin {
+  pickDocument(): Promise<PickedDocument>;
+}
+
+const SecureLifeFile = registerPlugin<SecureLifeFilePlugin>("SecureLifeFile");
+
+const base64ToFile = (base64: string, fileName: string, mimeType: string): File => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], fileName, { type: mimeType || "application/octet-stream" });
+};
 
 type VerifyStatus = "Pending" | "Verified" | "Rejected";
 
@@ -70,6 +92,21 @@ export default function Documents() {
       setForm((prev) => ({ ...prev, customerName: user.name || prev.customerName }));
     }
   }, [isCustomer, loadDocuments, user.name]);
+
+  const chooseDocument = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      document.getElementById("documentFile")?.click();
+      return;
+    }
+
+    try {
+      const picked = await SecureLifeFile.pickDocument();
+      const selectedFile = base64ToFile(picked.base64, picked.name, picked.mimeType);
+      setFile(selectedFile);
+    } catch (error) {
+      console.log("Document selection cancelled:", error);
+    }
+  };
 
   const uploadDocument = async () => {
     if (!form.customerName || !form.policyNumber || !file) {
@@ -244,8 +281,18 @@ export default function Documents() {
           <input
             id="documentFile"
             type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
+            style={{ display: Capacitor.isNativePlatform() ? "none" : undefined }}
           />
+
+          {Capacitor.isNativePlatform() && (
+            <button type="button" className="mini-btn" onClick={chooseDocument}>
+              Choose PDF / Photo
+            </button>
+          )}
+
+          {file && <small>Selected: {file.name}</small>}
 
           <input
             placeholder="Remarks"
