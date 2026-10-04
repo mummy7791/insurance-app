@@ -3275,3 +3275,22 @@ textarea:focus {
 }
 @media(max-width:1100px){.sl-benefit-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:768px){.customer-portal .sl-hero-slide{min-height:520px!important}.sl-hero-arrow{width:34px;height:34px}.sl-section-head{align-items:flex-start;flex-direction:column}.sl-goals-section,.sl-benefits-section{padding:18px}.sl-benefit-grid{grid-template-columns:repeat(2,1fr)}}
+
+
+/* ===== CUSTOMER DESKTOP: ICICI-STYLE TOP NAV, NO LEFT SIDEBAR ===== */
+@media(min-width:901px){
+ .layout.customer-portal{display:block!important;min-height:100vh!important;background:#f7faf8!important}
+ .customer-portal>.sidebar{display:none!important}
+ .customer-portal>.main{margin-left:0!important;width:100%!important;max-width:none!important;padding:0 34px 48px!important}
+ .customer-portal .topbar{position:sticky!important;top:0!important;z-index:60!important;max-width:1440px!important;margin:0 auto!important;min-height:76px!important;padding:0 26px!important;border-radius:0 0 14px 14px!important;background:rgba(255,255,255,.98)!important;box-shadow:0 5px 22px rgba(15,45,36,.08)!important;backdrop-filter:blur(14px)!important}
+ .customer-portal .customer-topnav{flex:1!important;display:flex!important;justify-content:center!important;gap:8px!important;overflow-x:auto!important}
+ .customer-portal .customer-topnav a{padding:27px 18px 23px!important;border-bottom:4px solid transparent!important;border-radius:0!important;font-size:14px!important;font-weight:800!important;color:#38485d!important;white-space:nowrap!important;transition:.2s!important}
+ .customer-portal .customer-topnav a:hover{color:#087b4a!important;border-bottom-color:#0a8b52!important;background:#f3faf6!important}
+ .customer-portal .topbar-actions{margin-left:auto!important}
+ .customer-portal .sl-home-strip,.customer-portal .sl-quick-nav,.customer-portal .securelife-reference-hero,.customer-portal .sl-goals-section,.customer-portal .sl-benefits-section,.customer-portal .reference-dashboard-columns,.customer-portal>.main>.section,.customer-portal .customer-section-title,.customer-portal .customer-summary-grid,.customer-portal .customer-health-grid,.customer-portal .customer-dashboard-grid{max-width:1440px!important;margin-left:auto!important;margin-right:auto!important}
+ .customer-portal .sl-home-strip{margin-top:12px!important}
+ .customer-portal .sl-quick-nav{top:82px!important}
+}
+@media(max-width:900px){
+ .customer-portal>.sidebar{display:block}
+}
