@@ -138,14 +138,21 @@ export default function CustomerDashboard() {
             <Link to="/premiums"><b>₹</b><span>Premiums</span></Link><Link to="/claims"><b>✓</b><span>Claims</span></Link>
           </div>
         </div>
-        <div className="dashboard-hero-insight">
-          <span className="insight-label">YOUR PROTECTION</span>
-          <strong>{money(totalCoverage)}</strong>
-          <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small>
-          <div className="insight-divider" />
-          <div><span>Premium due</span><b>{money(dueAmount)}</b></div>
-          <div><span>Open claims</span><b>{openClaims.length}</b></div>
-          <div><span>KYC verified</span><b>{kycProgress}%</b></div>
+        <div className="dashboard-hero-right">
+          <img
+            className="dashboard-hero-banner"
+            src="/India%E2%80%99s%20SecureLife%20Insurance%20Banner.png"
+            alt="SecureLife Insurance - Your Protection, Our Responsibility"
+          />
+          <div className="dashboard-hero-insight">
+            <span className="insight-label">YOUR PROTECTION</span>
+            <strong>{money(totalCoverage)}</strong>
+            <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small>
+            <div className="insight-divider" />
+            <div><span>Premium due</span><b>{money(dueAmount)}</b></div>
+            <div><span>Open claims</span><b>{openClaims.length}</b></div>
+            <div><span>KYC verified</span><b>{kycProgress}%</b></div>
+          </div>
         </div>
         </section>
 
