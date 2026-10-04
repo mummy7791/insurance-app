@@ -3356,3 +3356,8 @@ textarea:focus {
 .customer-portal table{display:block;overflow-x:auto;white-space:nowrap}
 .customer-portal .section-heading-row{gap:10px;align-items:flex-start!important}
 }
+
+/* Mobile: notifications remain available in the sidebar; hide duplicate topbar bell. */
+@media(max-width:768px){
+  .customer-portal .topbar .notification-bell{display:none!important}
+}
