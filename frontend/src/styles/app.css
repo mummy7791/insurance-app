@@ -3233,3 +3233,20 @@ textarea:focus {
 /* ===== QUOTATION BROWSER TOOLS ===== */
 .quotation-tools{display:flex;align-items:center;gap:12px;margin:18px 0 22px;padding:12px;border:1px solid #e1ebe5;border-radius:16px;background:#fbfffc}.quotation-tools input{flex:1;min-width:220px;height:44px;padding:0 14px;border:1px solid #d7e4dc;border-radius:11px;outline:none;font:inherit}.quotation-tools input:focus{border-color:#16a05d;box-shadow:0 0 0 3px rgba(22,160,93,.1)}.quotation-tools>div{display:flex;gap:7px;overflow-x:auto}.quotation-tools button{border:1px solid #d5e7dc;background:#fff;color:#315a42;border-radius:999px;padding:8px 12px;font-weight:800;cursor:pointer;white-space:nowrap}.quotation-tools button.active{background:#07864e;color:#fff;border-color:#07864e}.quotation-card{display:flex;flex-direction:column}.quotation-buy-btn,.quotation-unavailable{margin-top:auto}.quotation-card-grid>.portal-empty-state{grid-column:1/-1}
 @media(max-width:760px){.quotation-tools{align-items:stretch;flex-direction:column}.quotation-tools input{width:100%;min-width:0}.quotation-tools>div{padding-bottom:2px}}
+
+
+/* ===== SECURELIFE PREMIUM HOMEPAGE MOTION + QUICK NAV ===== */
+.sl-home-strip{overflow:hidden;margin:14px 0 10px;border-radius:12px;background:#07543a;color:#fff;box-shadow:0 8px 24px rgba(7,84,58,.12)}
+.sl-home-strip-track{width:max-content;display:flex;align-items:center;gap:34px;padding:10px 22px;animation:slTicker 24s linear infinite;white-space:nowrap;font-size:12px}
+.sl-home-strip-track span{font-weight:900;color:#83edb7;letter-spacing:.08em;text-transform:uppercase}.sl-home-strip-track b{font-weight:700}
+.sl-home-strip:hover .sl-home-strip-track{animation-play-state:paused}
+@keyframes slTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.sl-quick-nav{position:sticky;top:88px;z-index:18;display:flex;align-items:center;gap:4px;overflow-x:auto;margin:0 0 14px;padding:8px 10px;background:rgba(255,255,255,.97);border:1px solid #dce9e2;border-radius:13px;box-shadow:0 8px 24px rgba(15,55,40,.07);backdrop-filter:blur(12px);scrollbar-width:none}
+.sl-quick-nav::-webkit-scrollbar{display:none}.sl-quick-nav a{flex:0 0 auto;padding:10px 14px;border-radius:9px;color:#314b40;text-decoration:none;font-size:12px;font-weight:800;transition:.2s ease}.sl-quick-nav a:hover{background:#eaf8f0;color:#087a4b;transform:translateY(-1px)}
+@media(prefers-reduced-motion:no-preference){
+ .customer-portal .reference-plan-card{animation:slFloat 5.5s ease-in-out infinite}
+ .customer-portal .reference-plan-card:nth-child(2){animation-delay:.7s}.customer-portal .reference-plan-card:nth-child(3){animation-delay:1.4s}.customer-portal .reference-plan-card:nth-child(4){animation-delay:2.1s}
+ @keyframes slFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+}
+@media(max-width:768px){.sl-quick-nav{top:70px;margin-top:8px}.sl-home-strip{margin-top:8px}.sl-home-strip-track{gap:24px}}
+@media(prefers-reduced-motion:reduce){.sl-home-strip-track,.customer-portal .reference-plan-card{animation:none!important}}
