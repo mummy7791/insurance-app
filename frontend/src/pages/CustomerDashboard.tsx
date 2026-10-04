@@ -123,60 +123,54 @@ export default function CustomerDashboard() {
       title={`Welcome, ${user.name || "Policyholder"}`}
       subtitle="Your protection, payments and claims in one secure place"
     >
-      <section className="securelife-reference-hero product-dashboard-hero">
-        <div className="reference-hero-copy">
-          <span className="dashboard-kicker">SECURELIFE POLICYHOLDER PORTAL</span>
-          <h1>Protection that stays<br/><strong>one step ahead.</strong></h1>
-          <p>Manage cover, renew premiums, track claims and keep your policy documents ready from one secure workspace.</p>
-          <div className="dashboard-hero-actions">
-            <Link to="/insurance-plans" className="dashboard-primary-action">Explore protection <span>→</span></Link>
-            <Link to="/policies" className="dashboard-secondary-action">View my policies</Link>
-          </div>
-          <div className="reference-categories dashboard-category-row">
-            <Link to="/insurance-plans"><b>🚗</b><span>Car</span></Link><Link to="/insurance-plans"><b>🏍</b><span>Bike</span></Link>
-            <Link to="/insurance-plans"><b>✚</b><span>Health</span></Link><Link to="/insurance-plans"><b>♥</b><span>Life</span></Link>
-            <Link to="/premiums"><b>₹</b><span>Premiums</span></Link><Link to="/claims"><b>✓</b><span>Claims</span></Link>
-          </div>
-        </div>
-        <div className="dashboard-hero-right">
-          <img
-            className="dashboard-hero-banner"
-            src="/India%E2%80%99s%20SecureLife%20Insurance%20Banner.png"
-            alt="SecureLife Insurance - Your Protection, Our Responsibility"
-          />
-          <div className="dashboard-hero-insight">
-            <span className="insight-label">YOUR PROTECTION</span>
-            <strong>{money(totalCoverage)}</strong>
-            <small>Across {activePolicyCount} active {activePolicyCount === 1 ? "policy" : "policies"}</small>
-            <div className="insight-divider" />
-            <div><span>Premium due</span><b>{money(dueAmount)}</b></div>
-            <div><span>Open claims</span><b>{openClaims.length}</b></div>
-            <div><span>KYC verified</span><b>{kycProgress}%</b></div>
-          </div>
-        </div>
-        </section>
+      <section className="securelife-showcase-hero">
+        <img
+          className="securelife-showcase-image"
+          src="/India%E2%80%99s%20SecureLife%20Insurance%20Banner.png"
+          alt="SecureLife Insurance - Your Protection, Our Responsibility"
+        />
+      </section>
 
-      <div className="reference-dashboard-columns">
-        <section className="reference-popular">
-          <div className="reference-section-heading"><div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div><Link to="/insurance-plans">View All Plans →</Link></div>
-          <div className="reference-plan-grid">
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual plan-car"><img src="https://pngimg.com/uploads/toyota/toyota_PNG1937.png" alt="Car insurance" /></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual plan-bike"><img src="https://pngimg.com/uploads/motorcycle/motorcycle_PNG5342.png" alt="Bike insurance" /></div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual plan-health"><span className="family-art">👨‍👩‍👧</span></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
-            <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual plan-life"><span className="family-art">☂️</span></div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
-          </div>
-        </section>
-        <aside className="reference-summary-panel">
-          <div className="reference-section-heading"><h2>Your Insurance Summary</h2><span className="secure-chip">● Secure session</span></div>
-          <div className="reference-summary-cards">
-            <Link to="/policies"><small>Active Policies</small><strong>{activePolicyCount}</strong><span>View policies →</span></Link>
-            <Link to="/insurance-plans"><small>Total Protection</small><strong>{money(totalCoverage)}</strong><span>Explore plans →</span></Link>
-            <Link to="/premiums"><small>Premium Due</small><strong>{money(dueAmount)}</strong><span>Pay now →</span></Link>
-            <Link to="/claims"><small>Open Claims</small><strong>{openClaims.length}</strong><span>Track claims →</span></Link>
-          </div>
-          <Link to="/insurance-plans" className="reference-promo"><b>Protection<br/>for a Brighter<br/>Tomorrow</b><span>Explore Plans →</span></Link>
-        </aside>
-      </div>
+      <section className="securelife-plan-browser">
+        <div className="securelife-plan-search">
+          <span aria-hidden="true">⌕</span>
+          <span>Search plans (e.g. Car, Bike, Health, Term, etc.)....</span>
+          <Link to="/insurance-plans">Search</Link>
+        </div>
+        <div className="securelife-category-strip">
+          <Link to="/insurance-plans">🚗 <span>Car</span></Link>
+          <Link to="/insurance-plans">🏍 <span>Bike</span></Link>
+          <Link to="/insurance-plans">🛡 <span>Health</span></Link>
+          <Link to="/insurance-plans">✈ <span>Travel</span></Link>
+          <Link to="/insurance-plans">♥ <span>Term Life</span></Link>
+          <Link to="/insurance-plans">👤 <span>Child</span></Link>
+          <Link to="/insurance-plans">▣ <span>Pension</span></Link>
+          <Link to="/insurance-plans">▦ <span>All Plans</span></Link>
+        </div>
+      </section>
+
+      <section className="securelife-home-plans">
+        <div className="reference-section-heading">
+          <div><h2>Popular Insurance Plans</h2><p>Choose from our wide range of plans designed for your protection.</p></div>
+          <Link to="/insurance-plans">View All Plans →</Link>
+        </div>
+        <div className="reference-plan-grid">
+          <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Car Insurance</h3><div className="plan-visual plan-car"><img src="https://pngimg.com/uploads/toyota/toyota_PNG1937.png" alt="Car insurance" /></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹6,500</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+          <article className="reference-plan-card"><span>MOTOR INSURANCE</span><h3>Bike Insurance</h3><div className="plan-visual plan-bike"><img src="https://pngimg.com/uploads/motorcycle/motorcycle_PNG5342.png" alt="Bike insurance" /></div><p>🛡 Cover: ₹1,00,000</p><p>₹ Premium from: ₹2,200</p><p>▣ Payment Years: 1</p><p>✓ Comprehensive Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+          <article className="reference-plan-card health"><span>HEALTH INSURANCE</span><h3>Super Star PI</h3><div className="plan-visual plan-health"><span className="family-art">👨‍👩‍👧</span></div><p>🛡 Cover: ₹5,00,000</p><p>₹ Premium from: ₹10,000</p><p>▣ Payment Years: 1</p><p>✓ Cashless Hospital Network</p><Link to="/insurance-plans">View Plan →</Link></article>
+          <article className="reference-plan-card life"><span>LIFE INSURANCE</span><h3>Term Life Insurance</h3><div className="plan-visual plan-life"><span className="family-art">☂️</span></div><p>🛡 Cover: ₹25,00,000</p><p>₹ Premium from: ₹350/month</p><p>▣ Payment Years: 10</p><p>✓ High Life Cover</p><Link to="/insurance-plans">View Plan →</Link></article>
+        </div>
+      </section>
+
+      <section className="securelife-why">
+        <div className="reference-section-heading"><div><h2>Why Choose SecureLife?</h2><p>Government-backed vision with modern digital convenience.</p></div></div>
+        <div className="securelife-trust-grid">
+          <div><b>🛡</b><span><strong>Trusted Protection</strong><small>Reliable and secure insurance solutions</small></span></div>
+          <div><b>👥</b><span><strong>Wide Coverage</strong><small>Plans for individuals, families and businesses</small></span></div>
+          <div><b>🇮🇳</b><span><strong>Government Support</strong><small>Aligned with national insurance initiatives</small></span></div>
+          <div><b>🎧</b><span><strong>24x7 Support</strong><small>Always here to assist you</small></span></div>
+        </div>
+      </section>
 
       {loading ? <div className="section"><p>Loading your insurance summary...</p></div> : (
         <>
