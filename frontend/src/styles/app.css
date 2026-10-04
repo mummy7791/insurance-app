@@ -3329,3 +3329,30 @@ textarea:focus {
 .customer-portal .securelife-home-plans .reference-plan-card{min-height:0!important}
 .customer-portal .securelife-trust-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ===== CUSTOMER PORTAL UNIFIED SECURELIFE DESIGN SYSTEM ===== */
+.customer-portal{--sl-green:#078b50;--sl-dark:#064c39;--sl-soft:#eefaf3;--sl-border:#d9e9df;--sl-text:#10243f;--sl-muted:#64748b}
+.customer-portal .section{border:1px solid var(--sl-border)!important;border-radius:16px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 7px 22px rgba(8,80,50,.07)!important}
+.customer-portal h1,.customer-portal h2,.customer-portal h3{color:var(--sl-text)}
+.customer-portal .eyebrow{color:var(--sl-green)!important;font-weight:850!important;letter-spacing:.09em}
+.customer-portal input,.customer-portal select,.customer-portal textarea{border:1px solid #cfe2d7!important;border-radius:11px!important;background:#fff!important;min-height:44px}
+.customer-portal input:focus,.customer-portal select:focus,.customer-portal textarea:focus{outline:none!important;border-color:var(--sl-green)!important;box-shadow:0 0 0 3px rgba(7,139,80,.10)!important}
+.customer-portal button:not(.mobile-menu-btn):not(.notification-bell),.customer-portal .btn,.customer-portal .mini-btn{border-radius:10px!important;font-weight:800!important}
+.customer-portal .mini-btn,.customer-portal .primary-btn,.customer-portal button.primary{background:linear-gradient(135deg,#078b50,#06a65e)!important;color:#fff!important;border-color:transparent!important}
+.customer-portal table{width:100%;border-collapse:separate!important;border-spacing:0!important;overflow:hidden;border:1px solid var(--sl-border);border-radius:14px;background:#fff}
+.customer-portal th{background:#edf8f2!important;color:#174b39!important;font-weight:800!important}
+.customer-portal th,.customer-portal td{padding:13px 14px!important;border-bottom:1px solid #e7f0eb!important}
+.customer-portal .status-pill{border-radius:999px!important;font-weight:800!important}
+.customer-portal .customer-summary-card,.customer-portal .customer-health-card,.customer-portal .customer-action-grid>a,.customer-portal .quick-service-grid>a,.customer-portal .renewal-bucket{border:1px solid var(--sl-border)!important;border-radius:14px!important;box-shadow:0 5px 16px rgba(8,80,50,.05)!important}
+.customer-portal .customer-summary-card:hover,.customer-portal .customer-action-grid>a:hover,.customer-portal .quick-service-grid>a:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(8,80,50,.10)!important}
+.customer-portal .section-heading-row a,.customer-portal .reference-section-heading a{color:var(--sl-green)!important;font-weight:800!important}
+.customer-portal .sidebar{background:linear-gradient(180deg,#064c39 0%,#087a48 65%,#079653 100%)!important}
+.customer-portal .sidebar a{border-radius:10px!important}
+.customer-portal .sidebar a.active-link{background:rgba(25,199,111,.34)!important}
+.customer-portal .sidebar-secure-card{border-radius:14px!important;background:rgba(255,255,255,.93)!important;color:#174b39!important}
+@media(max-width:768px){
+.customer-portal .section{border-radius:13px!important}
+.customer-portal .customer-summary-grid,.customer-portal .customer-health-grid,.customer-portal .customer-feature-grid,.customer-portal .customer-dashboard-grid{grid-template-columns:1fr!important}
+.customer-portal table{display:block;overflow-x:auto;white-space:nowrap}
+.customer-portal .section-heading-row{gap:10px;align-items:flex-start!important}
+}
