@@ -111,59 +111,6 @@ export default function Policies() {
     return () => { cancelled = true; };
   }, []);
 
-  const addPdfHeader = (doc: jsPDF, documentTitle: string, reference: string) => {
-    doc.setFillColor(127, 29, 29);
-    doc.rect(0, 0, 210, 34, "F");
-    doc.setFillColor(249, 115, 22);
-    doc.rect(0, 34, 210, 3, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("SecureLife Insurance", 18, 18);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Digital Policy Services", 18, 26);
-    doc.setTextColor(30, 41, 59);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(documentTitle, 18, 51);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text(reference, 18, 58);
-    doc.setDrawColor(226, 232, 240);
-    doc.line(18, 63, 192, 63);
-  };
-
-  const addPdfDetails = (doc: jsPDF, rows: Array<[string, string]>, startY = 74) => {
-    let y = startY;
-    rows.forEach(([label, value], index) => {
-      if (index % 2 === 0) {
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(18, y - 6, 174, 10, 2, 2, "F");
-      }
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
-      doc.text(label, 22, y);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 41, 59);
-      doc.text(String(value || "N/A"), 78, y, { maxWidth: 108 });
-      y += 11;
-    });
-    return y;
-  };
-
-  const addPdfFooter = (doc: jsPDF, note: string, page = 1) => {
-    doc.setDrawColor(226, 232, 240);
-    doc.line(18, 270, 192, 270);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(note, 18, 278, { maxWidth: 174 });
-    doc.text(`SecureLife Insurance | Digital Policy Services | Page ${page}`, 18, 287);
-  };
-
   const addBondHeader = (doc: jsPDF, title: string, policyNo: string) => {
     // Premium SecureLife corporate policy-bond masthead.
     doc.setFillColor(4, 78, 57); doc.rect(0, 0, 210, 35, "F");
