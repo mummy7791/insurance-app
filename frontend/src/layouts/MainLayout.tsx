@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
+import SecureLifeAIChat from "../components/SecureLifeAIChat";
 
 type MainLayoutProps = {
   title: string;
@@ -29,6 +30,7 @@ export default function MainLayout({ title, subtitle, children }: MainLayoutProp
       <main className="main">
         <Topbar title={title} subtitle={subtitle} />
         {children}
+        {role === "customer" && <SecureLifeAIChat />}
       </main>
     </div>
   );
