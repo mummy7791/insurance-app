@@ -196,7 +196,7 @@ export default function InsurancePlans() {
               <p><b>Premium-paying term:</b> {p.paymentGuidance}</p>
               <p><b>Eligibility:</b> {p.eligibilityGuidance}</p>
               <div className="plan-benefit-box"><span>Availability</span><p>{p.state === "historical" ? "Historical product — new purchase unavailable or unverified" : p.state === "eligibility" ? "Government eligibility check required" : "Official insurer or scheme confirmation required"}</p></div>
-              <button className="btn small-btn" disabled style={{ marginTop: 12, opacity: 0.7 }}>Not available for direct purchase</button>
+              {p.state === "historical" ? <button className="btn small-btn" disabled style={{ marginTop: 12, opacity: 0.7 }}>Historical — purchase unavailable</button> : <a className="btn small-btn" href={p.group === "LIC" ? "https://licindia.in/en/buy-online" : p.group === "Postal Life Insurance" || p.group === "Rural Postal Life Insurance" ? "https://pli.indiapost.gov.in/CustomerPortal/mloadQuotePage.action" : p.officialQuoteUrl} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12, display: "inline-block", textAlign: "center" }}>{p.state === "eligibility" ? "Check eligibility on official site ↗" : p.group === "LIC" || p.group.includes("Postal") ? "Get official quote / apply with provider ↗" : "Open official provider / scheme ↗"}</a>}
             </div>
           ))}
         </div>
