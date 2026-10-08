@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
+import { referencePlans } from "../data/insuranceReferenceCatalog";
 
 type Plan = {
   _id: string;
@@ -177,6 +178,23 @@ export default function InsurancePlans() {
             })}
           </div>
         )}
+      </div>
+
+      <div className="section">
+        <div className="plan-browser-heading"><div><span className="eyebrow">REFERENCE CATALOGUE</span><h2>LIC, Postal and Government Insurance Schemes</h2><p>Information only. These are not SecureLife-issued policies or purchase offers. Confirm terms and prices with the official provider.</p></div><span className="plan-result-count">{referencePlans.length} references</span></div>
+        <div className="insurance-plan-grid">
+          {referencePlans.filter(p => (categoryFilter === "All" || p.group === categoryFilter) && (p.name + " " + p.group).toLowerCase().includes(search.toLowerCase())).map(p => (
+            <div className="insurance-plan-card" key={p.name}>
+              <div className="plan-label-row"><span className="plan-category">{p.group}</span></div>
+              <h3>{p.name}</h3>
+              <p><b>Annual premium:</b> {p.annualPremium !== undefined ? "₹" + p.annualPremium.toLocaleString("en-IN") + " per year (reconfirm)" : p.state === "eligibility" ? "No retail beneficiary premium" : "Official quote required"}</p>
+              <p><b>Monthly premium:</b> {p.annualPremium !== undefined ? "Not billed monthly" : "Official quote required / not applicable"}</p>
+              <p><b>Coverage:</b> {p.cover ? "Up to ₹" + p.cover.toLocaleString("en-IN") + " subject to eligibility" : "See official scheme or policy terms"}</p>
+              <div className="plan-benefit-box"><span>Availability</span><p>{p.state === "historical" ? "Historical product — new purchase unavailable or unverified" : p.state === "eligibility" ? "Government eligibility check required" : "Official insurer or scheme confirmation required"}</p></div>
+              <button className="btn small-btn" disabled style={{ marginTop: 12, opacity: 0.7 }}>Not available for direct purchase</button>
+            </div>
+          ))}
+        </div>
       </div>
     </MainLayout>
   );
