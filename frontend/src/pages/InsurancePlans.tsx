@@ -189,6 +189,8 @@ export default function InsurancePlans() {
               <h3>{p.name}</h3>
               <p><b>Annual premium:</b> {p.annualPremium !== undefined ? "₹" + p.annualPremium.toLocaleString("en-IN") + " per year (reconfirm)" : p.state === "eligibility" ? "No retail beneficiary premium" : "Official quote required"}</p>
               <p><b>Monthly premium:</b> {p.annualPremium !== undefined ? "Not billed monthly" : "Official quote required / not applicable"}</p>
+              <p><b>Official premium guidance:</b> {p.premiumNote}</p>
+              <p><a href={p.officialQuoteUrl} target="_blank" rel="noopener noreferrer">Check official premium / source ↗</a></p>
               <p><b>Coverage:</b> {p.cover ? "Up to ₹" + p.cover.toLocaleString("en-IN") + " subject to eligibility" : "See official scheme or policy terms"}</p>
               <p><b>Benefits:</b> {p.benefitSummary}</p>
               <p><b>Premium-paying term:</b> {p.paymentGuidance}</p>
