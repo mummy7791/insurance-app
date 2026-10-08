@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import api from "../services/api";
+import { referencePlans } from "../data/insuranceReferenceCatalog";
 
 type Category =
   | "Life Insurance"
@@ -128,6 +129,8 @@ function AdminInsurancePlans() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [referenceSearch, setReferenceSearch] = useState("");
+  const filteredReferences = useMemo(() => referencePlans.filter((p) => `${p.name} ${p.group} ${p.state}`.toLowerCase().includes(referenceSearch.toLowerCase())), [referenceSearch]);
   const filteredPlans = useMemo(() => plans.filter((plan) => `${plan.planName} ${plan.category} ${plan.planType || ""} ${plan.status}`.toLowerCase().includes(search.toLowerCase())), [plans, search]);
 
   const fetchPlans = useCallback(async (): Promise<Plan[]> => {
@@ -646,6 +649,27 @@ function AdminInsurancePlans() {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="section">
+        <span className="eyebrow">REFERENCE ONLY — NOT FOR SALE</span>
+        <h2>LIC, PLI, RPLI & Government Schemes ({referencePlans.length})</h2>
+        <p className="section-copy">These are informational catalogue entries, not approved SecureLife products. No payments or policy issuance. Verify insurer availability, rates and authorization before adding any to the saleable product database.</p>
+        <input aria-label="Search reference plans" placeholder="Search reference plan, provider or status" value={referenceSearch} onChange={(e) => setReferenceSearch(e.target.value)} style={{ width: "100%", maxWidth: 480, marginBottom: 16 }} />
+        <div style={{ overflowX: "auto" }}>
+          <table className="table" style={{ width: "100%" }}>
+            <thead><tr><th>Plan</th><th>Provider / Group</th><th>Annual premium</th><th>Benefits & Eligibility</th><th>Status</th></tr></thead>
+            <tbody>{filteredReferences.map((p) => (
+              <tr key={p.name}>
+                <td><strong>{p.name}</strong></td>
+                <td>{p.group}</td>
+                <td>{p.annualPremium === undefined ? "Official quote required" : `₹${p.annualPremium.toLocaleString("en-IN")} / year (verify)`}</td>
+                <td>{p.benefitSummary}<div style={{ marginTop: 6 }}>{p.paymentGuidance}</div><div style={{ marginTop: 6 }}>{p.eligibilityGuidance}</div></td>
+                <td>{p.state === "historical" ? "Historical / unverified" : p.state === "eligibility" ? "Check eligibility" : "Official verification required"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
       </div>
     </MainLayout>
   );
