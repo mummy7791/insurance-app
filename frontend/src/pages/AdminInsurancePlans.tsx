@@ -663,7 +663,7 @@ function AdminInsurancePlans() {
               <tr key={p.name}>
                 <td><strong>{p.name}</strong></td>
                 <td>{p.group}</td>
-                <td>{p.annualPremium === undefined ? "Official quote required" : `₹${p.annualPremium.toLocaleString("en-IN")} / year (verify)`}</td>
+                <td>{p.annualPremium === undefined ? "Official quote required" : `₹${p.annualPremium.toLocaleString("en-IN")} / year`}<div style={{ marginTop: 6, fontSize: 12 }}>{p.premiumNote}</div><a href={p.officialQuoteUrl} target="_blank" rel="noopener noreferrer">Official source ↗</a></td>
                 <td>{p.benefitSummary}<div style={{ marginTop: 6 }}>{p.paymentGuidance}</div><div style={{ marginTop: 6 }}>{p.eligibilityGuidance}</div></td>
                 <td>{p.state === "historical" ? "Historical / unverified" : p.state === "eligibility" ? "Check eligibility" : "Official verification required"}</td>
               </tr>
