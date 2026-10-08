@@ -91,7 +91,7 @@ export default function InsurancePlans() {
     }, 300);
   };
 
-  const categories = ["All", ...Array.from(new Set(plans.map((plan) => plan.category).filter(Boolean)))];
+  const categories = ["All", ...Array.from(new Set([...plans.map((plan) => plan.category), ...referencePlans.map((plan) => plan.group)].filter(Boolean)))];
   const visiblePlans = [...plans]
     .filter((plan) => categoryFilter === "All" || plan.category === categoryFilter)
     .filter((plan) => `${plan.planName} ${plan.category}`.toLowerCase().includes(search.trim().toLowerCase()))
@@ -129,6 +129,7 @@ export default function InsurancePlans() {
           visiblePlans.length === 0 ? <div className="plan-empty-state"><strong>No matching plans found.</strong><span>Try another plan name or category.</span><button className="mini-btn" onClick={() => { setSearch(""); setCategoryFilter("All"); }}>Show all plans</button></div> : <div className="insurance-plan-grid">
             {visiblePlans.map((plan) => {
               const premium = plan.yearlyPremium || plan.yearlyAmount || 0;
+              const hasVerifiedPrice = Number.isFinite(premium) && premium > 0;
 
               return (
                 <div className={`insurance-plan-card ${estimate?.category === plan.category ? "recommended-match" : ""}`} key={plan._id}><div className="plan-label-row"><span className="plan-category">{plan.category}</span>{estimate?.category === plan.category && <span className="estimate-match">Matches estimate</span>}</div>
@@ -142,8 +143,7 @@ export default function InsurancePlans() {
                   </p>
 
                   <p>
-                    <b>Premium from:</b> ₹
-                    {premium.toLocaleString("en-IN")}
+                    <b>Premium from:</b> {hasVerifiedPrice ? `₹${premium.toLocaleString("en-IN")}` : "Contact admin for official quote"}
                   </p>
 
                   <p>
@@ -163,15 +163,15 @@ export default function InsurancePlans() {
                     <span>Key benefits</span>
                     <p>{getBenefits(plan.benefits)}</p>
                   </div>
-                  <div className="plan-card-footer"><div><small>Annual premium</small><strong>₹{premium.toLocaleString("en-IN")}</strong></div><div><small>Life cover</small><strong>₹{(plan.coverageAmount || 0).toLocaleString("en-IN")}</strong></div></div>
+                  <div className="plan-card-footer"><div><small>Annual premium</small><strong>{hasVerifiedPrice ? `₹${premium.toLocaleString("en-IN")}` : "Quote required"}</strong></div><div><small>Life cover</small><strong>₹{(plan.coverageAmount || 0).toLocaleString("en-IN")}</strong></div></div>
 
                   <button
                     className="btn small-btn"
                     onClick={() => buyPlan(plan._id)}
-                    disabled={buyingId === plan._id}
+                    disabled={buyingId === plan._id || !hasVerifiedPrice}
                     style={{ marginTop: 12 }}
                   >
-                    {buyingId === plan._id ? "Opening..." : "Start proposal →"}
+                    {!hasVerifiedPrice ? "Official quote required" : buyingId === plan._id ? "Opening..." : "Start proposal →"}
                   </button>
                 </div>
               );
@@ -190,6 +190,9 @@ export default function InsurancePlans() {
               <p><b>Annual premium:</b> {p.annualPremium !== undefined ? "₹" + p.annualPremium.toLocaleString("en-IN") + " per year (reconfirm)" : p.state === "eligibility" ? "No retail beneficiary premium" : "Official quote required"}</p>
               <p><b>Monthly premium:</b> {p.annualPremium !== undefined ? "Not billed monthly" : "Official quote required / not applicable"}</p>
               <p><b>Coverage:</b> {p.cover ? "Up to ₹" + p.cover.toLocaleString("en-IN") + " subject to eligibility" : "See official scheme or policy terms"}</p>
+              <p><b>Benefits:</b> {p.benefitSummary}</p>
+              <p><b>Premium-paying term:</b> {p.paymentGuidance}</p>
+              <p><b>Eligibility:</b> {p.eligibilityGuidance}</p>
               <div className="plan-benefit-box"><span>Availability</span><p>{p.state === "historical" ? "Historical product — new purchase unavailable or unverified" : p.state === "eligibility" ? "Government eligibility check required" : "Official insurer or scheme confirmation required"}</p></div>
               <button className="btn small-btn" disabled style={{ marginTop: 12, opacity: 0.7 }}>Not available for direct purchase</button>
             </div>
