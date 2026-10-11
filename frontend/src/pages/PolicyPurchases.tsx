@@ -85,6 +85,8 @@ export default function PolicyPurchases() {
       const data = new FormData();
       data.append("certificate", certificateFile);
       await api.post(`/plan-purchases/issuance-review/${certificatePurchaseId}/certificate`, data);
+      const refreshed = await api.get<CertificateRecord[]>("/plan-purchases/issuance-certificates").catch(() => null);
+      if (refreshed && Array.isArray(refreshed.data)) setCertificateRecords(refreshed.data);
       setCertificateMessage("Certificate uploaded to private storage.");
       setUploadedThisSession(previous => [...previous, certificatePurchaseId]);
       setCertificateFile(null);
