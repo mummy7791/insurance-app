@@ -10,6 +10,8 @@ type PolicyPurchase = {
 
 type IssuanceReview = { _id: string; planName: string; policyNumber?: string; receiptNumber?: string; transactionId?: string; paymentStatus: string; policyStatus: string; createdAt?: string; };
 
+type CertificateRecord = { purchaseId: string; sha256: string; originalName: string; byteSize: number; uploadedAt: string; uploadedBy: string; };
+
 type IssuanceAudit = { purchaseId: string; planName: string; appPolicyReference?: string; policyStatus: string; insurerName: string; insurerPolicyNumber: string; evidenceReference: string; confirmedAt?: string | null; confirmedBy?: string | null; certificateSha256?: string; };
 
 export default function PolicyPurchases() {
@@ -18,6 +20,7 @@ export default function PolicyPurchases() {
   const [search, setSearch] = useState("");
   const [issuanceReviews, setIssuanceReviews] = useState<IssuanceReview[]>([]);
   const [issuanceAudit, setIssuanceAudit] = useState<IssuanceAudit[]>([]);
+  const [certificateRecords, setCertificateRecords] = useState<CertificateRecord[]>([]);
   const [issuanceError, setIssuanceError] = useState("");
   const [reviewId, setReviewId] = useState("");
   const [insurerName, setInsurerName] = useState("");
@@ -41,6 +44,7 @@ export default function PolicyPurchases() {
         setIssuanceReviews(Array.isArray(review.data) ? review.data : []);
         setIssuanceError("");
         try { const audit = await api.get<IssuanceAudit[]>("/plan-purchases/issuance-audit"); setIssuanceAudit(Array.isArray(audit.data) ? audit.data : []); } catch { setIssuanceAudit([]); }
+        try { const records = await api.get<CertificateRecord[]>("/plan-purchases/issuance-certificates"); setCertificateRecords(Array.isArray(records.data) ? records.data : []); } catch { setCertificateRecords([]); }
       } catch {
         setIssuanceError("Issuance review queue unavailable. Check admin access and backend deployment.");
       }
@@ -150,6 +154,10 @@ export default function PolicyPurchases() {
         <div className="section-heading-row"><div><span className="eyebrow">PRIVATE CERTIFICATES</span><h2>Upload insurer-issued certificate</h2></div></div>
         <p>Upload only an independently verified insurer-issued PDF. Documents are stored privately; duplicate uploads are blocked.</p>
         <div className="card">
+          <p>{certificateRecords.length} certificates recorded (latest 200). Select a confirmed proposal to check its upload status.</p>
+          {certificatePurchaseId && (certificateRecords.some(item => item.purchaseId === certificatePurchaseId)
+            ? <p role="status">Certificate already stored for this proposal.</p>
+            : <p>Certificate not uploaded yet.</p>)}
           <label htmlFor="certificate-purchase">Confirmed proposal</label>
           <select id="certificate-purchase" value={certificatePurchaseId} onChange={e => setCertificatePurchaseId(e.target.value)}>
             <option value="">Select confirmed proposal</option>
@@ -158,10 +166,17 @@ export default function PolicyPurchases() {
           </select>
           <label htmlFor="certificate-pdf">Insurer certificate PDF (max 10 MB)</label>
           <input id="certificate-pdf" type="file" accept=".pdf,application/pdf" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
-          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId)} onClick={() => void uploadCertificate()}>
+          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId) || certificateRecords.some(item => item.purchaseId === certificatePurchaseId)} onClick={() => void uploadCertificate()}>
             {certificateUploading ? "Uploading..." : "Upload private certificate"}
           </button>
-          {certificateMessage && <p role="status">{certificateMessage}</p>}
+          {certificateMessage && <p role="status">{certificateMessage}</p>
+          {certificateRecords.length > 0 && <div className="admin-detail-list">
+            <h3>Recent private certificates</h3>
+            {certificateRecords.slice(0, 15).map(item => <p key={item.purchaseId}>
+              <b>{item.originalName}</b> — {Math.ceil(item.byteSize / 1024)} KB — {new Date(item.uploadedAt).toLocaleDateString("en-IN")}
+              <small style={{ display: "block", overflowWrap: "anywhere" }}>Proposal: {item.purchaseId} | SHA-256: {item.sha256}</small>
+            </p>)}
+          </div>}}
         </div>
       </div>
       <div className="section">
