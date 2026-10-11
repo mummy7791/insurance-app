@@ -20,6 +20,8 @@ type Policy = {
 
 type PurchasedPlan = { _id:string; policyTermYears?:number; entryAge?:number; coverTillAge?:number; premiumFrequency?:string; benefitType?:string; benefitSchedule?:Array<{policyYear:number;amount:number;type:string}>; maturityAmount?:number; deathBenefit?:number; premiumProgress?:{paidCount:number;remainingCount:number;paidAmount:number;premiums:Array<{_id:string;amount:number;dueDate:string;paidDate?:string;status:string;receiptNumber?:string}>}; createdAt?:string; planName:string; policyNumber?:string; receiptNumber?:string; transactionId?:string; category:string; coverageAmount:number; yearlyPremium:number; paymentYears:number; totalPremiumPayable?:number; nextPremiumDate?:string; paymentStatus:string; policyStatus:string; startDate?:string; endDate?:string; proposal?: { customerName?:string; nomineeName?:string; nomineeRelation?:string; }; };
 
+type IssuanceConfirmation = { purchaseId: string; policyStatus: string; insurerConfirmed: boolean; insurerName: string; insurerPolicyNumber: string; confirmedAt: string | null; };
+
 type PolicyForm = {
   customerName: string;
   customerPhone: string;
@@ -45,6 +47,7 @@ export default function Policies() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
+  const [issuanceConfirmations, setIssuanceConfirmations] = useState<IssuanceConfirmation[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
   const [policyLogoDataUrl,setPolicyLogoDataUrl]=useState("");
@@ -58,15 +61,16 @@ export default function Policies() {
     const days = Math.ceil((due.getTime() - Date.now()) / 86400000);
     return { plan, days, due };
   }).filter(row => Number.isFinite(row.days) && (renewalFilter === "all" || renewalFilter === "overdue" && row.days < 0 || renewalFilter === "7" && row.days >= 0 && row.days <= 7 || renewalFilter === "30" && row.days <= 30)).sort((a,b) => a.days-b.days);
+  const issuanceFor = (plan: PurchasedPlan) => issuanceConfirmations.find(item => item.purchaseId === plan._id);
   const purchaseJourney = (plan: PurchasedPlan) => {
     const paid = String(plan.paymentStatus).toLowerCase() === "paid";
-    const issued = String(plan.policyStatus).toLowerCase() === "active";
+    const issued = String(plan.policyStatus).toLowerCase() === "active" && Boolean(issuanceFor(plan)?.insurerConfirmed);
     return [
       { label: "Proposal submitted", done: true },
       { label: "Payment confirmed", done: paid },
       { label: "KYC review (confirm with insurer)", done: false },
       { label: "Underwriting / insurer review (confirm)", done: false },
-      { label: "App policy marked active", done: issued }
+      { label: "Insurer issuance confirmed in app", done: issued }
     ];
   };
   const purchaseStatusClass = (plan: PurchasedPlan) => {
@@ -88,6 +92,10 @@ export default function Policies() {
         : Promise.resolve({ data: [] as PurchasedPlan[] });
 
       const [policyResult, purchaseResult] = await Promise.allSettled([policyRequest, purchaseRequest]);
+      if (isCustomer) {
+        try { const confirmation = await api.get<IssuanceConfirmation[]>("/plan-purchases/my-issuance-history"); setIssuanceConfirmations(Array.isArray(confirmation.data) ? confirmation.data : []); }
+        catch { setIssuanceConfirmations([]); }
+      }
       let loaded = false;
 
       if (policyResult.status === "fulfilled") {
