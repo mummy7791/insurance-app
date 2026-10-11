@@ -605,6 +605,21 @@ const syncPaidPurchase = async (purchase, customerId) => {
   return purchase;
 };
 
+// Admin review only: a payment reference is not evidence of insurer issuance.
+router.get("/issuance-review", auth(["admin"]), async (_req, res) => {
+  try {
+    const records = await PlanPurchase.find({ paymentStatus: "Paid", policyStatus: "Inactive" })
+      .select("_id planName customerId policyNumber receiptNumber transactionId paymentStatus policyStatus createdAt")
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+    res.json(records);
+  } catch (error) {
+    console.error("Issuance review fetch error:", error);
+    res.status(500).json({ message: "Unable to load pending insurer issuance reviews" });
+  }
+});
+
 router.get("/my-plans", auth(["customer"]), async (req, res) => {
   try {
     const purchases = await PlanPurchase.find({ customerId: req.user.id }).sort({ createdAt: -1 });
