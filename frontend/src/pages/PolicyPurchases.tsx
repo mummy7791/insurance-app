@@ -8,16 +8,27 @@ type PolicyPurchase = {
   customerName: string; customerEmail: string; customerPhone: string; createdAt?: string;
 };
 
+type IssuanceReview = { _id: string; planName: string; policyNumber?: string; receiptNumber?: string; transactionId?: string; paymentStatus: string; policyStatus: string; createdAt?: string; };
+
 export default function PolicyPurchases() {
   const [purchases, setPurchases] = useState<PolicyPurchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [issuanceReviews, setIssuanceReviews] = useState<IssuanceReview[]>([]);
+  const [issuanceError, setIssuanceError] = useState("");
 
   const loadPurchases = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get<PolicyPurchase[]>("/policy-purchases");
       setPurchases(Array.isArray(res.data) ? res.data : []);
+      try {
+        const review = await api.get<IssuanceReview[]>("/plan-purchases/issuance-review");
+        setIssuanceReviews(Array.isArray(review.data) ? review.data : []);
+        setIssuanceError("");
+      } catch {
+        setIssuanceError("Issuance review queue unavailable. Check admin access and backend deployment.");
+      }
     } catch (error) {
       console.error("Policy purchases load error:", error);
       alert("Policy purchases load failed");
@@ -42,6 +53,12 @@ export default function PolicyPurchases() {
         <div className="card"><h3>Premium Collected</h3><h1>₹{totalPaid.toLocaleString("en-IN")}</h1></div>
         <div className="card"><h3>Active Policies</h3><h1>{activeCount}</h1></div>
         <div className="card"><h3>Paid Transactions</h3><h1>{paidCount}</h1></div>
+      </div>
+      <div className="section">
+        <div className="section-heading-row"><div><span className="eyebrow">INSURER CONFIRMATION</span><h2>Paid proposals awaiting issuance review</h2></div><span>{issuanceReviews.length} pending review</span></div>
+        <p>Payment confirmation alone does not activate insurer coverage. This is a read-only admin review queue; insurer confirmation and approval are not yet integrated.</p>
+        {issuanceError && <p role="alert">{issuanceError}</p>}
+        {issuanceReviews.length === 0 ? <p>No pending issuance reviews loaded.</p> : <div className="admin-record-grid">{issuanceReviews.map((item) => <article className="admin-record-card" key={item._id}><h3>{item.planName || "Insurance plan"}</h3><div className="admin-detail-list"><p><span>Payment</span><strong>{item.paymentStatus}</strong></p><p><span>Policy status</span><strong>{item.policyStatus} — insurer confirmation required</strong></p><p><span>App reference</span><strong>{item.policyNumber || "Pending"}</strong></p><p><span>Receipt</span><strong>{item.receiptNumber || "Pending"}</strong></p><p><span>Transaction</span><strong>{item.transactionId || "Pending"}</strong></p></div></article>)}</div>}
       </div>
       <div className="section">
         <div className="section-heading-row"><div><span className="eyebrow">TRANSACTION REGISTER</span><h2>Customer purchased policies</h2></div><button className="mini-btn" onClick={() => void loadPurchases()}>Refresh</button></div>
