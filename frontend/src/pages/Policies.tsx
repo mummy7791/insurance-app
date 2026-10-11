@@ -52,6 +52,22 @@ export default function Policies() {
   const isCustomer = user.role === "customer" || !user.role;
   const activePurchasedPlans = purchasedPlans.filter((plan) => String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid");
   const pendingPurchasedPlans = purchasedPlans.filter((plan) => !(String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid"));
+  const renewalRows = purchasedPlans.filter(plan => plan.nextPremiumDate && String(plan.policyStatus).toLowerCase() === "active").map(plan => {
+    const due = new Date(plan.nextPremiumDate!);
+    const days = Math.ceil((due.getTime() - Date.now()) / 86400000);
+    return { plan, days, due };
+  }).filter(row => Number.isFinite(row.days) && row.days <= 30).sort((a,b) => a.days-b.days);
+  const purchaseJourney = (plan: PurchasedPlan) => {
+    const paid = String(plan.paymentStatus).toLowerCase() === "paid";
+    const issued = String(plan.policyStatus).toLowerCase() === "active";
+    return [
+      { label: "Proposal submitted", done: true },
+      { label: "Payment confirmed", done: paid },
+      { label: "KYC review", done: issued },
+      { label: "Underwriting / insurer review", done: issued },
+      { label: "Policy active (verify insurer issuance)", done: issued }
+    ];
+  };
   const purchaseStatusClass = (plan: PurchasedPlan) => {
     const payment = String(plan.paymentStatus || "").toLowerCase();
     if (payment === "failed") return "failed";
@@ -308,6 +324,26 @@ export default function Policies() {
       title="Policies"
       subtitle={isCustomer ? "View your policy coverage, premium and current status" : "Create and manage insurance policies"}
     >
+      {isCustomer && <div className="section">
+        <h2>Renewal Center</h2>
+        <p>Upcoming premium dates are based on your saved policy records. Confirm the payable amount and due date with your insurer before payment.</p>
+        {renewalRows.length === 0 ? <p>No active policy premiums due within 30 days in the available records.</p> : <div style={{ display: "grid", gap: 12 }}>
+          {renewalRows.map(({plan,days,due}) => <div key={plan._id} className="plan-benefit-box">
+            <strong>{plan.planName}</strong>
+            <p>Due: {due.toLocaleDateString("en-IN")} — {days < 0 ? `Overdue by ${Math.abs(days)} days` : days === 0 ? "Due today" : `Due in ${days} days`}</p>
+            <p>Confirm renewal amount and payment link with the issuing insurer. No automatic debit is initiated here.</p>
+          </div>)}
+        </div>}
+        <h2 style={{ marginTop: 24 }}>Policy Journey Tracker</h2>
+        <p>Payment success does not by itself confirm that an insurer has issued a policy. Check the insurer-issued policy number and certificate.</p>
+        {purchasedPlans.map(plan => <div className="plan-benefit-box" key={plan._id} style={{ marginBottom: 12 }}>
+          <strong>{plan.planName}</strong>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+            {purchaseJourney(plan).map(step => <span key={step.label} style={{ border: "1px solid #d4e7dc", borderRadius: 8, padding: "6px 10px" }}>{step.done ? "✓ " : "○ "}{step.label}</span>)}
+          </div>
+          {String(plan.policyStatus).toLowerCase() === "active" && <p style={{ marginTop: 8 }}>App status: Active. Independently verify the policy with the issuing insurer.</p>}
+        </div>)}
+      </div>}
 {!isCustomer && (
       <div className="section">
         <h2>Add New Policy</h2>
