@@ -665,6 +665,7 @@ router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), (req, r
       return res.status(201).json({ id: certificate._id, sha256, message: "Certificate stored privately" });
     } catch (error) {
       await deletePrivateDocument(stored.public_id).catch(() => {});
+      if (error?.code === 11000) return res.status(409).json({ message: "Certificate already uploaded for this proposal" });
       throw error;
     }
   } catch (error) {
