@@ -10,7 +10,7 @@ type PolicyPurchase = {
 
 type IssuanceReview = { _id: string; planName: string; policyNumber?: string; receiptNumber?: string; transactionId?: string; paymentStatus: string; policyStatus: string; createdAt?: string; };
 
-type IssuanceAudit = { purchaseId: string; planName: string; appPolicyReference?: string; policyStatus: string; insurerName: string; insurerPolicyNumber: string; evidenceReference: string; confirmedAt?: string | null; confirmedBy?: string | null; };
+type IssuanceAudit = { purchaseId: string; planName: string; appPolicyReference?: string; policyStatus: string; insurerName: string; insurerPolicyNumber: string; evidenceReference: string; confirmedAt?: string | null; confirmedBy?: string | null; certificateSha256?: string; };
 
 export default function PolicyPurchases() {
   const [purchases, setPurchases] = useState<PolicyPurchase[]>([]);
@@ -23,6 +23,7 @@ export default function PolicyPurchases() {
   const [insurerName, setInsurerName] = useState("");
   const [insurerPolicyNumber, setInsurerPolicyNumber] = useState("");
   const [evidenceReference, setEvidenceReference] = useState("");
+  const [certificateSha256, setCertificateSha256] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const loadPurchases = useCallback(async () => {
@@ -56,9 +57,9 @@ export default function PolicyPurchases() {
       setSubmitting(true);
       setIssuanceError("");
       await api.post(`/plan-purchases/issuance-review/${reviewId}/confirm`, {
-        insurerName: insurerName.trim(), insurerPolicyNumber: insurerPolicyNumber.trim(), evidenceReference: evidenceReference.trim()
+        insurerName: insurerName.trim(), insurerPolicyNumber: insurerPolicyNumber.trim(), evidenceReference: evidenceReference.trim(), certificateSha256
       });
-      setReviewId(""); setInsurerName(""); setInsurerPolicyNumber(""); setEvidenceReference("");
+      setReviewId(""); setInsurerName(""); setInsurerPolicyNumber(""); setEvidenceReference(""); setCertificateSha256("");
       await loadPurchases();
     } catch {
       setIssuanceError("Confirmation failed. Verify insurer evidence, admin access and proposal status before retrying.");
@@ -99,6 +100,21 @@ export default function PolicyPurchases() {
           <input id="issuance-number" maxLength={200} value={insurerPolicyNumber} onChange={e => setInsurerPolicyNumber(e.target.value)} placeholder="Verified insurer policy number" />
           <label htmlFor="issuance-evidence">Verification evidence reference</label>
           <input id="issuance-evidence" maxLength={200} value={evidenceReference} onChange={e => setEvidenceReference(e.target.value)} placeholder="Insurer portal / confirmation reference" />
+          <label htmlFor="issuance-certificate">Certificate PDF fingerprint (optional)</label>
+          <input id="issuance-certificate" type="file" accept="application/pdf,.pdf" onChange={async e => {
+            const file = e.target.files?.[0];
+            setCertificateSha256("");
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { setIssuanceError("Certificate PDF must be 10 MB or smaller."); return; }
+            if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) { setIssuanceError("Select a PDF certificate."); return; }
+            try {
+              const hash = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+              setCertificateSha256(Array.from(new Uint8Array(hash)).map(byte => byte.toString(16).padStart(2, "0")).join(""));
+              setIssuanceError("");
+            } catch { setIssuanceError("Unable to fingerprint PDF on this device."); }
+          }} />
+          <p style={{ fontSize: 12 }}>PDF stays on your device; only its SHA-256 fingerprint is recorded. This does not upload or verify the certificate with the insurer.</p>
+          {certificateSha256 && <small>SHA-256: {certificateSha256}</small>}
           <button type="button" className="mini-btn" disabled={submitting || !reviewId} onClick={() => void confirmIssuance()}>{submitting ? "Confirming..." : "Confirm insurer issuance"}</button>
         </div>}
         {issuanceReviews.length === 0 ? <p>No pending issuance reviews loaded.</p> : <div className="admin-record-grid">{issuanceReviews.map((item) => <article className="admin-record-card" key={item._id}><h3>{item.planName || "Insurance plan"}</h3><div className="admin-detail-list"><p><span>Payment</span><strong>{item.paymentStatus}</strong></p><p><span>Policy status</span><strong>{item.policyStatus} — insurer confirmation required</strong></p><p><span>App reference</span><strong>{item.policyNumber || "Pending"}</strong></p><p><span>Receipt</span><strong>{item.receiptNumber || "Pending"}</strong></p><p><span>Transaction</span><strong>{item.transactionId || "Pending"}</strong></p></div></article>)}</div>}
@@ -112,6 +128,7 @@ export default function PolicyPurchases() {
             <p><span>Insurer</span><strong>{entry.insurerName || "N/A"}</strong></p>
             <p><span>Insurer policy number</span><strong>{entry.insurerPolicyNumber || "N/A"}</strong></p>
             <p><span>Evidence reference</span><strong>{entry.evidenceReference || "N/A"}</strong></p>
+            <p><span>Certificate fingerprint</span><strong style={{ overflowWrap: "anywhere" }}>{entry.certificateSha256 || "Not recorded"}</strong></p>
             <p><span>Recorded on</span><strong>{entry.confirmedAt ? new Date(entry.confirmedAt).toLocaleString("en-IN") : "N/A"}</strong></p>
             <p><span>Admin ID</span><strong>{entry.confirmedBy || "N/A"}</strong></p>
             <p><span>Current status</span><strong>{entry.policyStatus}</strong></p>
