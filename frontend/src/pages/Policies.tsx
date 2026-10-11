@@ -63,9 +63,9 @@ export default function Policies() {
     return [
       { label: "Proposal submitted", done: true },
       { label: "Payment confirmed", done: paid },
-      { label: "KYC review", done: issued },
-      { label: "Underwriting / insurer review", done: issued },
-      { label: "Policy active (verify insurer issuance)", done: issued }
+      { label: "KYC review (confirm with insurer)", done: false },
+      { label: "Underwriting / insurer review (confirm)", done: false },
+      { label: "App policy marked active", done: issued }
     ];
   };
   const purchaseStatusClass = (plan: PurchasedPlan) => {
