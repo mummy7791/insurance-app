@@ -34,24 +34,32 @@ export default function PolicyPurchases() {
   const [certificateMessage, setCertificateMessage] = useState("");
   const [uploadedThisSession, setUploadedThisSession] = useState<string[]>([]);
 
+  const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
+
   const loadPurchases = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.get<PolicyPurchase[]>("/policy-purchases");
-      setPurchases(Array.isArray(res.data) ? res.data : []);
-      try {
-        const review = await api.get<IssuanceReview[]>("/plan-purchases/issuance-review");
-        setIssuanceReviews(Array.isArray(review.data) ? review.data : []);
-        setIssuanceError("");
-        try { const audit = await api.get<IssuanceAudit[]>("/plan-purchases/issuance-audit"); setIssuanceAudit(Array.isArray(audit.data) ? audit.data : []); } catch { setIssuanceAudit([]); }
-        try { const records = await api.get<CertificateRecord[]>("/plan-purchases/issuance-certificates"); setCertificateRecords(Array.isArray(records.data) ? records.data : []); } catch { setCertificateRecords([]); }
-      } catch {
-        setIssuanceError("Issuance review queue unavailable. Check admin access and backend deployment.");
-      }
-    } catch (error) {
-      console.error("Policy purchases load error:", error);
-      alert("Policy purchases load failed");
-    } finally { setLoading(false); }
+    setLoading(true);
+    const [purchasesResult, reviewsResult, auditResult, certificatesResult] = await Promise.allSettled([
+      api.get<PolicyPurchase[]>("/policy-purchases"),
+      api.get<IssuanceReview[]>("/plan-purchases/issuance-review"),
+      api.get<IssuanceAudit[]>("/plan-purchases/issuance-audit"),
+      api.get<CertificateRecord[]>("/plan-purchases/issuance-certificates")
+    ]);
+    const warnings: string[] = [];
+    if (purchasesResult.status === "fulfilled") setPurchases(Array.isArray(purchasesResult.value.data) ? purchasesResult.value.data : []);
+    else warnings.push("Purchase register could not be loaded.");
+    if (reviewsResult.status === "fulfilled") {
+      setIssuanceReviews(Array.isArray(reviewsResult.value.data) ? reviewsResult.value.data : []);
+      setIssuanceError("");
+    } else {
+      setIssuanceReviews([]);
+      setIssuanceError("Issuance review queue unavailable. Check admin access and backend deployment.");
+    }
+    if (auditResult.status === "fulfilled") setIssuanceAudit(Array.isArray(auditResult.value.data) ? auditResult.value.data : []);
+    else { setIssuanceAudit([]); warnings.push("Issuance audit history could not be loaded; zero does not mean no confirmations exist."); }
+    if (certificatesResult.status === "fulfilled") setCertificateRecords(Array.isArray(certificatesResult.value.data) ? certificatesResult.value.data : []);
+    else { setCertificateRecords([]); warnings.push("Certificate register could not be loaded; upload status is unknown."); }
+    setLoadWarnings(warnings);
+    setLoading(false);
   }, []);
 
   useEffect(() => { const timer = window.setTimeout(() => void loadPurchases(), 0); return () => window.clearTimeout(timer); }, [loadPurchases]);
@@ -109,6 +117,7 @@ export default function PolicyPurchases() {
 
   return (
     <MainLayout title="Policy Purchases" subtitle="Monitor customer purchases, payment references and active cover">
+      {loadWarnings.length > 0 && <div role="alert" className="card" style={{ marginBottom: 16 }}><strong>Some admin data could not be loaded</strong>{loadWarnings.map(warning => <p key={warning}>{warning}</p>)}<button type="button" className="mini-btn" onClick={() => void loadPurchases()}>Retry loading</button></div>}
       <div className="admin-page-summary"><div><span className="eyebrow">POLICY OPERATIONS</span><h2>Purchase & payment register</h2><p>Review issued policies and payment activity without exposing proposal KYC data.</p></div><div className="admin-summary-metrics"><div><span>Purchases</span><strong>{purchases.length}</strong></div><div><span>Active</span><strong>{activeCount}</strong></div><div><span>Paid</span><strong>{paidCount}</strong></div></div></div>
       <div className="cards admin-kpi-grid">
         <div className="card"><h3>Total Purchases</h3><h1>{purchases.length}</h1></div>
