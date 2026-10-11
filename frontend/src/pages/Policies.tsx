@@ -141,21 +141,21 @@ export default function Policies() {
     doc.setTextColor(255,255,255); doc.setFontSize(19); doc.text("SecureLife",42,17);
     doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.text("INSURANCE • DIGITAL POLICY SERVICES",42,24);
     doc.setFontSize(7); doc.text("Trusted Protection for a Safer Tomorrow",42,29);
-    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.text("POLICY BOND",195,15,{align:"right"});
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.text("POLICY SUMMARY",195,15,{align:"right"});
     doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.text(policyNo,195,22,{align:"right",maxWidth:62});
     doc.setDrawColor(8,139,80); doc.setLineWidth(.8); doc.rect(7,7,196,283);
     doc.setDrawColor(214,231,220); doc.setLineWidth(.25); doc.rect(10,40,190,247);
     doc.setTextColor(15,35,55); doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.text(title,15,49);
     doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
-    doc.text("Official digitally generated SecureLife policy document",15,55);
-    doc.text("VERIFY • SECURE • AUTHENTIC",195,49,{align:"right"});
+    doc.text("SecureLife account record - not an insurer-issued certificate",15,55);
+    doc.text("VERIFY WITH ISSUING INSURER",195,49,{align:"right"});
   };
   const bondSection=(doc:jsPDF,title:string,y:number)=>{doc.setFillColor(235,248,241);doc.roundedRect(15,y,180,9,1.5,1.5,"F");doc.setTextColor(4,100,67);doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text(title.toUpperCase(),19,y+6);return y+15;};
   const bondRows=(doc:jsPDF,rows:Array<[string,string]>,y:number)=>{doc.setFontSize(8.3);rows.forEach(([l,v],i)=>{if(i%2===0){doc.setFillColor(250,252,251);doc.rect(18,y-5.5,174,8,"F");}doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text(l,20,y);doc.setFont("helvetica","bold");doc.setTextColor(25,45,55);doc.text(String(v||"N/A"),78,y,{maxWidth:110});y+=8;});return y;};
   const bondFooter=(doc:jsPDF,policyNo:string)=>{
     doc.setDrawColor(214,231,220);doc.line(15,274,195,274);
     doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(4,100,67);doc.text("SECURELIFE INSURANCE",15,280);
-    doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text("Computer-generated policy bond • No physical signature required",15,285);
+    doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);doc.text("Account-generated summary; not proof of insurer issuance",15,285);
     doc.text(policyNo,195,280,{align:"right"});doc.text("Customer Copy",195,285,{align:"right"});
   };
   const addPolicyTermsPage = (doc: jsPDF, plan: PurchasedPlan) => {
@@ -211,7 +211,7 @@ export default function Policies() {
     doc.setDrawColor(8,139,80);doc.setLineWidth(.8);doc.rect(7,7,196,283);
     doc.setDrawColor(214,231,220);doc.setLineWidth(.25);doc.rect(10,43,190,244);
     doc.setTextColor(15,35,55);doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text("Premium Payment Receipt",15,54);
-    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,116,139);doc.text("Official payment acknowledgement issued by SecureLife Insurance",15,60);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,116,139);doc.text("SecureLife account payment record; verify with payment provider",15,60);
     doc.setTextColor(4,100,67);doc.setFont("helvetica","bold");doc.text("PAID • VERIFIED",195,54,{align:"right"});
 
     doc.setFillColor(235,248,241);doc.roundedRect(15,68,180,10,2,2,"F");
@@ -251,8 +251,8 @@ export default function Policies() {
 
   const downloadCertificate = (plan: PurchasedPlan) => {
     if (Number(plan.yearlyPremium || 0) <= 0 || Number(plan.coverageAmount || 0) <= 0) { alert("This policy does not have a valid plan premium/coverage. Please contact SecureLife servicing."); return; }
-    if (plan.paymentStatus !== "Paid" || !plan.policyNumber) { alert("Policy bond will be available after payment is verified and the policy number is issued."); return; }
-    const doc=new jsPDF();addBondHeader(doc,"Certificate of Insurance / Policy Schedule",plan.policyNumber);let y=63;
+    if (plan.paymentStatus !== "Paid" || !plan.policyNumber) { alert("Account policy summary is available after recorded payment and policy number. Verify issuance with the insurer."); return; }
+    const doc=new jsPDF();addBondHeader(doc,"Account Policy Summary / Recorded Schedule",plan.policyNumber);let y=63;
     y=bondSection(doc,"Policyholder & Policy Details",y);
     y=bondRows(doc,[["Policyholder",plan.proposal?.customerName||user.name||"Customer"],["Policy Number",plan.policyNumber],["Document Reference",`BOND-${plan.policyNumber.slice(-12)}`],["Issue Date",new Date(plan.startDate||plan.createdAt||Date.now()).toLocaleDateString("en-IN")],["Plan Name",plan.planName],["Product Category",plan.category],["Policy Status",plan.policyStatus],["Payment Status",plan.paymentStatus]],y);
     y=bondSection(doc,"Insurance Benefits",y+2);
@@ -260,9 +260,9 @@ export default function Policies() {
     y=bondSection(doc,"Nominee & Validity",y+2);
     y=bondRows(doc,[["Nominee",plan.proposal?.nomineeName||"N/A"],["Relationship",plan.proposal?.nomineeRelation||"N/A"],["Commencement Date",plan.startDate?new Date(plan.startDate).toLocaleDateString("en-IN"):"N/A"],["Policy Valid Until",plan.endDate?new Date(plan.endDate).toLocaleDateString("en-IN"):"N/A"],["Next Premium Due",plan.nextPremiumDate?new Date(plan.nextPremiumDate).toLocaleDateString("en-IN"):"No further premium due"]],y);
     const verifiedY=Math.min(Math.max(y+5,218),246);
-    doc.setFillColor(236,253,245);doc.roundedRect(15,verifiedY,180,24,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text("POLICY ISSUED - PAYMENT VERIFIED",20,verifiedY+10);doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,verifiedY+17,{maxWidth:165});
+    doc.setFillColor(236,253,245);doc.roundedRect(15,verifiedY,180,24,2,2,"F");doc.setTextColor(22,101,52);doc.setFont("helvetica","bold");doc.setFontSize(9.5);doc.text("APP RECORD - VERIFY INSURER ISSUANCE",20,verifiedY+10);doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.text("This document is generated from the policy information recorded in your SecureLife account.",20,verifiedY+17,{maxWidth:165});
     bondFooter(doc,plan.policyNumber);addPolicySchedulePage(doc,plan);addPolicyTermsPage(doc,plan);
-    doc.save(`${plan.policyNumber}-SecureLife-Policy-Bond.pdf`);
+    doc.save(`${plan.policyNumber}-SecureLife-Policy-Summary.pdf`);
   };
 
   const addPolicy = async () => {
