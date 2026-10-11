@@ -14,6 +14,12 @@ const DUMMY_PASSWORD_HASH =
 const authRateLimit = (req, res, next) => {
   const key = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
+  // Prevent stale IP entries from growing without bound on a long-running server.
+  if (authAttempts.size > 5000) {
+    for (const [address, attempt] of authAttempts) {
+      if (attempt.resetAt <= now) authAttempts.delete(address);
+    }
+  }
   const current = authAttempts.get(key);
 
   if (!current || current.resetAt <= now) {
