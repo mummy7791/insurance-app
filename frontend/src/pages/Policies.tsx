@@ -48,6 +48,7 @@ export default function Policies() {
   const [form, setForm] = useState<PolicyForm>(initialForm);
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
   const [policyLogoDataUrl,setPolicyLogoDataUrl]=useState("");
+  const [renewalFilter,setRenewalFilter]=useState<"all"|"overdue"|"7"|"30">("30");
   const user = useMemo(() => { try { return JSON.parse(localStorage.getItem("insuranceUser") || "{}"); } catch { return {}; } }, []);
   const isCustomer = user.role === "customer" || !user.role;
   const activePurchasedPlans = purchasedPlans.filter((plan) => String(plan.policyStatus).toLowerCase() === "active" && String(plan.paymentStatus).toLowerCase() === "paid");
@@ -56,7 +57,7 @@ export default function Policies() {
     const due = new Date(plan.nextPremiumDate!);
     const days = Math.ceil((due.getTime() - Date.now()) / 86400000);
     return { plan, days, due };
-  }).filter(row => Number.isFinite(row.days) && row.days <= 30).sort((a,b) => a.days-b.days);
+  }).filter(row => Number.isFinite(row.days) && (renewalFilter === "all" || renewalFilter === "overdue" && row.days < 0 || renewalFilter === "7" && row.days >= 0 && row.days <= 7 || renewalFilter === "30" && row.days <= 30)).sort((a,b) => a.days-b.days);
   const purchaseJourney = (plan: PurchasedPlan) => {
     const paid = String(plan.paymentStatus).toLowerCase() === "paid";
     const issued = String(plan.policyStatus).toLowerCase() === "active";
@@ -326,8 +327,9 @@ export default function Policies() {
     >
       {isCustomer && <div className="section">
         <h2>Renewal Center</h2>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>{(["30","7","overdue","all"] as const).map(filter => <button key={filter} className="mini-btn" type="button" aria-pressed={renewalFilter === filter} onClick={() => setRenewalFilter(filter)} style={{ fontWeight: renewalFilter === filter ? 800 : 400 }}>{filter === "30" ? "Due in 30 days + overdue" : filter === "7" ? "Next 7 days" : filter === "overdue" ? "Overdue" : "All scheduled"}</button>)}</div>
         <p>Upcoming premium dates are based on your saved policy records. Confirm the payable amount and due date with your insurer before payment.</p>
-        {renewalRows.length === 0 ? <p>No active policy premiums due within 30 days in the available records.</p> : <div style={{ display: "grid", gap: 12 }}>
+        {renewalRows.length === 0 ? <p>No matching scheduled premiums in available active policy records.</p> : <div style={{ display: "grid", gap: 12 }}>
           {renewalRows.map(({plan,days,due}) => <div key={plan._id} className="plan-benefit-box">
             <strong>{plan.planName}</strong>
             <p>Due: {due.toLocaleDateString("en-IN")} — {days < 0 ? `Overdue by ${Math.abs(days)} days` : days === 0 ? "Due today" : `Due in ${days} days`}</p>
