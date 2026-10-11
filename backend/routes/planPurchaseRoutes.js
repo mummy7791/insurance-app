@@ -426,7 +426,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     if (purchase.proposal?.panNumber) {
       purchase.proposal.panNumber = maskPan(purchase.proposal.panNumber);
     }
-    purchase.policyStatus = "Pending Issuance";
+    purchase.policyStatus = "Inactive";
     purchase.transactionId = transactionId;
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
