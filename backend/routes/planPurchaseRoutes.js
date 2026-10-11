@@ -548,10 +548,11 @@ const syncPaidPurchase = async (purchase, customerId) => {
   const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
   const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
 
-  if (!purchase.policyNumber || !purchase.receiptNumber || purchase.policyStatus === "Inactive") {
+  if (!purchase.policyNumber || !purchase.receiptNumber) {
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
-    purchase.policyStatus = "Active";
+    // Payment confirmation does not establish insurer-issued coverage.
+    // Never activate a policy while repairing payment records.
     purchase.startDate = purchase.startDate || new Date();
     if (!purchase.endDate) {
       const endDate = new Date(purchase.startDate);
