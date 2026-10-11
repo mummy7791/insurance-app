@@ -641,6 +641,11 @@ router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), certifi
       return res.status(409).json({ message: "A certificate is already stored for this purchase" });
     }
     const sha256 = crypto.createHash("sha256").update(req.file.buffer).digest("hex");
+    const recorded = (purchase.serviceHistory || []).filter(x => x.requestType === "Insurer Issuance Confirmed").pop();
+    const fingerprint = String(recorded?.previousValue?.certificateSha256 || "").toLowerCase();
+    if (fingerprint && fingerprint !== sha256) {
+      return res.status(422).json({ message: "Certificate fingerprint mismatch" });
+    }
     const stored = await uploadPrivateDocument({
       buffer: req.file.buffer, mimeType: "application/pdf",
       customerId: String(purchase.customerId), documentType: "insurer-certificate"
