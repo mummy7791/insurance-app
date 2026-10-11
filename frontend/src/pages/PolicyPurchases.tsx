@@ -176,7 +176,7 @@ export default function PolicyPurchases() {
               <b>{item.originalName}</b> — {Math.ceil(item.byteSize / 1024)} KB — {new Date(item.uploadedAt).toLocaleDateString("en-IN")}
               <small style={{ display: "block", overflowWrap: "anywhere" }}>Proposal: {item.purchaseId} | SHA-256: {item.sha256}</small>
             </p>)}
-          </div>}}
+          </div>}
         </div>
       </div>
       <div className="section">
