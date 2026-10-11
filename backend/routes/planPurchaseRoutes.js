@@ -672,6 +672,32 @@ router.post("/issuance-review/:purchaseId/confirm", auth(["admin"]), async (req,
   }
 });
 
+// Return insurer confirmation audit to the policy owner without exposing admin identity.
+router.get("/my-issuance-history", auth(["customer"]), async (req, res) => {
+  try {
+    const records = await PlanPurchase.find({ customerId: req.user.id, paymentStatus: "Paid" })
+      .select("_id policyStatus serviceHistory")
+      .lean();
+    res.json(records.map(record => {
+      const confirmation = (record.serviceHistory || [])
+        .filter(entry => entry.requestType === "Insurer Issuance Confirmed")
+        .sort((a, b) => new Date(b.changedAt || 0) - new Date(a.changedAt || 0))[0];
+      const details = confirmation?.previousValue || {};
+      return {
+        purchaseId: record._id,
+        policyStatus: record.policyStatus,
+        insurerConfirmed: Boolean(confirmation),
+        insurerName: confirmation ? String(details.insurerName || "") : "",
+        insurerPolicyNumber: confirmation ? String(details.insurerPolicyNumber || "") : "",
+        confirmedAt: confirmation?.changedAt || null,
+      };
+    }));
+  } catch (error) {
+    console.error("Customer issuance history error:", error);
+    res.status(500).json({ message: "Could not load insurer issuance history" });
+  }
+});
+
 router.get("/my-plans", auth(["customer"]), async (req, res) => {
   try {
     const purchases = await PlanPurchase.find({ customerId: req.user.id }).sort({ createdAt: -1 });
