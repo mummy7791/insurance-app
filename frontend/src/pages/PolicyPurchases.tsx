@@ -160,17 +160,30 @@ export default function PolicyPurchases() {
           {certificatePurchaseId && (certificateRecords.some(item => item.purchaseId === certificatePurchaseId)
             ? <p role="status">Certificate already stored for this proposal.</p>
             : <p>Certificate not uploaded yet.</p>)}
-          <label htmlFor="certificate-purchase">Confirmed proposal</label>
-          <select id="certificate-purchase" value={certificatePurchaseId} onChange={e => setCertificatePurchaseId(e.target.value)}>
-            <option value="">Select confirmed proposal</option>
-            {issuanceAudit.filter((item, index, all) => all.findIndex(row => row.purchaseId === item.purchaseId) === index).map(item =>
-              <option key={item.purchaseId} value={item.purchaseId}>{item.planName} — {item.insurerPolicyNumber}</option>)}
-          </select>
-          <label htmlFor="certificate-pdf">Insurer certificate PDF (max 10 MB)</label>
-          <input id="certificate-pdf" type="file" accept=".pdf,application/pdf" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
-          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId) || certificateRecords.some(item => item.purchaseId === certificatePurchaseId)} onClick={() => void uploadCertificate()}>
-            {certificateUploading ? "Uploading..." : "Upload private certificate"}
-          </button>
+          {issuanceAudit.length === 0 && (
+            <p role="status" style={{ padding: 12, background: "#f0f7f3", borderRadius: 10 }}>
+              No insurer-confirmed proposals available. First complete the paid proposal's insurer issuance review above. If a confirmation already exists, check backend access and reload this page.
+            </p>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16, alignItems: "start", marginTop: 16 }}>
+            <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
+              <label htmlFor="certificate-purchase" style={{ fontWeight: 600 }}>Confirmed proposal</label>
+              <select id="certificate-purchase" style={{ width: "100%", maxWidth: "100%", minHeight: 44 }} value={certificatePurchaseId} onChange={e => { setCertificatePurchaseId(e.target.value); setCertificateMessage(""); }}>
+                <option value="">Select confirmed proposal</option>
+                {issuanceAudit.filter((item, index, all) => all.findIndex(row => row.purchaseId === item.purchaseId) === index).map(item =>
+                  <option key={item.purchaseId} value={item.purchaseId}>{item.planName} — {item.insurerPolicyNumber}</option>)}
+              </select>
+            </div>
+            <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
+              <label htmlFor="certificate-pdf" style={{ fontWeight: 600 }}>Insurer certificate PDF (max 10 MB)</label>
+              <input id="certificate-pdf" style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }} type="file" accept=".pdf,application/pdf" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
+            </div>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId) || certificateRecords.some(item => item.purchaseId === certificatePurchaseId)} onClick={() => void uploadCertificate()}>
+              {certificateUploading ? "Uploading..." : "Upload private certificate"}
+            </button>
+          </div>
           {certificateMessage && <p role="status">{certificateMessage}</p>}
           {certificateRecords.length > 0 && <div className="admin-detail-list">
             <h3>Recent private certificates</h3>
