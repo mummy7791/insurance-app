@@ -25,6 +25,10 @@ export default function PolicyPurchases() {
   const [evidenceReference, setEvidenceReference] = useState("");
   const [certificateSha256, setCertificateSha256] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [certificatePurchaseId, setCertificatePurchaseId] = useState("");
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [certificateUploading, setCertificateUploading] = useState(false);
+  const [certificateMessage, setCertificateMessage] = useState("");
 
   const loadPurchases = useCallback(async () => {
     try {
@@ -64,6 +68,22 @@ export default function PolicyPurchases() {
     } catch {
       setIssuanceError("Confirmation failed. Verify insurer evidence, admin access and proposal status before retrying.");
     } finally { setSubmitting(false); }
+  };
+
+  const uploadCertificate = async () => {
+    if (!certificatePurchaseId || !certificateFile) { setCertificateMessage("Select a confirmed proposal and PDF."); return; }
+    if (certificateFile.size > 10 * 1024 * 1024 || !certificateFile.name.toLowerCase().endsWith(".pdf")) {
+      setCertificateMessage("Select a PDF certificate up to 10 MB."); return;
+    }
+    try {
+      setCertificateUploading(true); setCertificateMessage("");
+      const data = new FormData();
+      data.append("certificate", certificateFile);
+      await api.post(`/plan-purchases/issuance-review/${certificatePurchaseId}/certificate`, data);
+      setCertificateMessage("Certificate uploaded to private storage.");
+      setCertificateFile(null);
+    } catch { setCertificateMessage("Upload failed. Check private storage configuration, certificate and prior upload status."); }
+    finally { setCertificateUploading(false); }
   };
 
   const filtered = useMemo(() => purchases.filter((item) =>
@@ -118,6 +138,24 @@ export default function PolicyPurchases() {
           <button type="button" className="mini-btn" disabled={submitting || !reviewId} onClick={() => void confirmIssuance()}>{submitting ? "Confirming..." : "Confirm insurer issuance"}</button>
         </div>}
         {issuanceReviews.length === 0 ? <p>No pending issuance reviews loaded.</p> : <div className="admin-record-grid">{issuanceReviews.map((item) => <article className="admin-record-card" key={item._id}><h3>{item.planName || "Insurance plan"}</h3><div className="admin-detail-list"><p><span>Payment</span><strong>{item.paymentStatus}</strong></p><p><span>Policy status</span><strong>{item.policyStatus} — insurer confirmation required</strong></p><p><span>App reference</span><strong>{item.policyNumber || "Pending"}</strong></p><p><span>Receipt</span><strong>{item.receiptNumber || "Pending"}</strong></p><p><span>Transaction</span><strong>{item.transactionId || "Pending"}</strong></p></div></article>)}</div>}
+      </div>
+      <div className="section">
+        <div className="section-heading-row"><div><span className="eyebrow">PRIVATE CERTIFICATES</span><h2>Upload insurer-issued certificate</h2></div></div>
+        <p>Upload only an independently verified insurer-issued PDF. Documents are stored privately; duplicate uploads are blocked.</p>
+        <div className="card">
+          <label htmlFor="certificate-purchase">Confirmed proposal</label>
+          <select id="certificate-purchase" value={certificatePurchaseId} onChange={e => setCertificatePurchaseId(e.target.value)}>
+            <option value="">Select confirmed proposal</option>
+            {issuanceAudit.filter((item, index, all) => all.findIndex(row => row.purchaseId === item.purchaseId) === index).map(item =>
+              <option key={item.purchaseId} value={item.purchaseId}>{item.planName} — {item.insurerPolicyNumber}</option>)}
+          </select>
+          <label htmlFor="certificate-pdf">Insurer certificate PDF (max 10 MB)</label>
+          <input id="certificate-pdf" type="file" accept=".pdf,application/pdf" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
+          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile} onClick={() => void uploadCertificate()}>
+            {certificateUploading ? "Uploading..." : "Upload private certificate"}
+          </button>
+          {certificateMessage && <p role="status">{certificateMessage}</p>}
+        </div>
       </div>
       <div className="section">
         <div className="section-heading-row"><div><span className="eyebrow">AUDIT HISTORY</span><h2>Insurer issuance confirmations</h2></div><span>{issuanceAudit.length} confirmations loaded</span></div>
