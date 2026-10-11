@@ -62,6 +62,16 @@ export default function Policies() {
     return { plan, days, due };
   }).filter(row => Number.isFinite(row.days) && (renewalFilter === "all" || renewalFilter === "overdue" && row.days < 0 || renewalFilter === "7" && row.days >= 0 && row.days <= 7 || renewalFilter === "30" && row.days <= 30)).sort((a,b) => a.days-b.days);
   const issuanceFor = (plan: PurchasedPlan) => issuanceConfirmations.find(item => item.purchaseId === plan._id);
+  const downloadInsurerCertificate = async (purchaseId: string) => {
+    try {
+      const response = await api.get<{ downloadUrl: string }>(`/plan-purchases/my-issuance-certificates/${purchaseId}`);
+      const url = response.data?.downloadUrl;
+      if (!url || !url.startsWith("https://")) throw new Error("Invalid certificate link");
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      window.alert("Certificate unavailable. The insurer-issued PDF may not have been uploaded yet.");
+    }
+  };
   const purchaseJourney = (plan: PurchasedPlan) => {
     const paid = String(plan.paymentStatus).toLowerCase() === "paid";
     const issued = String(plan.policyStatus).toLowerCase() === "active" && Boolean(issuanceFor(plan)?.insurerConfirmed);
@@ -380,6 +390,7 @@ export default function Policies() {
             <div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2><p className="section-copy">Your active, paid policies and policy documents.</p></div><span className="policy-count-chip">${activePurchasedPlans.length} Active</span></div>
             <div className="insurance-plan-grid">
               {activePurchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}>
+                <button type="button" className="mini-btn" onClick={() => void downloadInsurerCertificate(plan._id)}>View insurer-issued certificate</button>
                 <span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3>
                 <div className="policy-detail-rows">
                   <p><b>Policy No:</b><span>{plan.policyNumber || "Processing"}</span></p>
