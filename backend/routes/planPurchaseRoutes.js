@@ -1,6 +1,11 @@
 const express = require("express");
 const crypto = require("crypto");
 
+const multer = require("multer");
+const { uploadPrivateDocument, signedDownloadUrl, deletePrivateDocument } = require("../services/privateDocumentStorage");
+const InsurerCertificate = require("../models/InsurerCertificate");
+const certificateUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
+
 const router = express.Router();
 
 const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
@@ -617,6 +622,58 @@ router.get("/issuance-review", auth(["admin"]), async (_req, res) => {
   } catch (error) {
     console.error("Issuance review fetch error:", error);
     res.status(500).json({ message: "Unable to load pending insurer issuance reviews" });
+  }
+});
+
+// Store insurer-issued PDF privately. No public URL is saved or returned.
+router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), certificateUpload.single("certificate"), async (req, res) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(req.params.purchaseId)) return res.status(400).json({ message: "Invalid purchase ID" });
+    const purchase = await PlanPurchase.findById(req.params.purchaseId).select("customerId paymentStatus policyStatus serviceHistory");
+    if (!purchase || purchase.paymentStatus !== "Paid" || purchase.policyStatus !== "Active" ||
+        !(purchase.serviceHistory || []).some(item => item.requestType === "Insurer Issuance Confirmed")) {
+      return res.status(409).json({ message: "An admin-recorded insurer issuance confirmation is required first" });
+    }
+    if (!req.file || req.file.size < 5 || req.file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+      return res.status(400).json({ message: "A valid PDF file is required" });
+    }
+    if (await InsurerCertificate.exists({ purchaseId: purchase._id })) {
+      return res.status(409).json({ message: "A certificate is already stored for this purchase" });
+    }
+    const sha256 = crypto.createHash("sha256").update(req.file.buffer).digest("hex");
+    const stored = await uploadPrivateDocument({
+      buffer: req.file.buffer, mimeType: "application/pdf",
+      customerId: String(purchase.customerId), documentType: "insurer-certificate"
+    });
+    try {
+      const certificate = await InsurerCertificate.create({
+        purchaseId: purchase._id, customerId: purchase.customerId,
+        storagePublicId: stored.public_id, sha256, originalName: String(req.file.originalname || "certificate.pdf").slice(0, 150),
+        byteSize: req.file.size, uploadedBy: req.user.id
+      });
+      return res.status(201).json({ id: certificate._id, sha256, message: "Certificate stored privately" });
+    } catch (error) {
+      await deletePrivateDocument(stored.public_id).catch(() => {});
+      throw error;
+    }
+  } catch (error) {
+    console.error("Insurer certificate upload error:", error);
+    res.status(500).json({ message: "Certificate upload failed" });
+  }
+});
+
+router.get("/my-issuance-certificates/:purchaseId", auth(["customer", "admin"]), async (req, res) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(req.params.purchaseId)) return res.status(400).json({ message: "Invalid purchase ID" });
+    const certificate = await InsurerCertificate.findOne({ purchaseId: req.params.purchaseId }).lean();
+    if (!certificate) return res.status(404).json({ message: "Certificate not found" });
+    if (req.user.role !== "admin" && String(certificate.customerId) !== String(req.user.id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    res.json({ downloadUrl: signedDownloadUrl(certificate.storagePublicId), sha256: certificate.sha256, originalName: certificate.originalName });
+  } catch (error) {
+    console.error("Insurer certificate access error:", error);
+    res.status(500).json({ message: "Unable to access certificate" });
   }
 });
 
