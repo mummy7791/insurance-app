@@ -662,6 +662,20 @@ router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), certifi
   }
 });
 
+// Certificate availability contains metadata only; never expose storage identifiers.
+router.get("/my-certificate-status", auth(["customer"]), async (req, res) => {
+  try {
+    const certificates = await InsurerCertificate.find({ customerId: req.user.id })
+      .select("purchaseId sha256 createdAt").lean();
+    res.json(certificates.map(item => ({
+      purchaseId: item.purchaseId, available: true, sha256: item.sha256, uploadedAt: item.createdAt
+    })));
+  } catch (error) {
+    console.error("Certificate status error:", error);
+    res.status(500).json({ message: "Unable to load certificate availability" });
+  }
+});
+
 router.get("/my-issuance-certificates/:purchaseId", auth(["customer", "admin"]), async (req, res) => {
   try {
     if (!/^[a-f0-9]{24}$/i.test(req.params.purchaseId)) return res.status(400).json({ message: "Invalid purchase ID" });
