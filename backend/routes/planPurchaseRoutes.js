@@ -562,20 +562,24 @@ const syncPaidPurchase = async (purchase, customerId) => {
     await purchase.save();
   }
 
-  await Policy.findOneAndUpdate(
+  // Never overwrite an existing insurer-verified active policy on a customer read.
+  // Only create a pending servicing record when none exists.
+  await Policy.updateOne(
     { policyNumber },
     {
-      customerName: purchase.proposal?.customerName || customer?.name || "Customer",
-      policyName: purchase.planName || "Insurance Plan",
-      policyNumber,
-      premiumAmount: Number(purchase.yearlyPremium || 0),
-      sumAssured: Number(purchase.coverageAmount || 0),
-      paymentMode: "yearly",
-      status: "pending",
-      customerId,
-      createdBy: customerId,
+      $setOnInsert: {
+        customerName: purchase.proposal?.customerName || customer?.name || "Customer",
+        policyName: purchase.planName || "Insurance Plan",
+        policyNumber,
+        premiumAmount: Number(purchase.yearlyPremium || 0),
+        sumAssured: Number(purchase.coverageAmount || 0),
+        paymentMode: "yearly",
+        status: "pending",
+        customerId,
+        createdBy: customerId,
+      },
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true }
   );
 
   if (receiptNumber) {
