@@ -620,6 +620,29 @@ router.get("/issuance-review", auth(["admin"]), async (_req, res) => {
   }
 });
 
+// Read-only audit: administrators can review recorded insurer confirmations.
+router.get("/issuance-audit", auth(["admin"]), async (_req, res) => {
+  try {
+    const records = await PlanPurchase.find({
+      "serviceHistory.requestType": "Insurer Issuance Confirmed"
+    }).select("_id planName policyNumber policyStatus paymentStatus serviceHistory").sort({ updatedAt: -1 }).limit(200).lean();
+    res.json(records.flatMap(record => (record.serviceHistory || [])
+      .filter(entry => entry.requestType === "Insurer Issuance Confirmed")
+      .map(entry => ({
+        purchaseId: record._id, planName: record.planName, appPolicyReference: record.policyNumber,
+        policyStatus: record.policyStatus, paymentStatus: record.paymentStatus,
+        insurerName: String(entry.previousValue?.insurerName || ""),
+        insurerPolicyNumber: String(entry.previousValue?.insurerPolicyNumber || ""),
+        evidenceReference: String(entry.previousValue?.evidenceReference || ""),
+        confirmedAt: entry.changedAt || null,
+        confirmedBy: entry.previousValue?.confirmedBy || null
+      }))));
+  } catch (error) {
+    console.error("Issuance audit error:", error);
+    res.status(500).json({ message: "Could not load issuance audit" });
+  }
+});
+
 // Manual insurer confirmation: restricted to authenticated administrators.
 // Evidence is an external insurer reference, never a SecureLife-generated receipt.
 router.post("/issuance-review/:purchaseId/confirm", auth(["admin"]), async (req, res) => {
