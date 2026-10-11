@@ -620,6 +620,58 @@ router.get("/issuance-review", auth(["admin"]), async (_req, res) => {
   }
 });
 
+// Manual insurer confirmation: restricted to authenticated administrators.
+// Evidence is an external insurer reference, never a SecureLife-generated receipt.
+router.post("/issuance-review/:purchaseId/confirm", auth(["admin"]), async (req, res) => {
+  try {
+    const { purchaseId } = req.params;
+    if (!/^[a-f0-9]{24}$/i.test(purchaseId)) {
+      return res.status(400).json({ message: "Invalid purchase ID" });
+    }
+    const insurerName = String(req.body?.insurerName || "").trim();
+    const insurerPolicyNumber = String(req.body?.insurerPolicyNumber || "").trim();
+    const evidenceReference = String(req.body?.evidenceReference || "").trim();
+    if (!insurerName || !insurerPolicyNumber || !evidenceReference ||
+        [insurerName, insurerPolicyNumber, evidenceReference].some(v => v.length > 200)) {
+      return res.status(400).json({ message: "Insurer name, insurer-issued policy number and verification evidence reference are required (max 200 characters each)." });
+    }
+    const purchase = await PlanPurchase.findById(purchaseId);
+    if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+    if (purchase.paymentStatus !== "Paid" || !purchase.transactionId || !purchase.policyNumber) {
+      return res.status(409).json({ message: "Verified payment and application reference required before insurer confirmation" });
+    }
+    if (purchase.policyStatus !== "Inactive") {
+      return res.status(409).json({ message: "Only inactive paid proposals may be confirmed" });
+    }
+    const existing = await PlanPurchase.findOne({
+      _id: { $ne: purchase._id },
+      "serviceHistory.requestType": "Insurer Issuance Confirmed",
+      "serviceHistory.previousValue.insurerPolicyNumber": insurerPolicyNumber,
+    }).select("_id");
+    if (existing) return res.status(409).json({ message: "Insurer policy number is already recorded on another purchase" });
+    const confirmedAt = new Date();
+    const updated = await PlanPurchase.findOneAndUpdate(
+      { _id: purchase._id, paymentStatus: "Paid", policyStatus: "Inactive", transactionId: purchase.transactionId },
+      {
+        $set: { policyStatus: "Active" },
+        $push: { serviceHistory: {
+          requestType: "Insurer Issuance Confirmed",
+          previousValue: { insurerName, insurerPolicyNumber, evidenceReference, confirmedBy: req.user.id, confirmedAt },
+          changedAt: confirmedAt,
+        } },
+      },
+      { new: true }
+    );
+    if (!updated) return res.status(409).json({ message: "Purchase status changed; refresh and retry" });
+    await Policy.updateOne({ policyNumber: purchase.policyNumber, customerId: purchase.customerId },
+      { $set: { status: "active" } });
+    res.json({ message: "Admin recorded insurer issuance confirmation.", policyStatus: updated.policyStatus, confirmedAt });
+  } catch (error) {
+    console.error("Insurer issuance confirmation error:", error);
+    res.status(500).json({ message: "Could not record insurer confirmation; check policy status before retrying" });
+  }
+});
+
 router.get("/my-plans", auth(["customer"]), async (req, res) => {
   try {
     const purchases = await PlanPurchase.find({ customerId: req.user.id }).sort({ createdAt: -1 });
