@@ -403,7 +403,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
       purchase.receiptNumber
     ) {
       return res.json({
-        message: "Payment already verified. Plan is active.",
+        message: "Payment already verified. Insurer issuance is not confirmed.",
         confirmation: {
           policyNumber: purchase.policyNumber,
           receiptNumber: purchase.receiptNumber,
@@ -426,7 +426,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     if (purchase.proposal?.panNumber) {
       purchase.proposal.panNumber = maskPan(purchase.proposal.panNumber);
     }
-    purchase.policyStatus = "Active";
+    purchase.policyStatus = "Pending Issuance";
     purchase.transactionId = transactionId;
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
@@ -459,7 +459,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
         $set: {
           policyNumber,
           customerName: purchase.proposal?.customerName || customer?.name || "Customer",
-          remarks: "KYC document linked to active online policy - pending verification",
+          remarks: "KYC document linked to paid proposal - insurer issuance and KYC verification pending",
         },
       }
     );
@@ -474,7 +474,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
         premiumAmount: amount,
         sumAssured: plan.coverageAmount || 0,
         paymentMode: "yearly",
-        status: "active",
+        status: "pending",
         customerId: req.user.id,
         createdBy: req.user.id,
       },
@@ -520,7 +520,7 @@ router.post("/verify-payment", auth(["customer"]), async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Payment verified. Plan is active.",
+      message: "Payment verified. Insurer issuance remains pending.",
       confirmation: {
         policyNumber,
         receiptNumber,
@@ -548,7 +548,7 @@ const syncPaidPurchase = async (purchase, customerId) => {
   const policyNumber = purchase.policyNumber || makeReference(`SLI-${new Date().getFullYear()}`);
   const receiptNumber = purchase.receiptNumber || makeReference("RCPT");
 
-  if (!purchase.policyNumber || !purchase.receiptNumber || purchase.policyStatus !== "Active") {
+  if (!purchase.policyNumber || !purchase.receiptNumber || purchase.policyStatus === "Inactive") {
     purchase.policyNumber = policyNumber;
     purchase.receiptNumber = receiptNumber;
     purchase.policyStatus = "Active";
@@ -570,7 +570,7 @@ const syncPaidPurchase = async (purchase, customerId) => {
       premiumAmount: Number(purchase.yearlyPremium || 0),
       sumAssured: Number(purchase.coverageAmount || 0),
       paymentMode: "yearly",
-      status: "active",
+      status: "pending",
       customerId,
       createdBy: customerId,
     },
