@@ -1,0 +1,56 @@
+name: SecureLife quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Typecheck and production build
+        working-directory: frontend
+        run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Syntax check backend entry and routes
+        working-directory: backend
+        run: |
+          node --check server.js
+          find routes models services middleware -name '*.js' -type f -print0 | xargs -0 -n1 node --check
+      - name: Dependency security report
+        working-directory: backend
+        run: |
+          npm audit --json > audit-report.json || true
+          node -e "const a=require('./audit-report.json'); console.log('Backend dependency vulnerabilities:', JSON.stringify(a.metadata?.vulnerabilities || {}))"
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-npm-audit
+          path: backend/audit-report.json
+          retention-days: 7
