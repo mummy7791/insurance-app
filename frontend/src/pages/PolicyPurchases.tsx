@@ -29,6 +29,7 @@ export default function PolicyPurchases() {
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificateUploading, setCertificateUploading] = useState(false);
   const [certificateMessage, setCertificateMessage] = useState("");
+  const [uploadedThisSession, setUploadedThisSession] = useState<string[]>([]);
 
   const loadPurchases = useCallback(async () => {
     try {
@@ -81,6 +82,7 @@ export default function PolicyPurchases() {
       data.append("certificate", certificateFile);
       await api.post(`/plan-purchases/issuance-review/${certificatePurchaseId}/certificate`, data);
       setCertificateMessage("Certificate uploaded to private storage.");
+      setUploadedThisSession(previous => [...previous, certificatePurchaseId]);
       setCertificateFile(null);
     } catch { setCertificateMessage("Upload failed. Check private storage configuration, certificate and prior upload status."); }
     finally { setCertificateUploading(false); }
@@ -151,7 +153,7 @@ export default function PolicyPurchases() {
           </select>
           <label htmlFor="certificate-pdf">Insurer certificate PDF (max 10 MB)</label>
           <input id="certificate-pdf" type="file" accept=".pdf,application/pdf" onChange={e => setCertificateFile(e.target.files?.[0] || null)} />
-          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile} onClick={() => void uploadCertificate()}>
+          <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId)} onClick={() => void uploadCertificate()}>
             {certificateUploading ? "Uploading..." : "Upload private certificate"}
           </button>
           {certificateMessage && <p role="status">{certificateMessage}</p>}
