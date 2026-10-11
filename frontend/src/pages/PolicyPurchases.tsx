@@ -16,6 +16,11 @@ export default function PolicyPurchases() {
   const [search, setSearch] = useState("");
   const [issuanceReviews, setIssuanceReviews] = useState<IssuanceReview[]>([]);
   const [issuanceError, setIssuanceError] = useState("");
+  const [reviewId, setReviewId] = useState("");
+  const [insurerName, setInsurerName] = useState("");
+  const [insurerPolicyNumber, setInsurerPolicyNumber] = useState("");
+  const [evidenceReference, setEvidenceReference] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const loadPurchases = useCallback(async () => {
     try {
@@ -37,6 +42,25 @@ export default function PolicyPurchases() {
 
   useEffect(() => { const timer = window.setTimeout(() => void loadPurchases(), 0); return () => window.clearTimeout(timer); }, [loadPurchases]);
 
+  const confirmIssuance = async () => {
+    if (!reviewId || !insurerName.trim() || !insurerPolicyNumber.trim() || !evidenceReference.trim()) {
+      setIssuanceError("Select a proposal and complete all insurer verification fields.");
+      return;
+    }
+    if (!window.confirm("Have you independently verified issuance with the insurer? This will activate the policy in SecureLife.")) return;
+    try {
+      setSubmitting(true);
+      setIssuanceError("");
+      await api.post(`/plan-purchases/issuance-review/${reviewId}/confirm`, {
+        insurerName: insurerName.trim(), insurerPolicyNumber: insurerPolicyNumber.trim(), evidenceReference: evidenceReference.trim()
+      });
+      setReviewId(""); setInsurerName(""); setInsurerPolicyNumber(""); setEvidenceReference("");
+      await loadPurchases();
+    } catch {
+      setIssuanceError("Confirmation failed. Verify insurer evidence, admin access and proposal status before retrying.");
+    } finally { setSubmitting(false); }
+  };
+
   const filtered = useMemo(() => purchases.filter((item) =>
     `${item.customerName} ${item.customerEmail} ${item.customerPhone} ${item.policyName} ${item.policyNumber} ${item.transactionId || ""} ${item.status} ${item.paymentStatus}`.toLowerCase().includes(search.toLowerCase())
   ), [purchases, search]);
@@ -56,8 +80,23 @@ export default function PolicyPurchases() {
       </div>
       <div className="section">
         <div className="section-heading-row"><div><span className="eyebrow">INSURER CONFIRMATION</span><h2>Paid proposals awaiting issuance review</h2></div><span>{issuanceReviews.length} pending review</span></div>
-        <p>Payment confirmation alone does not activate insurer coverage. This is a read-only admin review queue; insurer confirmation and approval are not yet integrated.</p>
+        <p>Payment confirmation alone does not activate insurer coverage. Only confirm after independently checking insurer-issued evidence. Confirmation activates the policy record in SecureLife; it does not contact the insurer.</p>
         {issuanceError && <p role="alert">{issuanceError}</p>}
+        {issuanceReviews.length > 0 && <div className="card" style={{ marginBottom: 16 }}>
+          <h3>Record insurer-issued policy confirmation</h3>
+          <label htmlFor="issuance-proposal">Paid proposal</label>
+          <select id="issuance-proposal" value={reviewId} onChange={e => setReviewId(e.target.value)}>
+            <option value="">Select proposal</option>
+            {issuanceReviews.map(item => <option key={item._id} value={item._id}>{item.planName} — {item.policyNumber || item._id}</option>)}
+          </select>
+          <label htmlFor="issuance-insurer">Issuing insurer</label>
+          <input id="issuance-insurer" maxLength={200} value={insurerName} onChange={e => setInsurerName(e.target.value)} placeholder="Insurer legal name" />
+          <label htmlFor="issuance-number">Insurer-issued policy number</label>
+          <input id="issuance-number" maxLength={200} value={insurerPolicyNumber} onChange={e => setInsurerPolicyNumber(e.target.value)} placeholder="Verified insurer policy number" />
+          <label htmlFor="issuance-evidence">Verification evidence reference</label>
+          <input id="issuance-evidence" maxLength={200} value={evidenceReference} onChange={e => setEvidenceReference(e.target.value)} placeholder="Insurer portal / confirmation reference" />
+          <button type="button" className="mini-btn" disabled={submitting || !reviewId} onClick={() => void confirmIssuance()}>{submitting ? "Confirming..." : "Confirm insurer issuance"}</button>
+        </div>}
         {issuanceReviews.length === 0 ? <p>No pending issuance reviews loaded.</p> : <div className="admin-record-grid">{issuanceReviews.map((item) => <article className="admin-record-card" key={item._id}><h3>{item.planName || "Insurance plan"}</h3><div className="admin-detail-list"><p><span>Payment</span><strong>{item.paymentStatus}</strong></p><p><span>Policy status</span><strong>{item.policyStatus} — insurer confirmation required</strong></p><p><span>App reference</span><strong>{item.policyNumber || "Pending"}</strong></p><p><span>Receipt</span><strong>{item.receiptNumber || "Pending"}</strong></p><p><span>Transaction</span><strong>{item.transactionId || "Pending"}</strong></p></div></article>)}</div>}
       </div>
       <div className="section">
