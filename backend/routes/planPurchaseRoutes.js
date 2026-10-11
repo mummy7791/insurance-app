@@ -626,7 +626,12 @@ router.get("/issuance-review", auth(["admin"]), async (_req, res) => {
 });
 
 // Store insurer-issued PDF privately. No public URL is saved or returned.
-router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), certificateUpload.single("certificate"), async (req, res) => {
+router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), (req, res, next) => {
+  certificateUpload.single("certificate")(req, res, error => {
+    if (error) return res.status(error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ message: error.code === "LIMIT_FILE_SIZE" ? "Certificate PDF exceeds 10 MB" : "Invalid certificate upload" });
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!/^[a-f0-9]{24}$/i.test(req.params.purchaseId)) return res.status(400).json({ message: "Invalid purchase ID" });
     const purchase = await PlanPurchase.findById(req.params.purchaseId).select("customerId paymentStatus policyStatus serviceHistory");
