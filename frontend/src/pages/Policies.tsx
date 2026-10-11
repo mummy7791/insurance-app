@@ -22,6 +22,8 @@ type PurchasedPlan = { _id:string; policyTermYears?:number; entryAge?:number; co
 
 type IssuanceConfirmation = { purchaseId: string; policyStatus: string; insurerConfirmed: boolean; insurerName: string; insurerPolicyNumber: string; confirmedAt: string | null; };
 
+type CertificateStatus = { purchaseId: string; available: boolean; sha256: string; uploadedAt: string; };
+
 type PolicyForm = {
   customerName: string;
   customerPhone: string;
@@ -47,6 +49,7 @@ export default function Policies() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [purchasedPlans, setPurchasedPlans] = useState<PurchasedPlan[]>([]);
+  const [certificateStatuses, setCertificateStatuses] = useState<CertificateStatus[]>([]);
   const [issuanceConfirmations, setIssuanceConfirmations] = useState<IssuanceConfirmation[]>([]);
   const [form, setForm] = useState<PolicyForm>(initialForm);
   const [journeyPlan,setJourneyPlan]=useState<PurchasedPlan|null>(null);
@@ -61,13 +64,14 @@ export default function Policies() {
     const days = Math.ceil((due.getTime() - Date.now()) / 86400000);
     return { plan, days, due };
   }).filter(row => Number.isFinite(row.days) && (renewalFilter === "all" || renewalFilter === "overdue" && row.days < 0 || renewalFilter === "7" && row.days >= 0 && row.days <= 7 || renewalFilter === "30" && row.days <= 30)).sort((a,b) => a.days-b.days);
+  const certificateFor = (plan: PurchasedPlan) => certificateStatuses.find(item => item.purchaseId === plan._id);
   const issuanceFor = (plan: PurchasedPlan) => issuanceConfirmations.find(item => item.purchaseId === plan._id);
   const downloadInsurerCertificate = async (purchaseId: string) => {
     try {
       const response = await api.get<{ downloadUrl: string }>(`/plan-purchases/my-issuance-certificates/${purchaseId}`);
       const url = response.data?.downloadUrl;
       if (!url || !url.startsWith("https://")) throw new Error("Invalid certificate link");
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.location.assign(url);
     } catch {
       window.alert("Certificate unavailable. The insurer-issued PDF may not have been uploaded yet.");
     }
@@ -105,6 +109,8 @@ export default function Policies() {
       if (isCustomer) {
         try { const confirmation = await api.get<IssuanceConfirmation[]>("/plan-purchases/my-issuance-history"); setIssuanceConfirmations(Array.isArray(confirmation.data) ? confirmation.data : []); }
         catch { setIssuanceConfirmations([]); }
+        try { const status = await api.get<CertificateStatus[]>("/plan-purchases/my-certificate-status"); setCertificateStatuses(Array.isArray(status.data) ? status.data : []); }
+        catch { setCertificateStatuses([]); }
       }
       let loaded = false;
 
@@ -390,7 +396,10 @@ export default function Policies() {
             <div className="section-heading-row"><div><span className="eyebrow">DIGITAL POLICIES</span><h2>My Active Cover</h2><p className="section-copy">Your active, paid policies and policy documents.</p></div><span className="policy-count-chip">${activePurchasedPlans.length} Active</span></div>
             <div className="insurance-plan-grid">
               {activePurchasedPlans.map((plan) => <div className="insurance-plan-card policy-wallet-card" key={plan._id}>
-                <button type="button" className="mini-btn" onClick={() => void downloadInsurerCertificate(plan._id)}>View insurer-issued certificate</button>
+                {certificateFor(plan)?.available
+                  ? <><button type="button" className="mini-btn" onClick={() => void downloadInsurerCertificate(plan._id)}>View insurer-issued certificate</button>
+                      <small>Certificate uploaded: {new Date(certificateFor(plan)!.uploadedAt).toLocaleDateString("en-IN")}</small></>
+                  : <p>Insurer certificate not yet available for download.</p>}
                 <span className="plan-category">{plan.category}</span><h3>{plan.planName}</h3>
                 <div className="policy-detail-rows">
                   <p><b>Policy No:</b><span>{plan.policyNumber || "Processing"}</span></p>
