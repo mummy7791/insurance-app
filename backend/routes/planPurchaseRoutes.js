@@ -634,6 +634,7 @@ router.get("/issuance-audit", auth(["admin"]), async (_req, res) => {
         insurerName: String(entry.previousValue?.insurerName || ""),
         insurerPolicyNumber: String(entry.previousValue?.insurerPolicyNumber || ""),
         evidenceReference: String(entry.previousValue?.evidenceReference || ""),
+        certificateSha256: String(entry.previousValue?.certificateSha256 || ""),
         confirmedAt: entry.changedAt || null,
         confirmedBy: entry.previousValue?.confirmedBy || null
       }))));
@@ -650,6 +651,10 @@ router.post("/issuance-review/:purchaseId/confirm", auth(["admin"]), async (req,
     const { purchaseId } = req.params;
     if (!/^[a-f0-9]{24}$/i.test(purchaseId)) {
       return res.status(400).json({ message: "Invalid purchase ID" });
+    }
+    const certificateSha256 = String(req.body?.certificateSha256 || "").trim().toLowerCase();
+    if (certificateSha256 && !/^[a-f0-9]{64}$/.test(certificateSha256)) {
+      return res.status(400).json({ message: "Certificate SHA-256 must be a 64-character hexadecimal digest" });
     }
     const insurerName = String(req.body?.insurerName || "").trim();
     const insurerPolicyNumber = String(req.body?.insurerPolicyNumber || "").trim();
@@ -679,7 +684,7 @@ router.post("/issuance-review/:purchaseId/confirm", auth(["admin"]), async (req,
         $set: { policyStatus: "Active" },
         $push: { serviceHistory: {
           requestType: "Insurer Issuance Confirmed",
-          previousValue: { insurerName, insurerPolicyNumber, evidenceReference, confirmedBy: req.user.id, confirmedAt },
+          previousValue: { insurerName, insurerPolicyNumber, evidenceReference, certificateSha256, confirmedBy: req.user.id, confirmedAt },
           changedAt: confirmedAt,
         } },
       },
