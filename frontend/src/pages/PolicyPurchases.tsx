@@ -84,7 +84,12 @@ export default function PolicyPurchases() {
       setCertificateMessage("Certificate uploaded to private storage.");
       setUploadedThisSession(previous => [...previous, certificatePurchaseId]);
       setCertificateFile(null);
-    } catch { setCertificateMessage("Upload failed. Check private storage configuration, certificate and prior upload status."); }
+    } catch (error: unknown) {
+      const response = error as { response?: { status?: number; data?: { message?: string } } };
+      const status = response.response?.status;
+      const detail = response.response?.data?.message;
+      setCertificateMessage(detail || (status === 413 ? "Certificate exceeds 10 MB." : status === 409 ? "Certificate already uploaded or issuance not confirmed." : "Certificate upload failed. Please retry."));
+    }
     finally { setCertificateUploading(false); }
   };
 
