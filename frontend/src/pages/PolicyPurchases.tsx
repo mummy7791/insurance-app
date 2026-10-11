@@ -169,7 +169,7 @@ export default function PolicyPurchases() {
           <button type="button" className="mini-btn" disabled={certificateUploading || !certificatePurchaseId || !certificateFile || uploadedThisSession.includes(certificatePurchaseId) || certificateRecords.some(item => item.purchaseId === certificatePurchaseId)} onClick={() => void uploadCertificate()}>
             {certificateUploading ? "Uploading..." : "Upload private certificate"}
           </button>
-          {certificateMessage && <p role="status">{certificateMessage}</p>
+          {certificateMessage && <p role="status">{certificateMessage}</p>}
           {certificateRecords.length > 0 && <div className="admin-detail-list">
             <h3>Recent private certificates</h3>
             {certificateRecords.slice(0, 15).map(item => <p key={item.purchaseId}>
