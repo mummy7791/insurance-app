@@ -10,11 +10,14 @@ type PolicyPurchase = {
 
 type IssuanceReview = { _id: string; planName: string; policyNumber?: string; receiptNumber?: string; transactionId?: string; paymentStatus: string; policyStatus: string; createdAt?: string; };
 
+type IssuanceAudit = { purchaseId: string; planName: string; appPolicyReference?: string; policyStatus: string; insurerName: string; insurerPolicyNumber: string; evidenceReference: string; confirmedAt?: string | null; confirmedBy?: string | null; };
+
 export default function PolicyPurchases() {
   const [purchases, setPurchases] = useState<PolicyPurchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [issuanceReviews, setIssuanceReviews] = useState<IssuanceReview[]>([]);
+  const [issuanceAudit, setIssuanceAudit] = useState<IssuanceAudit[]>([]);
   const [issuanceError, setIssuanceError] = useState("");
   const [reviewId, setReviewId] = useState("");
   const [insurerName, setInsurerName] = useState("");
@@ -31,6 +34,7 @@ export default function PolicyPurchases() {
         const review = await api.get<IssuanceReview[]>("/plan-purchases/issuance-review");
         setIssuanceReviews(Array.isArray(review.data) ? review.data : []);
         setIssuanceError("");
+        try { const audit = await api.get<IssuanceAudit[]>("/plan-purchases/issuance-audit"); setIssuanceAudit(Array.isArray(audit.data) ? audit.data : []); } catch { setIssuanceAudit([]); }
       } catch {
         setIssuanceError("Issuance review queue unavailable. Check admin access and backend deployment.");
       }
@@ -98,6 +102,21 @@ export default function PolicyPurchases() {
           <button type="button" className="mini-btn" disabled={submitting || !reviewId} onClick={() => void confirmIssuance()}>{submitting ? "Confirming..." : "Confirm insurer issuance"}</button>
         </div>}
         {issuanceReviews.length === 0 ? <p>No pending issuance reviews loaded.</p> : <div className="admin-record-grid">{issuanceReviews.map((item) => <article className="admin-record-card" key={item._id}><h3>{item.planName || "Insurance plan"}</h3><div className="admin-detail-list"><p><span>Payment</span><strong>{item.paymentStatus}</strong></p><p><span>Policy status</span><strong>{item.policyStatus} — insurer confirmation required</strong></p><p><span>App reference</span><strong>{item.policyNumber || "Pending"}</strong></p><p><span>Receipt</span><strong>{item.receiptNumber || "Pending"}</strong></p><p><span>Transaction</span><strong>{item.transactionId || "Pending"}</strong></p></div></article>)}</div>}
+      </div>
+      <div className="section">
+        <div className="section-heading-row"><div><span className="eyebrow">AUDIT HISTORY</span><h2>Insurer issuance confirmations</h2></div><span>{issuanceAudit.length} confirmations loaded</span></div>
+        <p>Admin-recorded insurer confirmations. These records do not independently verify insurer issuance.</p>
+        {issuanceAudit.length === 0 ? <p>No confirmation history available.</p> : <div className="admin-record-grid">{issuanceAudit.map((entry, index) => <article className="admin-record-card" key={`${entry.purchaseId}-${index}`}>
+          <h3>{entry.planName || "Insurance plan"}</h3>
+          <div className="admin-detail-list">
+            <p><span>Insurer</span><strong>{entry.insurerName || "N/A"}</strong></p>
+            <p><span>Insurer policy number</span><strong>{entry.insurerPolicyNumber || "N/A"}</strong></p>
+            <p><span>Evidence reference</span><strong>{entry.evidenceReference || "N/A"}</strong></p>
+            <p><span>Recorded on</span><strong>{entry.confirmedAt ? new Date(entry.confirmedAt).toLocaleString("en-IN") : "N/A"}</strong></p>
+            <p><span>Admin ID</span><strong>{entry.confirmedBy || "N/A"}</strong></p>
+            <p><span>Current status</span><strong>{entry.policyStatus}</strong></p>
+          </div>
+        </article>)}</div>}
       </div>
       <div className="section">
         <div className="section-heading-row"><div><span className="eyebrow">TRANSACTION REGISTER</span><h2>Customer purchased policies</h2></div><button className="mini-btn" onClick={() => void loadPurchases()}>Refresh</button></div>
