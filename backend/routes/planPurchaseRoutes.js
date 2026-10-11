@@ -673,6 +673,26 @@ router.post("/issuance-review/:purchaseId/certificate", auth(["admin"]), (req, r
 });
 
 // Certificate availability contains metadata only; never expose storage identifiers.
+// Admin certificate register: metadata only, never cloud storage identifiers.
+router.get("/issuance-certificates", auth(["admin"]), async (req, res) => {
+  try {
+    const items = await InsurerCertificate.find({})
+      .sort({ createdAt: -1 }).limit(200)
+      .select("purchaseId sha256 originalName byteSize createdAt uploadedBy").lean();
+    res.json(items.map(item => ({
+      purchaseId: item.purchaseId,
+      sha256: item.sha256,
+      originalName: item.originalName,
+      byteSize: item.byteSize,
+      uploadedAt: item.createdAt,
+      uploadedBy: item.uploadedBy
+    })));
+  } catch (error) {
+    console.error("Admin certificate register error:", error);
+    res.status(500).json({ message: "Unable to load certificate register" });
+  }
+});
+
 router.get("/my-certificate-status", auth(["customer"]), async (req, res) => {
   try {
     const certificates = await InsurerCertificate.find({ customerId: req.user.id })
