@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const multer = require("multer");
 const { uploadPrivateDocument, signedDownloadUrl, deletePrivateDocument } = require("../services/privateDocumentStorage");
 const InsurerCertificate = require("../models/InsurerCertificate");
+const CertificateAccessLog = require("../models/CertificateAccessLog");
 const certificateUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 
 const router = express.Router();
@@ -714,6 +715,13 @@ router.get("/my-issuance-certificates/:purchaseId", auth(["customer", "admin"]),
     if (req.user.role !== "admin" && String(certificate.customerId) !== String(req.user.id)) {
       return res.status(403).json({ message: "Access denied" });
     }
+    // Log authorized access before issuing a short-lived private download link.
+    await CertificateAccessLog.create({
+      certificateId: certificate._id,
+      purchaseId: certificate.purchaseId,
+      accessedBy: req.user.id,
+      accessRole: req.user.role
+    });
     res.json({ downloadUrl: signedDownloadUrl(certificate.storagePublicId), sha256: certificate.sha256, originalName: certificate.originalName });
   } catch (error) {
     console.error("Insurer certificate access error:", error);
