@@ -74,7 +74,7 @@ export default function Login() {
           <button className="auth-outline-btn" onClick={() => navigate("/customer-otp-login", { state: { mode: "login" } })}>Login with mobile OTP</button>
 
           <p className="auth-link">New to SecureLife? <Link to="/register">Create account</Link></p>
-          <p className="auth-link small"><Link to="/admin-login">Staff / Admin login</Link></p>
+          <p className="auth-link small"><Link to="/advisor-login">Advisor Login</Link> <span aria-hidden="true"> · </span> <Link to="/admin-login">Staff / Admin Login</Link></p>
         </section>
       </div>
     </div>
