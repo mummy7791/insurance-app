@@ -233,7 +233,7 @@ export default function Notifications() {
     try {
       setMarkingAll(true);
       await api.put("/notifications/mark-all-read");
-      setNotifications((prev) => prev.map((item) => ({ ...item, status: "Read" as const })));
+      setNotifications((prev) => prev.map((item) => item.status === "Unread" ? { ...item, status: "Read" as const } : item));
       setFeedback({type:"success",text:"All notifications marked as read."});
     } catch (error) {
       console.error("Mark all read error:", error);
