@@ -226,7 +226,7 @@ router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
     const followupMap=new Map();followups.forEach(x=>{const k=String(x.premiumId);if(!followupMap.has(k))followupMap.set(k,[]);followupMap.get(k).push({status:x.status,date:x.date,remarks:x.remarks});});
     const timeline=premiums.slice().sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,50).map(p=>({premiumId:String(p._id),customerName:p.customerName,policyNumber:p.policyNumber,dueDate:p.dueDate,status:p.status,events:[{label:"Premium Due",date:p.dueDate},...(followupMap.get(String(p._id))||[]).map(x=>({label:x.status,date:x.date,remarks:x.remarks})),...(p.status==="Paid"?[{label:"Payment Received",date:p.paidDate},{label:"Receipt Generated",date:p.paidDate,remarks:p.receiptNumber||""}]:[])]}));
 
-    const todayList=premiums.filter(p=>p.dueDate===todayKey);
+    const todayList=premiums.filter(p=>p.status!=="Paid"&&p.dueDate===todayKey);
     const next7Days=premiums.filter(p=>p.status!=="Paid"&&p.dueDate>todayKey&&p.dueDate<=next7Key).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
     res.json({summary:{thisMonthDueAmount:dueAmount,collectedAmount,pendingAmount,collectionPercent,graceAmount,lapsedAmount},months,advisorPerformance,timeline,todayList,next7Days});
   } catch(error){console.error("Premium analytics error:",error);res.status(500).json({message:"Premium analytics failed"});}
