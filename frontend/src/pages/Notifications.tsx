@@ -75,6 +75,7 @@ export default function Notifications() {
   const [form, setForm] = useState<NotificationForm>(initialForm);
   const [loading, setLoading] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | NotificationType>("All");
   const [feedback, setFeedback] = useState<{type:"success"|"error";text:string}|null>(null);
