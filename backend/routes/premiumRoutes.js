@@ -208,7 +208,8 @@ router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
     const sum = items => items.reduce((n,p)=>n+Number(p.amount||0),0);
     const dueAmount = sum(thisMonthDue), collectedAmount = sum(collected);
     const pendingAmount = sum(thisMonthDue.filter(p=>p.status!=="Paid"));
-    const collectionPercent = dueAmount>0 ? Math.round((collectedAmount/dueAmount)*10000)/100 : 0;
+    const paidThisMonthDue = sum(thisMonthDue.filter(p=>p.status==="Paid"));
+    const collectionPercent = dueAmount>0 ? Math.round((paidThisMonthDue/dueAmount)*10000)/100 : 0;
     const graceAmount = sum(premiums.filter(p=>p.status==="Grace Period"));
     const lapsedAmount = sum(premiums.filter(p=>p.status==="Lapsed"));
 
