@@ -33,9 +33,7 @@ export default function Topbar({ title, subtitle }: Props) {
     void load();
     connectSocket();
 
-    const onNew = (item: Notice) => {
-      if (item.status === "Unread") setUnread((count) => count + 1);
-    };
+    const onNew = () => { void load(); };
     const onUpdated = () => void load();
     const onDeleted = () => void load();
 
