@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../styles/MobilePortalHeader.css";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import socket, { connectSocket } from "../services/socket";
