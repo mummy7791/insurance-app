@@ -174,7 +174,9 @@ export default function Notifications() {
       return;
     }
 
+    if (sending) return;
     try {
+      setSending(true);
       const res = await api.post<NotificationItem>("/notifications", {
         recipientId: form.recipientId,
         title: form.title.trim(),
