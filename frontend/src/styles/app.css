@@ -3370,3 +3370,12 @@ textarea:focus {
 .securelife-ai-messages{flex:1;overflow-y:auto;padding:15px;background:#f6fcf8}.securelife-ai-message{display:flex;gap:7px;margin:0 0 11px;align-items:flex-end}.securelife-ai-message img{width:25px;height:25px;border-radius:7px;object-fit:cover}.securelife-ai-message span{max-width:82%;padding:10px 12px;border-radius:14px;font-size:12px;line-height:1.45;white-space:pre-wrap}.securelife-ai-message.assistant span{background:#eaf8f0;color:#173d30}.securelife-ai-message.user{justify-content:flex-end}.securelife-ai-message.user span{background:#078b50;color:#fff}.securelife-ai-typing{font-size:10px;color:#718078;margin:5px 32px}
 .securelife-ai-quick{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;border-top:1px solid #edf2ef}.securelife-ai-quick button{flex:0 0 auto!important;border:1px solid #cfe5d8!important;background:#f4fbf7!important;color:#08643e!important;border-radius:999px!important;padding:7px 9px!important;font-size:10px!important}.securelife-ai-panel form{display:grid;grid-template-columns:1fr 43px;gap:7px;padding:10px 12px;border-top:1px solid #edf2ef}.securelife-ai-panel form input{width:100%;min-width:0;height:42px!important;min-height:42px!important;padding:0 12px}.securelife-ai-panel form button{height:42px!important;border-radius:11px!important;background:#078b50!important;color:#fff!important;border:0!important}.securelife-ai-panel footer{padding:0 12px 9px;text-align:center;font-size:8.5px;color:#87958e}
 @media(max-width:768px){.securelife-ai-fab{right:14px;bottom:18px;width:56px;height:56px}.securelife-ai-panel{right:8px;bottom:82px;width:calc(100vw - 16px);height:min(520px,calc(100vh - 105px));border-radius:17px}}
+
+/* Mobile portal header: reserve space for the fixed menu toggle and prevent title overlap. */
+@media (max-width:768px){
+  .customer-portal .topbar{min-height:76px!important;box-sizing:border-box!important;padding:12px 14px 12px 78px!important;display:flex!important;align-items:center!important;justify-content:flex-end!important}
+  .customer-portal .topbar-title{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
+  .customer-portal .topbar-title h2{font-size:17px!important;line-height:1.3!important;margin:0!important}
+  .customer-portal .topbar-title p{font-size:12px!important;line-height:1.4!important;margin:4px 0 0!important}
+  .customer-portal .topbar-actions{min-width:0!important;max-width:100%!important}
+}
