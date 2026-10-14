@@ -127,7 +127,7 @@ export default function Notifications() {
     connectSocket();
 
     const handleNewNotification = (notification: NotificationItem) => {
-      if (!notification?._id) return;
+      if (!notification?._id || !notification.title || !notification.message) return;
       setNotifications((prev) => {
         const exists = prev.some((item) => item._id === notification._id);
         if (exists) return prev;
