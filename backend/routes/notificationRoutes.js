@@ -166,6 +166,9 @@ router.put("/mark-all-read", auth(), async (req, res) => {
 
 router.put("/:id", auth(), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid notification ID" });
+    }
     const staff = isStaff(req.user);
     const filter = staff
       ? { _id: req.params.id }
