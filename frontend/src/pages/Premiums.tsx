@@ -226,6 +226,7 @@ export default function Premiums() {
         status: "Due",
       });
 
+      if (!res.data?._id) throw new Error("Invalid premium creation response");
       setPremiums((prev) => [res.data, ...prev]);
       setForm(initialForm);
     } catch (error) {
