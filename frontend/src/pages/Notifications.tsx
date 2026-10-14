@@ -252,7 +252,7 @@ export default function Notifications() {
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter((item) => {
-      const text = `${item.title} ${item.message}`.toLowerCase();
+      const text = `${item.title || ""} ${item.message || ""} ${item.reference || ""}`.toLowerCase();
       const matchesSearch = text.includes(search.toLowerCase());
       const matchesType = typeFilter === "All" || item.type === typeFilter;
 
