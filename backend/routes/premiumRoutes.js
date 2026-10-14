@@ -91,6 +91,18 @@ const pickPremiumFields = (body = {}) => {
 router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const payload = pickPremiumFields(req.body);
+    if (typeof payload.customerName !== "string" || !payload.customerName.trim() || typeof payload.policyNumber !== "string" || !payload.policyNumber.trim()) {
+      return res.status(400).json({ message: "Customer name and policy number are required" });
+    }
+    if (!Number.isFinite(Number(payload.amount)) || Number(payload.amount) <= 0 || payload.amount === null || payload.amount === "") {
+      return res.status(400).json({ message: "Premium amount must be greater than zero" });
+    }
+    if (typeof payload.dueDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate) || Number.isNaN(Date.parse(payload.dueDate)) || new Date(payload.dueDate).toISOString().slice(0, 10) !== payload.dueDate) {
+      return res.status(400).json({ message: "Valid due date (YYYY-MM-DD) is required" });
+    }
+    payload.customerName = payload.customerName.trim();
+    payload.policyNumber = payload.policyNumber.trim();
+    payload.amount = Number(payload.amount);
 
     const premium = await Premium.create({
       ...payload,
