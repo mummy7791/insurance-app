@@ -361,8 +361,8 @@ export default function Notifications() {
             }
           />
 
-          <button className="btn small-btn" onClick={() => void addNotification()}>
-            Add Notification
+          <button className="btn small-btn" disabled={sending} onClick={() => void addNotification()}>
+            {sending ? "Sending..." : "Add Notification"}
           </button>
         </div>
       )}
