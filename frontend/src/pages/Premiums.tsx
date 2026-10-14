@@ -191,8 +191,8 @@ export default function Premiums() {
       });
       if (result?.error) {
         alert(result.error.message || "Payment could not be started");
-        setPayingId("");
       }
+      setPayingId("");
     } catch (error) {
       console.error("Renewal payment start error:", error);
       alert("Renewal payment could not be started");
