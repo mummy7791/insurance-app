@@ -94,7 +94,8 @@ export default function Notifications() {
     try {
       setLoading(true);
       const res = await api.get<NotificationItem[]>("/notifications");
-      setNotifications(Array.isArray(res.data) ? res.data : []);
+      if (!Array.isArray(res.data)) throw new Error("Invalid notifications response");
+      setNotifications(res.data);
     } catch (error) {
       console.error("Notifications load error:", error);
       setFeedback({type:"error",text:"Notifications could not be loaded. Please try again."});
