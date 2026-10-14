@@ -183,6 +183,7 @@ export default function Premiums() {
     try {
       setPayingId(premium._id);
       const res = await api.post<{ paymentSessionId: string }>(`/premiums/${premium._id}/create-payment-order`);
+      if (!res.data?.paymentSessionId) throw new Error("Missing Cashfree payment session");
       const cashfree = window.Cashfree({ mode: "production" });
       const result = await cashfree.checkout({
         paymentSessionId: res.data.paymentSessionId,
