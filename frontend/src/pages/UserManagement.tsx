@@ -130,6 +130,17 @@ export default function UserManagement() {
     }
   };
 
+  const removeAdvisorPhoto = async (user: UserItem) => {
+    if (!user.profilePhoto || !window.confirm(`Remove profile photo for ${user.name}?`)) return;
+    try {
+      const res = await api.put<UserItem>(`/user-management/${user._id}/profile-photo`, { profilePhoto: "" });
+      setUsers(prev => prev.map(item => item._id === user._id ? res.data : item));
+    } catch (error) {
+      console.error("Advisor photo removal error:", error);
+      alert("Could not remove advisor photo");
+    }
+  };
+
   const updateAdvisorPhoto = async (user: UserItem, file?: File) => {
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 140000) {
@@ -366,6 +377,7 @@ export default function UserManagement() {
 
                   <td>
                     <label style={{display:"inline-block",cursor:"pointer",marginRight:8,fontSize:12,color:"#087747"}}>Change Photo<input type="file" accept="image/jpeg,image/png,image/webp" style={{display:"none"}} onChange={e=>{void updateAdvisorPhoto(user,e.target.files?.[0]);e.target.value="";}} /></label>
+                    {user.profilePhoto && <button className="mini-btn" onClick={() => void removeAdvisorPhoto(user)} style={{marginRight:8}}>Remove Photo</button>}
                     <button
                       className="mini-btn danger-btn"
                       onClick={() => deleteUser(user._id)}
