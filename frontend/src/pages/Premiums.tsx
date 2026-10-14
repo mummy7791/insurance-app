@@ -107,7 +107,7 @@ export default function Premiums() {
 
   const loadRenewalReport=useCallback(async()=>{
     if(isCustomer)return;
-    try{const res=await api.get<{rows:RenewalRow[]}>("/premiums/renewal-report");setRenewalRows(Array.isArray(res.data.rows)?res.data.rows:[]);}
+    try{const res=await api.get<{rows:RenewalRow[]}>("/premiums/renewal-report");if(!Array.isArray(res.data?.rows))throw new Error("Invalid renewal report response");setRenewalRows(res.data.rows);}
     catch(error){console.error("Renewal report load error:",error);}
   },[isCustomer]);
 
