@@ -24,7 +24,7 @@ export default function Topbar({ title, subtitle }: Props) {
     const load = async () => {
       try {
         const res = await api.get<Notice[]>("/notifications");
-        if (active) setUnread(res.data.filter((item) => item.status === "Unread").length);
+        if (active) setUnread(Array.isArray(res.data) ? res.data.filter((item) => item.status === "Unread").length : 0);
       } catch (error) {
         console.error("Notification badge load error:", error);
       }
