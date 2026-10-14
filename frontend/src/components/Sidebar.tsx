@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -17,6 +17,7 @@ type User = {
   email?: string;
   role?: UserRole;
   branch?: string;
+  profilePhoto?: string;
 };
 
 const customerMenu = [
@@ -77,6 +78,15 @@ export default function Sidebar() {
   }, []);
 
   const role: UserRole = user.role || "customer";
+  const [advisorPhoto, setAdvisorPhoto] = useState(user.profilePhoto || "");
+  useEffect(() => {
+    if (role !== "advisor") return;
+    let active = true;
+    api.get<{ profilePhoto?: string }>("/users/me")
+      .then(res => { if (active) setAdvisorPhoto(res.data?.profilePhoto || ""); })
+      .catch(error => console.error("Advisor avatar load failed:", error));
+    return () => { active = false; };
+  }, [role]);
 
   const filteredMenu = useMemo(() => {
     if (role === "customer") return customerMenu;
@@ -129,7 +139,7 @@ export default function Sidebar() {
         </div>
 
         <div className="sidebar-user-card">
-          <div className="sidebar-avatar">{(user.name || user.email || "U").charAt(0).toUpperCase()}</div>
+          <div className="sidebar-avatar">{role === "advisor" && advisorPhoto ? <img src={advisorPhoto} alt="Advisor" style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"inherit"}} /> : (user.name || user.email || "U").charAt(0).toUpperCase()}</div>
           <div><strong>{user.name || user.email || "User"}</strong>
           <br />
           <small>{role === "customer" ? "Policyholder" : role}</small></div>
