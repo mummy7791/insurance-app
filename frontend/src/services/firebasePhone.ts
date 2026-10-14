@@ -13,6 +13,7 @@ type ConfirmationResultLike = {
 
 let confirmationResult: ConfirmationResultLike | null = null;
 let recaptchaVerifier: { clear?: () => void } | null = null;
+let otpSendInProgress = false;
 
 const loadFirebase = async () => {
   const appUrl = "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
@@ -24,6 +25,9 @@ const loadFirebase = async () => {
 };
 
 export const sendFirebasePhoneOtp = async (phone: string) => {
+  if (otpSendInProgress) throw new Error("OTP request already in progress. Please wait.");
+  otpSendInProgress = true;
+  try {
   const { authModule, auth } = await loadFirebase();
   // Reuse the verifier: clearing and recreating it on every resend can trigger
   // "reCAPTCHA has already been rendered in this element" on mobile browsers.
@@ -36,7 +40,13 @@ export const sendFirebasePhoneOtp = async (phone: string) => {
   } catch (error) {
     // A failed challenge must not leave an old confirmation available for login.
     confirmationResult = null;
+    // Firebase can leave a broken challenge after failed app verification.
+    try { recaptchaVerifier?.clear?.(); } catch { /* already cleared */ }
+    recaptchaVerifier = null;
     throw error;
+  }
+  } finally {
+    otpSendInProgress = false;
   }
 };
 
