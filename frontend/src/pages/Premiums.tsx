@@ -71,6 +71,7 @@ export default function Premiums() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<PremiumForm>(initialForm);
   const [payingId, setPayingId] = useState("");
+  const [savingPremium, setSavingPremium] = useState(false);
   const [renewalRows,setRenewalRows]=useState<RenewalRow[]>([]);
   const [renewalTab,setRenewalTab]=useState<PremiumStatus>("Upcoming");
   const [followupRow,setFollowupRow]=useState<RenewalRow|null>(null);
@@ -198,6 +199,7 @@ export default function Premiums() {
   };
 
   const addPremium = async () => {
+    if (savingPremium) return;
     if (!form.customerName.trim() || !form.policyNumber.trim() || !form.amount || !form.dueDate) {
       alert("Customer Name, Policy Number, Amount, Due Date required");
       return;
@@ -209,6 +211,7 @@ export default function Premiums() {
     }
 
     try {
+      setSavingPremium(true);
       const res = await api.post<Premium>("/premiums", {
         customerName: form.customerName.trim(),
         policyNumber: form.policyNumber.trim(),
@@ -225,6 +228,8 @@ export default function Premiums() {
     } catch (error) {
       console.error("Premium add error:", error);
       alert("Premium add failed");
+    } finally {
+      setSavingPremium(false);
     }
   };
 
@@ -383,7 +388,7 @@ export default function Premiums() {
           </select>
           <input placeholder="Receipt Number optional" value={form.receiptNumber} onChange={(e) => setForm((prev) => ({ ...prev, receiptNumber: e.target.value }))} />
         </div>
-        <button className="btn small-btn" onClick={addPremium}>Add Premium</button>
+        <button className="btn small-btn" disabled={savingPremium} onClick={addPremium}>{savingPremium ? "Saving..." : "Add Premium"}</button>
       </div>
       )}
 
