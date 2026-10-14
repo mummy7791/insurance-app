@@ -20,6 +20,7 @@ const getMessage = (error: unknown, fallback: string) => {
     if (/auth\/invalid-verification-code/i.test(message)) return "Incorrect OTP. Check the SMS and try again.";
     if (/auth\/code-expired|auth\/session-expired/i.test(message)) return "OTP expired. Request a new code.";
     if (/auth\/network-request-failed/i.test(message)) return "Network unavailable. Check your connection and retry.";
+    if (/recaptcha has already been rendered/i.test(message)) return "Phone verification needs a reset. Refresh this page and retry.";
   }
   if (typeof error === "object" && error !== null && "response" in error) {
     const e = error as { response?: { data?: { message?: string } } };
@@ -59,12 +60,14 @@ export default function CustomerOtpLogin() {
     if (!/^[6-9]\d{9}$/.test(mobile)) return setError("Enter your registered 10-digit mobile number.");
     try {
       setLoading(true); setError(""); setNotice("");
+      setSent(false); setOtp("");
       await sendFirebasePhoneOtp(mobile);
       setPhone(mobile);
       setSent(true);
       setResendSeconds(30);
       setNotice("A fresh 6-digit OTP was sent to your mobile number.");
     } catch (error: unknown) {
+      setSent(false); setNotice("");
       const message = getMessage(error, "Could not send OTP. Please try again.");
       setError(message);
     } finally { setLoading(false); }
