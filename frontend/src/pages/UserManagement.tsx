@@ -95,6 +95,7 @@ export default function UserManagement() {
   };
 
   const createUser = async () => {
+    if (creating) return;
     if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
       alert("Name, Email, Phone, Advisor Code and Password required");
       return;
@@ -116,6 +117,7 @@ export default function UserManagement() {
         profilePhoto: form.profilePhoto,
       });
 
+      if (!res.data?._id) throw new Error("Invalid advisor creation response");
       setUsers((prev) => [res.data, ...prev]);
       setForm(initialForm); setVerificationId(""); setOtp(""); setOtpSent(false); setOtpVerified(false);
       alert("User created successfully");
