@@ -107,7 +107,8 @@ export default function Notifications() {
   const loadRecipients = useCallback(async () => {
     try {
       const res = await api.get<Recipient[]>("/notifications/recipients");
-      setRecipients(Array.isArray(res.data) ? res.data : []);
+      if (!Array.isArray(res.data)) throw new Error("Invalid recipients response");
+      setRecipients(res.data);
     } catch (error) {
       console.error("Notification recipients load error:", error);
       setFeedback({type:"error",text:"Customer list could not be loaded."});
