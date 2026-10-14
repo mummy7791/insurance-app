@@ -175,6 +175,7 @@ export default function Premiums() {
   }, [loadPremiums]);
 
   const payPremium = async (premium: Premium) => {
+    if (payingId) return;
     if (!window.Cashfree) {
       alert("Cashfree checkout is loading. Please try again.");
       return;
@@ -450,7 +451,7 @@ export default function Premiums() {
                       <option value="Upcoming">Upcoming</option><option value="Due">Due</option><option value="Grace Period">Grace Period</option><option value="Overdue">Overdue</option><option value="Lapsed">Lapsed</option><option value="Paid">Paid</option>
                     </select>
                   )}</td>
-                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : premium.status === "Lapsed" ? <span className="status-pill overdue">Contact servicing</span> : <button className="btn small-btn" disabled={payingId === premium._id} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
+                  {isCustomer && <td>{premium.status === "Paid" ? <button className="mini-btn" onClick={() => downloadReceipt(premium)}>Download Receipt</button> : premium.status === "Lapsed" ? <span className="status-pill overdue">Contact servicing</span> : <button className="btn small-btn" disabled={Boolean(payingId)} onClick={() => payPremium(premium)}>{payingId === premium._id ? "Opening..." : `Pay ₹${Number(premium.amount || 0).toLocaleString("en-IN")}`}</button>}</td>}
                   {!isCustomer && <td><button className="mini-btn danger-btn" onClick={() => deletePremium(premium._id)}>Delete</button></td>}
                 </tr>
               ))}
