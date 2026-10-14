@@ -201,15 +201,20 @@ export default function Premiums() {
   };
 
   const addPremium = async () => {
-    if (!form.customerName || !form.policyNumber || !form.amount || !form.dueDate) {
+    if (!form.customerName.trim() || !form.policyNumber.trim() || !form.amount || !form.dueDate) {
       alert("Customer Name, Policy Number, Amount, Due Date required");
+      return;
+    }
+
+    if (!Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0) {
+      alert("Enter a valid premium amount greater than zero");
       return;
     }
 
     try {
       const res = await api.post<Premium>("/premiums", {
-        customerName: form.customerName,
-        policyNumber: form.policyNumber,
+        customerName: form.customerName.trim(),
+        policyNumber: form.policyNumber.trim(),
         amount: Number(form.amount),
         dueDate: form.dueDate,
         paymentMode: form.paymentMode,
