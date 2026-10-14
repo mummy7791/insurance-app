@@ -147,6 +147,19 @@ router.get("/", auth(), async (req, res) => {
   }
 });
 
+router.put("/mark-all-read", auth(), async (req, res) => {
+  try {
+    const filter = { recipientId: req.user.id, status: "Unread" };
+    const result = await Notification.updateMany(filter, { $set: { status: "Read" } });
+    // Notify only the authenticated recipient to refresh the unread badge.
+    emitToRecipient(req, "notificationsReadAll", { status: "Read" }, req.user.id);
+    res.json({ updated: result.modifiedCount || 0 });
+  } catch (error) {
+    console.error("Mark all notifications read error:", error);
+    res.status(500).json({ message: "Could not mark notifications as read" });
+  }
+});
+
 router.put("/:id", auth(), async (req, res) => {
   try {
     const staff = isStaff(req.user);
