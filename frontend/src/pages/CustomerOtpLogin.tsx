@@ -23,7 +23,8 @@ const getMessage = (error: unknown, fallback: string) => {
     if (/recaptcha has already been rendered/i.test(message)) return "Phone verification needs a reset. Refresh this page and retry.";
   }
   if (typeof error === "object" && error !== null && "response" in error) {
-    const e = error as { response?: { data?: { message?: string } } };
+    const e = error as { response?: { status?: number; data?: { message?: string } } };
+    if (e.response?.status === 429) return "Too many login attempts. Please wait 15 minutes before trying again.";
     return e.response?.data?.message || fallback;
   }
   return fallback;
@@ -76,7 +77,7 @@ export default function CustomerOtpLogin() {
   const verifyOtp = async () => {
     if (!/^\d{6}$/.test(otp)) return setError("Enter the 6-digit OTP from your SMS.");
     try {
-      setLoading(true); setError("");
+      setLoading(true); setError(""); setNotice("");
       const idToken = await confirmFirebasePhoneOtp(otp);
       const res = await api.post<AuthResponse>("/auth/firebase-phone-login", { phone: normalizedPhone(), idToken });
       localStorage.setItem("insuranceToken", res.data.token);
