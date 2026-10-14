@@ -54,18 +54,16 @@ export default function UserManagement() {
   const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
 
   const loadUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      setTimeout(() => setLoading(true), 0);
-
       const res = await api.get<UserItem[]>("/user-management");
-
       if (!Array.isArray(res.data)) throw new Error("Invalid advisor list response");
       setUsers(res.data);
-      setLoading(false);
     } catch (error) {
       console.error("Users load error:", error);
-      setTimeout(() => setLoading(false), 0);
-      alert("Users load failed. Only admin can access.");
+      alert("Advisor list could not be loaded. Please retry.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
