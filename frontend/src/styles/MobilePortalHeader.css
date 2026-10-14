@@ -1,0 +1,34 @@
+@media (max-width: 768px) {
+  .advisor-portal .topbar, .staff-portal .topbar {
+    box-sizing: border-box;
+    min-height: 76px;
+    padding: 12px 12px 12px 76px !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .advisor-portal .topbar-title, .staff-portal .topbar-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .advisor-portal .topbar-title h2, .staff-portal .topbar-title h2 {
+    font-size: 16px;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .advisor-portal .topbar-title p, .staff-portal .topbar-title p {
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 3px 0 0;
+  }
+  .advisor-portal .topbar-actions, .staff-portal .topbar-actions {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .advisor-portal .user-box, .staff-portal .user-box {
+    max-width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
