@@ -42,12 +42,14 @@ export default function Topbar({ title, subtitle }: Props) {
     socket.on("newNotification", onNew);
     socket.on("notificationUpdated", onUpdated);
     socket.on("notificationDeleted", onDeleted);
+    socket.on("notificationsReadAll", onUpdated);
 
     return () => {
       active = false;
       socket.off("newNotification", onNew);
       socket.off("notificationUpdated", onUpdated);
       socket.off("notificationDeleted", onDeleted);
+      socket.off("notificationsReadAll", onUpdated);
     };
   }, [showNotifications]);
 
