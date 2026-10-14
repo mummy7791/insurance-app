@@ -200,7 +200,7 @@ router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
     const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999);
     const todayKey = today.toISOString().slice(0,10);
     const next7 = new Date(today); next7.setDate(next7.getDate()+7);
-    const next7Key = next7.toISOString().slice(0,10);
+    const next7Key = `${next7.getFullYear()}-${String(next7.getMonth()+1).padStart(2,"0")}-${String(next7.getDate()).padStart(2,"0")}`;
     const currentMonth = todayKey.slice(0,7);
 
     const thisMonthDue = premiums.filter(p => String(p.dueDate||"").slice(0,7)===currentMonth);
