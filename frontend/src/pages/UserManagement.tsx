@@ -16,6 +16,7 @@ type UserItem = {
   phone?: string;
   advisorCode?: string;
   address?: string;
+  profilePhoto?: string;
   createdAt?: string;
 };
 
@@ -28,6 +29,7 @@ type UserForm = {
   advisorCode: string;
   address: string;
   password: string;
+  profilePhoto: string;
 };
 
 const initialForm: UserForm = {
@@ -39,6 +41,7 @@ const initialForm: UserForm = {
   advisorCode: "",
   address: "",
   password: "",
+  profilePhoto: "",
 };
 
 export default function UserManagement() {
@@ -83,6 +86,17 @@ export default function UserManagement() {
   const sendAdvisorOtp=async()=>{const mobile=form.phone.replace(/\D/g,"").slice(-10);if(!form.name||!form.email||!mobile||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}if(!/^[6-9]\d{9}$/.test(mobile)){alert("Enter a valid 10-digit Indian mobile number");return;}try{setOtpBusy(true);await sendFirebasePhoneOtp(mobile);setForm(prev=>({...prev,phone:mobile}));setOtpSent(true);setOtpVerified(false);setVerificationId("");alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert(e instanceof Error?e.message:"Could not send advisor OTP");}finally{setOtpBusy(false);}};
   const verifyAdvisorOtp=async()=>{if(!/^\d{6}$/.test(otp))return;try{setOtpBusy(true);const idToken=await confirmFirebasePhoneOtp(otp);const r=await api.post<{verificationId:string}>("/user-management/advisor/verify-firebase-phone",{...form,idToken});setVerificationId(r.data.verificationId);setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);const msg=typeof e==="object"&&e!==null&&"response" in e?String((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Invalid or expired OTP"):e instanceof Error?e.message:"Invalid or expired OTP";alert(msg);}finally{setOtpBusy(false);}};
 
+  const handlePhoto = (file?: File) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 140000) {
+      alert("Choose a JPG, PNG or WebP photo smaller than 140 KB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setForm(prev => ({ ...prev, profilePhoto: String(reader.result || "") }));
+    reader.readAsDataURL(file);
+  };
+
   const createUser = async () => {
     if (!form.name || !form.email || !form.phone || !form.advisorCode || !form.password) {
       alert("Name, Email, Phone, Advisor Code and Password required");
@@ -102,6 +116,7 @@ export default function UserManagement() {
         address: form.address,
         password: form.password,
         verificationId,
+        profilePhoto: form.profilePhoto,
       });
 
       setUsers((prev) => [res.data, ...prev]);
@@ -184,6 +199,11 @@ export default function UserManagement() {
         <div id="firebase-recaptcha" />
         <span className="eyebrow">NEW ADVISOR ACCOUNT</span><h2>Create advisor login</h2><p className="section-copy">Advisor can access only Plans, Commission and their Profile.</p>
 
+        <div style={{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap",margin:"18px 0"}}>
+          {form.profilePhoto ? <img src={form.profilePhoto} alt="Advisor preview" style={{width:88,height:88,borderRadius:"50%",objectFit:"cover"}} /> : <div style={{width:88,height:88,borderRadius:"50%",background:"#e8f5ec",display:"grid",placeItems:"center",fontWeight:700,color:"#087747"}}>Photo</div>}
+          <label>Advisor Profile Photo (JPG/PNG/WebP, max 140 KB)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>handlePhoto(e.target.files?.[0])} /></label>
+          {form.profilePhoto && <button type="button" className="mini-btn" onClick={()=>setForm(prev=>({...prev,profilePhoto:""}))}>Remove photo</button>}
+        </div>
         <div className="form-grid">
           <input
             placeholder="Full Name"
