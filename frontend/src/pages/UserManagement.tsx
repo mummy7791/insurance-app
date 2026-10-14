@@ -48,6 +48,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [photoUpdatingId, setPhotoUpdatingId] = useState("");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<UserForm>(initialForm);
   const [bankSubmissions,setBankSubmissions]=useState<BankSubmission[]>([]);
@@ -141,7 +142,7 @@ export default function UserManagement() {
   };
 
   const updateAdvisorPhoto = async (user: UserItem, file?: File) => {
-    if (!file) return;
+    if (!file || photoUpdatingId) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 140000) {
       alert("Choose a JPG, PNG or WebP photo smaller than 140 KB");
       return;
@@ -149,12 +150,15 @@ export default function UserManagement() {
     const reader = new FileReader();
     reader.onload = async () => {
       try {
+        setPhotoUpdatingId(user._id);
         const res = await api.put<UserItem>(`/user-management/${user._id}/profile-photo`, { profilePhoto: String(reader.result || "") });
         setUsers(prev => prev.map(item => item._id === user._id ? res.data : item));
         alert("Advisor photo updated successfully");
       } catch (error) {
         console.error("Advisor photo update error:", error);
         alert("Could not update advisor photo");
+      } finally {
+        setPhotoUpdatingId("");
       }
     };
     reader.readAsDataURL(file);
@@ -375,7 +379,7 @@ export default function UserManagement() {
                   </td>
 
                   <td>
-                    <label style={{display:"inline-block",cursor:"pointer",marginRight:8,fontSize:12,color:"#087747"}}>Change Photo<input type="file" accept="image/jpeg,image/png,image/webp" style={{display:"none"}} onChange={e=>{void updateAdvisorPhoto(user,e.target.files?.[0]);e.target.value="";}} /></label>
+                    <label style={{display:"inline-block",cursor:"pointer",marginRight:8,fontSize:12,color:"#087747"}}>{photoUpdatingId === user._id ? "Uploading..." : "Change Photo"}<input type="file" disabled={Boolean(photoUpdatingId)} accept="image/jpeg,image/png,image/webp" style={{display:"none"}} onChange={e=>{void updateAdvisorPhoto(user,e.target.files?.[0]);e.target.value="";}} /></label>
                     {user.profilePhoto && <button className="mini-btn" onClick={() => void removeAdvisorPhoto(user)} style={{marginRight:8}}>Remove Photo</button>}
                     <button
                       className="mini-btn danger-btn"
