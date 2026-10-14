@@ -12,6 +12,15 @@ type AuthResponse = {
 type LocationState = { phone?: string; mode?: "verify" | "login" };
 
 const getMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) {
+    const message = error.message;
+    if (/auth\/invalid-app-credential|auth\/invalid-app-id/i.test(message)) return "Phone verification configuration failed. Please contact support.";
+    if (/auth\/too-many-requests/i.test(message)) return "Too many OTP attempts. Please wait before trying again.";
+    if (/auth\/invalid-phone-number/i.test(message)) return "Enter a valid Indian mobile number.";
+    if (/auth\/invalid-verification-code/i.test(message)) return "Incorrect OTP. Check the SMS and try again.";
+    if (/auth\/code-expired|auth\/session-expired/i.test(message)) return "OTP expired. Request a new code.";
+    if (/auth\/network-request-failed/i.test(message)) return "Network unavailable. Check your connection and retry.";
+  }
   if (typeof error === "object" && error !== null && "response" in error) {
     const e = error as { response?: { data?: { message?: string } } };
     return e.response?.data?.message || fallback;
@@ -56,7 +65,7 @@ export default function CustomerOtpLogin() {
       setResendSeconds(30);
       setNotice("A fresh 6-digit OTP was sent to your mobile number.");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : getMessage(error, "Could not send OTP. Please try again.");
+      const message = getMessage(error, "Could not send OTP. Please try again.");
       setError(message);
     } finally { setLoading(false); }
   };
@@ -74,7 +83,7 @@ export default function CustomerOtpLogin() {
       const hasEstimate = Boolean(sessionStorage.getItem("premiumEstimate"));
       navigate(res.data.user.role === "advisor" ? "/insurance-plans" : hasEstimate ? "/insurance-plans" : "/customer-dashboard", { replace: true });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : getMessage(error, "Invalid or expired OTP.");
+      const message = getMessage(error, "Invalid or expired OTP.");
       setError(message);
     } finally { setLoading(false); }
   };
