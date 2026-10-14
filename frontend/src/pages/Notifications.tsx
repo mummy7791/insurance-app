@@ -136,7 +136,7 @@ export default function Notifications() {
     };
 
     const handleNotificationUpdated = (notification: NotificationItem) => {
-      if (!notification?._id) return;
+      if (!notification?._id || !notification.title || !notification.message) return;
       setNotifications((prev) =>
         prev.map((item) =>
           item._id === notification._id ? notification : item
