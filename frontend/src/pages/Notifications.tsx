@@ -196,6 +196,8 @@ export default function Notifications() {
     } catch (error) {
       console.error("Notification add error:", error);
       setFeedback({type:"error",text:"Notification could not be sent."});
+    } finally {
+      setSending(false);
     }
   };
 
