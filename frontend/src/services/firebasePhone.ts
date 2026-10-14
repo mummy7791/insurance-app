@@ -25,10 +25,19 @@ const loadFirebase = async () => {
 
 export const sendFirebasePhoneOtp = async (phone: string) => {
   const { authModule, auth } = await loadFirebase();
-  recaptchaVerifier?.clear?.();
-  const verifier = new authModule.RecaptchaVerifier(auth, "firebase-recaptcha", { size: "invisible" });
-  recaptchaVerifier = verifier;
-  confirmationResult = await authModule.signInWithPhoneNumber(auth, `+91${phone}`, verifier);
+  // Reuse the verifier: clearing and recreating it on every resend can trigger
+  // "reCAPTCHA has already been rendered in this element" on mobile browsers.
+  if (!recaptchaVerifier) {
+    recaptchaVerifier = new authModule.RecaptchaVerifier(auth, "firebase-recaptcha", { size: "invisible" });
+  }
+  confirmationResult = null;
+  try {
+    confirmationResult = await authModule.signInWithPhoneNumber(auth, `+91${phone}`, recaptchaVerifier);
+  } catch (error) {
+    // A failed challenge must not leave an old confirmation available for login.
+    confirmationResult = null;
+    throw error;
+  }
 };
 
 export const confirmFirebasePhoneOtp = async (otp: string) => {
