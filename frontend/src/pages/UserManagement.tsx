@@ -130,6 +130,26 @@ export default function UserManagement() {
     }
   };
 
+  const updateAdvisorPhoto = async (user: UserItem, file?: File) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 140000) {
+      alert("Choose a JPG, PNG or WebP photo smaller than 140 KB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const res = await api.put<UserItem>(`/user-management/${user._id}/profile-photo`, { profilePhoto: String(reader.result || "") });
+        setUsers(prev => prev.map(item => item._id === user._id ? res.data : item));
+        alert("Advisor photo updated successfully");
+      } catch (error) {
+        console.error("Advisor photo update error:", error);
+        alert("Could not update advisor photo");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const updateStatus = async (id: string, status: UserStatus) => {
     try {
       const res = await api.put<UserItem>(`/user-management/${id}/status`, {
@@ -319,7 +339,7 @@ export default function UserManagement() {
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user._id}>
-                  <td>{user.name || "N/A"}</td>
+                  <td><div style={{display:"flex",alignItems:"center",gap:10}}>{user.profilePhoto?<img src={user.profilePhoto} alt="" style={{width:42,height:42,borderRadius:"50%",objectFit:"cover"}}/>:<span style={{width:42,height:42,borderRadius:"50%",display:"grid",placeItems:"center",background:"#e8f5ec",color:"#087747",fontWeight:700}}>{(user.name||"A").charAt(0)}</span>}<span>{user.name || "N/A"}</span></div></td>
                   <td>{user.email}</td>
 
                   <td>{user.advisorCode || "—"}</td>
@@ -345,6 +365,7 @@ export default function UserManagement() {
                   </td>
 
                   <td>
+                    <label style={{display:"inline-block",cursor:"pointer",marginRight:8,fontSize:12,color:"#087747"}}>Change Photo<input type="file" accept="image/jpeg,image/png,image/webp" style={{display:"none"}} onChange={e=>{void updateAdvisorPhoto(user,e.target.files?.[0]);e.target.value="";}} /></label>
                     <button
                       className="mini-btn danger-btn"
                       onClick={() => deleteUser(user._id)}
