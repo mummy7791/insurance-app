@@ -185,6 +185,22 @@ router.put("/:id/role", auth(["admin"]), async (req, res) => {
   }
 });
 
+router.put("/:id/profile-photo", auth(["admin"]), async (req, res) => {
+  try {
+    const { profilePhoto } = req.body;
+    if (typeof profilePhoto !== "string" || (profilePhoto && (profilePhoto.length > 200000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(profilePhoto)))) {
+      return res.status(400).json({ message: "Invalid photo. Use JPG, PNG or WebP under 150 KB." });
+    }
+    const user = await User.findOneAndUpdate({ _id: req.params.id, role: "advisor" }, { profilePhoto }, { new: true }).select("-password -refreshToken");
+    if (!user) return res.status(404).json({ message: "Advisor not found" });
+    await createAuditLog({ req, action: "UPDATE", module: "USER_MANAGEMENT", description: `Updated profile photo for advisor ${user.email}`, targetUserId: user._id });
+    res.json(user);
+  } catch (error) {
+    console.error("Advisor photo update error:", error);
+    res.status(500).json({ message: "Advisor photo update failed" });
+  }
+});
+
 router.put("/:id/status", auth(["admin"]), async (req, res) => {
   try {
     const { status } = req.body;
