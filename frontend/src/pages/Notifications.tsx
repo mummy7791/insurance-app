@@ -93,7 +93,7 @@ export default function Notifications() {
     try {
       setLoading(true);
       const res = await api.get<NotificationItem[]>("/notifications");
-      setNotifications(res.data);
+      setNotifications(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Notifications load error:", error);
       setFeedback({type:"error",text:"Notifications could not be loaded. Please try again."});
@@ -105,7 +105,7 @@ export default function Notifications() {
   const loadRecipients = useCallback(async () => {
     try {
       const res = await api.get<Recipient[]>("/notifications/recipients");
-      setRecipients(res.data);
+      setRecipients(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Notification recipients load error:", error);
       setFeedback({type:"error",text:"Customer list could not be loaded."});
@@ -124,6 +124,7 @@ export default function Notifications() {
     connectSocket();
 
     const handleNewNotification = (notification: NotificationItem) => {
+      if (!notification?._id) return;
       setNotifications((prev) => {
         const exists = prev.some((item) => item._id === notification._id);
         if (exists) return prev;
