@@ -121,19 +121,16 @@ export default function Premiums() {
   };
 
   const loadPremiums = useCallback(async () => {
+    setLoading(true);
     try {
-      setTimeout(() => setLoading(true), 0);
-
       const res = await api.get<Premium[]>("/premiums");
-
-      setTimeout(() => {
-        setPremiums(res.data);
-        setLoading(false);
-      }, 0);
+      if (!Array.isArray(res.data)) throw new Error("Invalid premiums response");
+      setPremiums(res.data);
     } catch (error) {
       console.error("Premiums load error:", error);
-      setTimeout(() => setLoading(false), 0);
       alert("Premiums load failed");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
