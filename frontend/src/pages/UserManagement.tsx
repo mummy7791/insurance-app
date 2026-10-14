@@ -59,10 +59,9 @@ export default function UserManagement() {
 
       const res = await api.get<UserItem[]>("/user-management");
 
-      setTimeout(() => {
-        setUsers(res.data);
-        setLoading(false);
-      }, 0);
+      if (!Array.isArray(res.data)) throw new Error("Invalid advisor list response");
+      setUsers(res.data);
+      setLoading(false);
     } catch (error) {
       console.error("Users load error:", error);
       setTimeout(() => setLoading(false), 0);
