@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
     },
 
     advisorCode: { type: String, default: "", index: true },
+    profilePhoto: { type: String, default: "" },
     address: { type: String, default: "" },
 
     password: {
