@@ -133,6 +133,7 @@ export default function Notifications() {
     };
 
     const handleNotificationUpdated = (notification: NotificationItem) => {
+      if (!notification?._id) return;
       setNotifications((prev) =>
         prev.map((item) =>
           item._id === notification._id ? notification : item
@@ -141,6 +142,7 @@ export default function Notifications() {
     };
 
     const handleNotificationDeleted = (id: string) => {
+      if (!id) return;
       setNotifications((prev) => prev.filter((item) => item._id !== id));
     };
 
