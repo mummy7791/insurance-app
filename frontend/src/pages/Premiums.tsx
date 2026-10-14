@@ -165,6 +165,7 @@ export default function Premiums() {
         alert("Premium paid successfully. Your receipt is ready.");
       } catch (error) {
         console.error("Renewal verification error:", error);
+        await loadPremiums();
         alert("Payment verification failed. If money was debited, do not pay again. Refresh and check the premium status.");
       } finally {
         setPayingId("");
