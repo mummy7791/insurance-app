@@ -193,7 +193,8 @@ router.get("/renewal-report", auth(STAFF_ROLES), async (req, res) => {
 // Staff: premium collection analytics for renewal operations.
 router.get("/analytics", auth(STAFF_ROLES), async (req, res) => {
   try {
-    const premiums = await Premium.find({}).lean();
+    const premiums = await Premium.find({});
+    await syncLifecycle(premiums);
     const today = new Date(); today.setHours(0,0,0,0);
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0, 23,59,59,999);
