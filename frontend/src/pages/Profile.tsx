@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
-type User={id?:string;name?:string;role?:string;email?:string;branch?:string;phone?:string;advisorCode?:string;address?:string};
+type User={id?:string;name?:string;role?:string;email?:string;branch?:string;phone?:string;advisorCode?:string;address?:string;profilePhoto?:string};
 type Bank={_id:string;accountHolderName:string;bankName:string;accountNumber:string;ifscCode:string;branchName?:string;documentType:string;fileName:string;status:"Submitted"|"Approved"|"Rejected";adminRemarks?:string;submittedAt?:string};
 
 export default function Profile(){
  const user:User=useMemo(()=>{try{return JSON.parse(localStorage.getItem("insuranceUser")||"{}") as User}catch{return {}}},[]);
+ const [profilePhoto,setProfilePhoto]=useState(user.profilePhoto||"");
+ useEffect(()=>{if(user.role!=="advisor")return;api.get<{profilePhoto?:string}>("/users/me").then(r=>setProfilePhoto(r.data?.profilePhoto||"")).catch(e=>console.error("Advisor photo load failed",e))},[user.role]);
  const [currentPassword,setCurrentPassword]=useState(""),[newPassword,setNewPassword]=useState(""),[confirmPassword,setConfirmPassword]=useState(""),[changing,setChanging]=useState(false);
  const [bank,setBank]=useState<Bank|null>(null),[bankLoading,setBankLoading]=useState(user.role==="advisor"),[submitting,setSubmitting]=useState(false),[proof,setProof]=useState<File|null>(null);
  const [bankForm,setBankForm]=useState({accountHolderName:"",bankName:"",accountNumber:"",ifscCode:"",branchName:"",documentType:"Bank Passbook"});
@@ -19,7 +21,7 @@ export default function Profile(){
  const masked=(v:string)=>v.length>4?"••••••"+v.slice(-4):v;
 
  return <MainLayout title={user.role==="advisor"?"Advisor Profile":"My Profile"} subtitle={user.role==="advisor"?"Your advisor identity, payout account and account security":"Your SecureLife staff account and access details"}>
-  <div className="admin-page-summary"><div><span className="eyebrow">{user.role==="advisor"?"ADVISOR IDENTITY":"STAFF IDENTITY"}</span><h2>{user.name||"SecureLife Staff"}</h2><p>{user.role==="advisor"?"Your verified advisor account details. Keep your contact information and login credentials secure.":"Your signed-in identity is managed by the secure staff account."}</p></div><span className="secure-chip">Active session</span></div>
+  <div className="admin-page-summary"><div style={{display:"flex",alignItems:"center",gap:20}}>{user.role==="advisor"&&<div>{profilePhoto?<img src={profilePhoto} alt="Advisor profile" style={{width:100,height:100,objectFit:"cover",borderRadius:"50%",border:"3px solid #16a34a"}}/>:<div style={{width:100,height:100,borderRadius:"50%",display:"grid",placeItems:"center",background:"#e8f5ec",color:"#087747",fontSize:36,fontWeight:700}}>{(user.name||"A").charAt(0)}</div>}</div>}<div><span className="eyebrow">{user.role==="advisor"?"ADVISOR IDENTITY":"STAFF IDENTITY"}</span><h2>{user.name||"SecureLife Staff"}</h2><p>{user.role==="advisor"?"Your verified advisor account details. Keep your contact information and login credentials secure.":"Your signed-in identity is managed by the secure staff account."}</p></div></div><span className="secure-chip">Active session</span></div>
   <div className="cards admin-kpi-grid"><div className="card"><h3>Name</h3><h1>{user.name||"N/A"}</h1></div><div className="card"><h3>Role</h3><h1>{user.role||"N/A"}</h1></div><div className="card"><h3>Advisor Code</h3><h1>{user.advisorCode||"N/A"}</h1></div><div className="card"><h3>Status</h3><h1>Active</h1></div></div>
   <div className="section"><div className="section-heading-row"><div><span className="eyebrow">ACCOUNT DETAILS</span><h2>{user.role==="advisor"?"Advisor information":"Staff profile"}</h2></div><span className="secure-chip">Read only</span></div>
    <div className="profile-detail-grid"><div><span>Full name</span><strong>{user.name||"N/A"}</strong></div><div><span>Email address</span><strong>{user.email||"N/A"}</strong></div><div><span>Role</span><strong>{user.role||"N/A"}</strong></div><div><span>Phone</span><strong>{user.phone||"N/A"}</strong></div><div><span>Advisor code</span><strong>{user.advisorCode||"N/A"}</strong></div><div><span>Address</span><strong>{user.address||"N/A"}</strong></div></div>
