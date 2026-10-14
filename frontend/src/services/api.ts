@@ -8,6 +8,7 @@ const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, "")}/api`;
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 20000,
 });
 
 api.interceptors.request.use((config) => {
@@ -29,7 +30,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const isAuthEndpoint = String(originalRequest.url || "").includes("/auth/refresh") || String(originalRequest.url || "").includes("/auth/login");
+    const requestPath = String(originalRequest.url || "");
+    const isAuthEndpoint = requestPath.includes("/auth/");
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
@@ -37,7 +39,7 @@ api.interceptors.response.use(
         const res = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true, timeout: 12000 }
         );
 
         localStorage.setItem("insuranceToken", res.data.token);
