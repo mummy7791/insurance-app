@@ -18,6 +18,7 @@ const getMessage = (error: unknown, fallback: string) => {
     if (/auth\/too-many-requests/i.test(message)) return "Too many OTP attempts. Please wait before trying again.";
     if (/auth\/invalid-phone-number/i.test(message)) return "Enter a valid Indian mobile number.";
     if (/auth\/invalid-verification-code/i.test(message)) return "Incorrect OTP. Check the SMS and try again.";
+    if (/auth\/captcha-check-failed|auth\/missing-app-credential/i.test(message)) return "Phone verification failed. Check your connection and try again.";
     if (/auth\/code-expired|auth\/session-expired/i.test(message)) return "OTP expired. Request a new code.";
     if (/auth\/network-request-failed/i.test(message)) return "Network unavailable. Check your connection and retry.";
     if (/recaptcha has already been rendered/i.test(message)) return "Phone verification needs a reset. Refresh this page and retry.";
@@ -61,7 +62,7 @@ export default function CustomerOtpLogin() {
     if (!/^[6-9]\d{9}$/.test(mobile)) return setError("Enter your registered 10-digit mobile number.");
     try {
       setLoading(true); setError(""); setNotice("");
-      setSent(false); setOtp("");
+      setSent(false); setOtp(""); setResendSeconds(0);
       await sendFirebasePhoneOtp(mobile);
       setPhone(mobile);
       setSent(true);
