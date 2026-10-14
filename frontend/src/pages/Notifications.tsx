@@ -74,6 +74,7 @@ export default function Notifications() {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [form, setForm] = useState<NotificationForm>(initialForm);
   const [loading, setLoading] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | NotificationType>("All");
   const [feedback, setFeedback] = useState<{type:"success"|"error";text:string}|null>(null);
@@ -145,13 +146,15 @@ export default function Notifications() {
     socket.on("newNotification", handleNewNotification);
     socket.on("notificationUpdated", handleNotificationUpdated);
     socket.on("notificationDeleted", handleNotificationDeleted);
+    socket.on("notificationsReadAll", loadNotifications);
 
     return () => {
       socket.off("newNotification", handleNewNotification);
       socket.off("notificationUpdated", handleNotificationUpdated);
       socket.off("notificationDeleted", handleNotificationDeleted);
+      socket.off("notificationsReadAll", loadNotifications);
     };
-  }, []);
+  }, [loadNotifications]);
 
   const addNotification = async () => {
     if (!isStaff) return;
@@ -223,8 +226,18 @@ export default function Notifications() {
   const unreadCount = notifications.filter((item) => item.status === "Unread").length;
 
   const markAllRead = async () => {
-    const unread = notifications.filter((item) => item.status === "Unread");
-    await Promise.all(unread.map((item) => markAsRead(item._id)));
+    if (markingAll || unreadCount === 0) return;
+    try {
+      setMarkingAll(true);
+      await api.put("/notifications/mark-all-read");
+      setNotifications((prev) => prev.map((item) => ({ ...item, status: "Read" as const })));
+      setFeedback({type:"success",text:"All notifications marked as read."});
+    } catch (error) {
+      console.error("Mark all read error:", error);
+      setFeedback({type:"error",text:"Could not mark all notifications as read. Please retry."});
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   const filteredNotifications = useMemo(() => {
@@ -347,7 +360,7 @@ export default function Notifications() {
       )}
 
       <div className="section notification-tools">
-        <div className="section-heading-row"><div><span className="eyebrow">MESSAGE CENTER</span><h2>Search & Filter</h2></div>{!isStaff && unreadCount > 0 && <button className="mini-btn" onClick={() => void markAllRead()}>Mark all read</button>}</div>
+        <div className="section-heading-row"><div><span className="eyebrow">MESSAGE CENTER</span><h2>Search & Filter</h2></div>{!isStaff && unreadCount > 0 && <button className="mini-btn" disabled={markingAll} onClick={() => void markAllRead()}>{markingAll ? "Updating..." : "Mark all read"}</button>}</div>
 
         <div className="form-grid">
           <input
