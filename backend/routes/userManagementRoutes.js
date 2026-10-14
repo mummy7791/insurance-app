@@ -60,7 +60,10 @@ router.post("/advisor/verify-otp", auth(["admin"]), async(req,res)=>{try{
 
 router.post("/", auth(["admin"]), async (req, res) => {
   try {
-    const { name, email, role, status, phone, advisorCode, address, password, verificationId } = req.body;
+    const { name, email, role, status, phone, advisorCode, address, password, verificationId, profilePhoto } = req.body;
+    if (profilePhoto && (typeof profilePhoto !== "string" || profilePhoto.length > 200000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(profilePhoto))) {
+      return res.status(400).json({ message: "Invalid advisor photo. Use JPG, PNG or WebP under 150 KB." });
+    }
 
     if (!name || !email || !role || (role === "advisor" && (!phone || !advisorCode || !password))) {
       return res.status(400).json({
@@ -99,6 +102,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       email: cleanEmail,
       phone: phone || "",
       advisorCode: advisorCode || "",
+      profilePhoto: role === "advisor" ? (profilePhoto || "") : "",
       address: address || "",
       password: hashedPassword,
       role,
@@ -125,6 +129,7 @@ router.post("/", auth(["admin"]), async (req, res) => {
       status: user.status,
       phone: user.phone,
       advisorCode: user.advisorCode,
+      profilePhoto: user.profilePhoto,
       address: user.address,
       createdAt: user.createdAt,
     });
