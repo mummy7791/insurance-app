@@ -224,6 +224,9 @@ router.put("/:id", auth(), async (req, res) => {
 
 router.delete("/:id", auth(STAFF_ROLES), async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid notification ID" });
+    }
     const notification = await Notification.findByIdAndDelete(req.params.id);
 
     if (!notification) {
