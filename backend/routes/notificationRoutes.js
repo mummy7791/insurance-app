@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 const Notification = require("../models/Notification");
@@ -38,8 +39,11 @@ router.post("/", auth(STAFF_ROLES), async (req, res) => {
   try {
     const { title, message, type, date, recipientId } = req.body;
 
-    if (!recipientId) {
-      return res.status(400).json({ message: "Notification recipient required" });
+    if (!recipientId || !mongoose.isValidObjectId(recipientId)) {
+      return res.status(400).json({ message: "Valid notification recipient required" });
+    }
+    if (typeof title !== "string" || !title.trim() || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ message: "Notification title and message required" });
     }
 
     const recipient = await User.findOne({
@@ -53,8 +57,8 @@ router.post("/", auth(STAFF_ROLES), async (req, res) => {
     }
 
     const notification = await Notification.create({
-      title,
-      message,
+      title: title.trim(),
+      message: message.trim(),
       type,
       date,
       recipientId,
