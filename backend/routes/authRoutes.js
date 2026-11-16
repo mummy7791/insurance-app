@@ -437,7 +437,9 @@ router.post("/login", authRateLimit, async (req, res) => {
       return res.status(403).json({ message: "Please use Admin Login" });
     }
 
-    if (!user.isEmailVerified) {
+    // Admin-created advisors can sign in with their password without SMS OTP.
+    // Customer accounts still require phone verification.
+    if (user.role === "customer" && !user.isEmailVerified) {
       return res.status(403).json({ message: "Please verify your mobile number with OTP before logging in" });
     }
 
