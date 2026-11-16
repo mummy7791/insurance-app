@@ -81,10 +81,10 @@ router.post("/", auth(["admin"]), async (req, res) => {
 
     const cleanEmail = String(email).toLowerCase().trim();
     const cleanPhone = normalizeIndianMobile(phone);
-    if (role === "advisor" && !/^[6-9]\\d{9}$/.test(cleanPhone)) {
+    if (role === "advisor" && !/^[6-9]\d{9}$/.test(cleanPhone)) {
       return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
     }
-    if (role === "advisor" && (typeof password !== "string" || password.length < 8 || !/[A-Za-z]/.test(password) || !/\\d/.test(password))) {
+    if (role === "advisor" && (typeof password !== "string" || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password))) {
       return res.status(400).json({ message: "Password must be at least 8 characters with a letter and number" });
     }
     if (role === "advisor" && await User.findOne({ phone: cleanPhone })) {
