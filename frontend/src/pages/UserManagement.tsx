@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
-import { confirmFirebasePhoneOtp, sendFirebasePhoneOtp } from "../services/firebasePhone";
 import MainLayout from "../layouts/MainLayout";
 
 type UserRole = "advisor";
@@ -52,7 +51,6 @@ export default function UserManagement() {
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<UserForm>(initialForm);
   const [bankSubmissions,setBankSubmissions]=useState<BankSubmission[]>([]);
-  const [verificationId,setVerificationId]=useState(""); const [otp,setOtp]=useState(""); const [otpSent,setOtpSent]=useState(false); const [otpVerified,setOtpVerified]=useState(false); const [otpBusy,setOtpBusy]=useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -80,9 +78,6 @@ export default function UserManagement() {
 
     return () => clearTimeout(timer);
   }, [loadUsers,loadBankSubmissions]);
-
-  const sendAdvisorOtp=async()=>{const mobile=form.phone.replace(/\D/g,"").slice(-10);if(!form.name||!form.email||!mobile||!form.advisorCode||!form.password){alert("Fill Name, Email, Phone, Advisor Code and Password first");return;}if(!/^[6-9]\d{9}$/.test(mobile)){alert("Enter a valid 10-digit Indian mobile number");return;}try{setOtpBusy(true);await sendFirebasePhoneOtp(mobile);setForm(prev=>({...prev,phone:mobile}));setOtpSent(true);setOtpVerified(false);setVerificationId("");alert("OTP sent to advisor mobile number");}catch(e){console.error(e);alert(e instanceof Error?e.message:"Could not send advisor OTP");}finally{setOtpBusy(false);}};
-  const verifyAdvisorOtp=async()=>{if(!/^\d{6}$/.test(otp))return;try{setOtpBusy(true);const idToken=await confirmFirebasePhoneOtp(otp);const r=await api.post<{verificationId:string}>("/user-management/advisor/verify-firebase-phone",{...form,idToken});setVerificationId(r.data.verificationId);setOtpVerified(true);alert("Mobile number verified. Now click Create Advisor.");}catch(e){console.error(e);const msg=typeof e==="object"&&e!==null&&"response" in e?String((e as {response?:{data?:{message?:string}}}).response?.data?.message||"Invalid or expired OTP"):e instanceof Error?e.message:"Invalid or expired OTP";alert(msg);}finally{setOtpBusy(false);}};
 
   const handlePhoto = (file?: File) => {
     if (!file) return;
@@ -114,17 +109,19 @@ export default function UserManagement() {
         advisorCode: form.advisorCode,
         address: form.address,
         password: form.password,
-        verificationId,
         profilePhoto: form.profilePhoto,
       });
 
       if (!res.data?._id) throw new Error("Invalid advisor creation response");
       setUsers((prev) => [res.data, ...prev]);
-      setForm(initialForm); setVerificationId(""); setOtp(""); setOtpSent(false); setOtpVerified(false);
+      setForm(initialForm);
       alert("User created successfully");
     } catch (error) {
       console.error("User create error:", error);
-      alert("User create failed / email already exists");
+      const message = typeof error === "object" && error !== null && "response" in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      alert(message || "Could not create advisor. Please check the details and try again.");
     } finally {
       setCreating(false);
     }
@@ -205,7 +202,7 @@ export default function UserManagement() {
       title="Advisor Access"
       subtitle="Admin creates advisor login access, profile and account status"
     >
-      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create advisor accounts with email/password login and secure mobile number OTP verification.</p></div><div className="admin-summary-metrics"><div><span>Total Advisors</span><strong>{users.filter((u) => u.role === "advisor").length}</strong></div><div><span>Active</span><strong>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
+      <div className="admin-page-summary"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Staff access workspace</h2><p>Create advisor accounts directly with email and password. Mobile numbers are not OTP-verified during admin creation.</p></div><div className="admin-summary-metrics"><div><span>Total Advisors</span><strong>{users.filter((u) => u.role === "advisor").length}</strong></div><div><span>Active</span><strong>{users.filter((u) => u.role === "advisor" && u.status !== "blocked").length}</strong></div><div><span>Blocked</span><strong>{users.filter((u) => u.status === "blocked").length}</strong></div></div></div>
 
       <div className="cards admin-kpi-grid">
         <div className="card">
@@ -230,7 +227,6 @@ export default function UserManagement() {
       </div>
 
       <div className="section">
-        <div id="firebase-recaptcha" />
         <span className="eyebrow">NEW ADVISOR ACCOUNT</span><h2>Create advisor login</h2><p className="section-copy">Advisor can access only Plans, Commission and their Profile.</p>
 
         <div style={{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap",margin:"18px 0"}}>
@@ -277,35 +273,8 @@ export default function UserManagement() {
           </select>
         </div>
 
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
-          <button className="btn small-btn" onClick={sendAdvisorOtp} disabled={otpBusy || otpVerified}>
-            {otpBusy ? "Sending..." : otpSent ? "Resend OTP" : "Send Number OTP"}
-          </button>
-          {otpSent && !otpVerified && (
-            <>
-              <input
-                style={{ maxWidth: 220 }}
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="Enter 6-digit OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-              />
-              <button className="mini-btn" onClick={verifyAdvisorOtp} disabled={otpBusy || otp.length !== 6}>
-                Verify OTP
-              </button>
-            </>
-          )}
-          {otpVerified && <span className="secure-chip">✓ Number verified</span>}
-        </div>
-
-        <button
-          className="btn small-btn"
-          onClick={createUser}
-          disabled={creating || !otpVerified}
-          style={{ marginTop: 14 }}
-        >
-          {creating ? "Creating..." : otpVerified ? "Create Advisor" : "Verify Number First"}
+        <button className="btn small-btn" onClick={createUser} disabled={creating} style={{ marginTop: 16 }}>
+          {creating ? "Creating..." : "Create"}
         </button>
       </div>
 
