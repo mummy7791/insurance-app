@@ -60,7 +60,7 @@ router.post("/advisor/verify-otp", auth(["admin"]), async(req,res)=>{try{
 
 router.post("/", auth(["admin"]), async (req, res) => {
   try {
-    const { name, email, role, status, phone, advisorCode, address, password, verificationId, profilePhoto } = req.body;
+    const { name, email, role, status, phone, advisorCode, address, password, profilePhoto } = req.body;
     if (profilePhoto && (typeof profilePhoto !== "string" || profilePhoto.length > 200000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(profilePhoto))) {
       return res.status(400).json({ message: "Invalid advisor photo. Use JPG, PNG or WebP under 150 KB." });
     }
@@ -79,7 +79,20 @@ router.post("/", auth(["admin"]), async (req, res) => {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = String(email).toLowerCase().trim();
+    const cleanPhone = normalizeIndianMobile(phone);
+    if (role === "advisor" && !/^[6-9]\\d{9}$/.test(cleanPhone)) {
+      return res.status(400).json({ message: "Enter a valid 10-digit Indian mobile number" });
+    }
+    if (role === "advisor" && (typeof password !== "string" || password.length < 8 || !/[A-Za-z]/.test(password) || !/\\d/.test(password))) {
+      return res.status(400).json({ message: "Password must be at least 8 characters with a letter and number" });
+    }
+    if (role === "advisor" && await User.findOne({ phone: cleanPhone })) {
+      return res.status(409).json({ message: "An account with this mobile number already exists" });
+    }
+    if (role === "advisor" && await User.findOne({ advisorCode: String(advisorCode).trim() })) {
+      return res.status(409).json({ message: "Advisor code already exists" });
+    }
 
     const existingUser = await User.findOne({ email: cleanEmail });
 
@@ -91,27 +104,19 @@ router.post("/", auth(["admin"]), async (req, res) => {
 
     let hashedPassword = password ? await bcrypt.hash(String(password), 10) : await bcrypt.hash("ChangeMe123", 10);
 
-    if (role === "advisor") {
-      const pending = verificationId ? await PendingAdvisor.findById(verificationId) : null;
-      if (!pending || !pending.verifiedAt || pending.email !== cleanEmail || pending.phone !== normalizeIndianMobile(phone)) return res.status(403).json({ message: "Verify advisor mobile number OTP before creating account" });
-      hashedPassword = pending.password;
-    }
-
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
-      phone: phone || "",
+      phone: role === "advisor" ? cleanPhone : (phone || ""),
       advisorCode: advisorCode || "",
       profilePhoto: role === "advisor" ? (profilePhoto || "") : "",
       address: address || "",
       password: hashedPassword,
       role,
       status: status || "active",
-      isEmailVerified: role === "advisor",
+      isEmailVerified: false, // Admin-created advisor phone/email is not verified.
       permissions: role === "advisor" ? ["plans", "commission", "profile"] : [],
     });
-
-    if (role === "advisor" && verificationId) await PendingAdvisor.findByIdAndDelete(verificationId);
 
     await createAuditLog({
       req,
