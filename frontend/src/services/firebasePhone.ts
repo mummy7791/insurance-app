@@ -1,10 +1,10 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyAVdZx21Nf_BSizmRZEwThZppjez8ACvRU",
-  authDomain: "life-insurance-ee3f7.firebaseapp.com",
-  projectId: "life-insurance-ee3f7",
-  storageBucket: "life-insurance-ee3f7.firebasestorage.app",
-  messagingSenderId: "662761285549",
-  appId: "1:662761285549:web:825bca6d4f99c9ed44e324",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAVdZx21Nf_BSizmRZEwThZppjez8ACvRU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "life-insurance-ee3f7.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "life-insurance-ee3f7",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "life-insurance-ee3f7.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "662761285549",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:662761285549:web:825bca6d4f99c9ed44e324",
 };
 
 type ConfirmationResultLike = {
@@ -26,25 +26,22 @@ const loadFirebase = async () => {
 
 export const sendFirebasePhoneOtp = async (phone: string) => {
   if (otpSendInProgress) throw new Error("OTP request already in progress. Please wait.");
+  if (!/^[6-9]\d{9}$/.test(phone)) throw new Error("auth/invalid-phone-number");
   otpSendInProgress = true;
   try {
-  const { authModule, auth } = await loadFirebase();
-  // Reuse the verifier: clearing and recreating it on every resend can trigger
-  // "reCAPTCHA has already been rendered in this element" on mobile browsers.
-  if (!recaptchaVerifier) {
-    recaptchaVerifier = new authModule.RecaptchaVerifier(auth, "firebase-recaptcha", { size: "invisible" });
-  }
-  confirmationResult = null;
-  try {
-    confirmationResult = await authModule.signInWithPhoneNumber(auth, `+91${phone}`, recaptchaVerifier);
-  } catch (error) {
-    // A failed challenge must not leave an old confirmation available for login.
+    const { authModule, auth } = await loadFirebase();
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new authModule.RecaptchaVerifier(auth, "firebase-recaptcha", { size: "invisible" });
+    }
     confirmationResult = null;
-    // Firebase can leave a broken challenge after failed app verification.
-    try { recaptchaVerifier?.clear?.(); } catch { /* already cleared */ }
-    recaptchaVerifier = null;
-    throw error;
-  }
+    try {
+      confirmationResult = await authModule.signInWithPhoneNumber(auth, `+91${phone}`, recaptchaVerifier);
+    } catch (error) {
+      confirmationResult = null;
+      try { recaptchaVerifier?.clear?.(); } catch { /* already cleared */ }
+      recaptchaVerifier = null;
+      throw error;
+    }
   } finally {
     otpSendInProgress = false;
   }
